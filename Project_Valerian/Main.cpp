@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include<Global_Constants.h>
 #include <Message_Bus.h>
+#include<Draw_System.h>
+using namespace std;
 
 // DISPLAY VARIABLES
 SDL_Renderer* Game_Renderer = NULL;
@@ -97,7 +99,10 @@ int main(int argc, char *args[])
 	init();
 
 	// Create Message Bus
-	Message_Bus Main_Bus;
+	unique_ptr<Message_Bus> Main_Bus(new Message_Bus);
+
+	// Create Draw System
+	unique_ptr<Draw_System> Draw(new Draw_System);
 
 	while (!quit)
 	{
@@ -110,20 +115,38 @@ int main(int argc, char *args[])
 				quit = true;
 			}
 
-			Main_Bus.Add_Input_Message(e);
+			Main_Bus->Add_Input_Message(e);
 		}
+
+		// TEST CODE
+
+		Draw_System::Primitive_Instruction test_rect = {1, {100,100,100,100},true };
+		Draw->Add_Primitive_To_Render_Cycle(test_rect);
+
+		// END TEST CODE
 
 		//Clear screen
 		SDL_SetRenderDrawColor(Game_Renderer, 0x0, 0x0, 0x0, 0x0);
 		SDL_RenderClear(Game_Renderer);
 
+		// Draw objects on screen
+		Draw->Draw_Primitives(Game_Renderer);
+
 		//Update screen
 		SDL_RenderPresent(Game_Renderer);
 
+		// Clear Draw Instructions
+		Draw->Clear_Primitive_Instruction_Array();
+
 		// Clear the message bus
-		Main_Bus.Clear_Input_Messages();
+		Main_Bus->Clear_Input_Messages();
 	}
 
+	// Free and Remove objects created on the heap
+	Main_Bus->free();
+	Draw->free();
+
+	// Unload all major systems
 	close();
 
 	return 0;

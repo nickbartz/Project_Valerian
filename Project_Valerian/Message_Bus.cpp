@@ -26,3 +26,8 @@ void Message_Bus::Clear_Input_Messages()
 
 	count_input_message = -1;
 }
+
+void Message_Bus::free()
+{
+
+}

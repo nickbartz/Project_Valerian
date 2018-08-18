@@ -14,9 +14,14 @@ public:
 	void Add_Input_Message(SDL_Event input_event);
 	void Clear_Input_Messages();
 
-	int count_input_message;
+
+
+	// Free 
+	void free();
+
+
 
 private:
-
+	int count_input_message;
 	Input_Message Input_Message_Bus[MAX_INPUT_MESSAGES];
 };
