@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL2-2.0.8\include;C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL2_ttf-devel-2.0.14-VC\SDL2_ttf-2.0.14\include;C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL2_image-devel-2.0.3-VC\SDL2_image-2.0.3\include;C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL_FontCache-master\SDL_FontCache-master;C:\Users\nbartz\Desktop\Code\C++\Projects\Project_Valerian\Project_Valerian;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL2-2.0.8\include;C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL2_ttf-devel-2.0.14-VC\SDL2_ttf-2.0.14\include;C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL2_image-devel-2.0.3-VC\SDL2_image-2.0.3\include;C:\Users\nbartz\Desktop\Code\C++\Projects\Project_Valerian\Project_Valerian;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL2_ttf-devel-2.0.14-VC\SDL2_ttf-2.0.14\lib\x86;C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL2_image-devel-2.0.3-VC\SDL2_image-2.0.3\lib\x86;C:\Users\nbartz\Desktop\Code\C++\Projects\External Libraries\SDL2-2.0.8\lib\x86;C:\Users\nbartz\Desktop\Code\C++\Projects\Project_Valerian\Project_Valerian;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -122,17 +122,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Console_Panel.cpp" />
+    <ClCompile Include="Console_Window.cpp" />
+    <ClCompile Include="Cursor.cpp" />
     <ClCompile Include="Draw_System.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Message.cpp" />
     <ClCompile Include="Message_Bus.cpp" />
+    <ClCompile Include="SDL_FontCache.c" />
+    <ClCompile Include="Console_Component.cpp" />
+    <ClCompile Include="Service_Locator.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="UI.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Console_Component.h" />
+    <ClInclude Include="Console_Panel.h" />
+    <ClInclude Include="Cursor.h" />
     <ClInclude Include="Draw_System.h" />
     <ClInclude Include="Global_Constants.h" />
+    <ClInclude Include="Console_Window.h" />
     <ClInclude Include="Message.h" />
     <ClInclude Include="Message_Bus.h" />
+    <ClInclude Include="Service_Locator.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

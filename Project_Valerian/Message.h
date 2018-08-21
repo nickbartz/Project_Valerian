@@ -1,12 +1,16 @@
 #pragma once
 
+using namespace std;
 #include<SDL.h>
+#include<string>
 
 class Message
 {
 public:
 	Message();
+
 private:
+
 };
 
 class Input_Message: public Message
@@ -18,9 +22,11 @@ public:
 	}
 
 	SDL_Event Return_Event();
+	string Return_Event_String();
 
 private:
 
 	SDL_Event sdl_event;
 
 };
+
