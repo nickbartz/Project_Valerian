@@ -9,6 +9,11 @@ Draw_System::Draw_System(SDL_Renderer* game_renderer, FC_Font* font_array_start[
 	for (int p = 0; p < MAX_NUM_FONTS; ++p) { font_array[p] = font_array_start[p]; };
 }
 
+void Draw_System::Init_Sprites(SDL_Renderer* game_renderer)
+{
+	base_spritesheet.Init("Sprites/base_spritesheet.png", game_renderer);
+}
+
 // Query Functions
 
 int Draw_System::Return_Text_Width(int font_type, string text)
@@ -18,6 +23,16 @@ int Draw_System::Return_Text_Width(int font_type, string text)
 
 
 // Functions for adding or removing draw jobs from render cycle
+void Draw_System::Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point center, SDL_RendererFlip render_flip)
+{
+	switch (spritesheet)
+	{
+	case SPRITESHEET_BASE:
+		base_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		break;
+	}
+}
+
 void Draw_System::Add_Primitive_To_Render_Cycle(Primitive_Instruction primitive)
 {
 	Primitive_Instruction_Array[count_num_primitives] = primitive;
@@ -54,6 +69,12 @@ void Draw_System::Clear_Text_Instruction_Array()
 }
 
 // Functions for drawing primitives
+
+void Draw_System::Draw_Sprites(SDL_Renderer* render_target)
+{
+	base_spritesheet.Draw(render_target);
+}
+
 void Draw_System::Draw_Primitives(SDL_Renderer* render_target)
 {
 	for (int i = 0; i < count_num_primitives; i++)

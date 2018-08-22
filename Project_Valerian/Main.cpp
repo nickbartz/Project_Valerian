@@ -138,8 +138,9 @@ int main(int argc, char *args[])
 	// Create Service Locator
 	unique_ptr<Service_Locator> service_locator(new Service_Locator());
 
-	// Create Draw System
+	// Create Draw System & Load Sprites
 	unique_ptr<Draw_System> draw_system(new Draw_System{Game_Renderer, font_array});
+	draw_system.get()->Init_Sprites(Game_Renderer);
 
 	// Create UI System
 	unique_ptr<UI> user_interface(new UI(service_locator.get()));
@@ -165,7 +166,7 @@ int main(int argc, char *args[])
 		while (SDL_PollEvent(&e) != 0)
 		{			
 			//User requests quit
-			if (e.type == SDL_QUIT || e.key.keysym.sym == SDLK_ESCAPE)
+			if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE))
 			{
 				quit = true;
 			}
@@ -180,11 +181,14 @@ int main(int argc, char *args[])
 		cursor->Update();
 		user_interface->Update();
 
+		draw_system->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_BASE, { 0,0,32,32 }, { 0,0,32,32 });
+
 		//Clear screen
 		SDL_SetRenderDrawColor(Game_Renderer, 0x0, 0x0, 0x0, 0x0);
 		SDL_RenderClear(Game_Renderer);
 		
 		// Draw objects on screen
+		draw_system->Draw_Sprites(Game_Renderer);
 		draw_system->Draw_Primitives(Game_Renderer);
 		draw_system->Draw_Text_Strings(Game_Renderer);
 

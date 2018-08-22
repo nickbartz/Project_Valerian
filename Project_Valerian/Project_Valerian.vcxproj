@@ -132,6 +132,7 @@
     <ClCompile Include="SDL_FontCache.c" />
     <ClCompile Include="Console_Component.cpp" />
     <ClCompile Include="Service_Locator.cpp" />
+    <ClCompile Include="Spritesheet.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="UI.cpp" />
   </ItemGroup>
@@ -145,6 +146,7 @@
     <ClInclude Include="Message.h" />
     <ClInclude Include="Message_Bus.h" />
     <ClInclude Include="Service_Locator.h" />
+    <ClInclude Include="Spritesheet.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>
