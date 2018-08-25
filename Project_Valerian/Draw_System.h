@@ -38,7 +38,7 @@ public:
 	int Return_Text_Width(int font_type, string text);
 
 	// Functions to Add or Remove From the Draw Array
-	void Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point center = { 0,0 }, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
+	void Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
 
 	void Add_Primitive_To_Render_Cycle(Primitive_Instruction primitive);
 	void Clear_Primitive_Instruction_Array();
@@ -47,6 +47,7 @@ public:
 	void Clear_Text_Instruction_Array();
 
 	// Functions to Draw, called by main
+	void Draw(SDL_Renderer* render_target);
 	void Draw_Sprites(SDL_Renderer* render_target);
 	void Draw_Primitives(SDL_Renderer* render_target);
 	void Draw_Text_Strings(SDL_Renderer* render_target);
@@ -62,6 +63,7 @@ private:
 	FC_Font* font_array[MAX_NUM_FONTS];
 
 	//Spritesheets
+	Spritesheet background_spritesheet;
 	Spritesheet base_spritesheet;
 
 	// Primitive array 

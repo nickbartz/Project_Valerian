@@ -7,13 +7,22 @@
 Cursor::Cursor(Service_Locator* sPointer)
 {
 	service_pointer = sPointer;
+	camera = { 0, 0,32, 0 };
+}
+
+SDL_Rect Cursor::Get_Camera()
+{
+	return camera;
 }
 
 void Cursor::Update()
 {
 	Age_Mouse();
 
-	for (int i = 0; i < current_num_input_messages; i++) Parse_Input_Message(input_message_local[i].Return_Event());
+	for (int i = 0; i < service_pointer->get_MB_Pointer()->count_input_messages; i++)
+	{		
+		Parse_Input_Message(service_pointer->get_MB_Pointer()->Input_Message_Array[i].Return_Event());
+	}
 
 	if (left_button_previous == 1 && left_button == 0 && currently_clicked_component != NULL)
 	{
@@ -23,7 +32,6 @@ void Cursor::Update()
 
 	if (currently_clicked_component == NULL) Draw();
 
-	Clear_Messages();
 }
 
 void Cursor::Draw()
@@ -55,18 +63,10 @@ void Cursor::Age_Mouse()
 	last_mouse_y = current_mouse_y;
 }
 
-void Cursor::Push_Message_To_Cursor(Input_Message message)
-{
-	input_message_local[current_num_input_messages] = message;
-
-	current_num_input_messages++;
-	if (current_num_input_messages > MAX_INPUT_MESSAGES) current_num_input_messages = 0;
-}
-
 void Cursor::Parse_Input_Message(SDL_Event event)
 {
 	if (event.type == SDL_MOUSEMOTION)
-	{
+	{	
 		last_mouse_x = current_mouse_x;
 		last_mouse_y = current_mouse_y;		
 		current_mouse_x = event.motion.x;
@@ -74,6 +74,8 @@ void Cursor::Parse_Input_Message(SDL_Event event)
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
 	{
+
+		
 		if (event.button.button == SDL_BUTTON_LEFT)
 		{
 			left_button = true;
@@ -102,15 +104,23 @@ void Cursor::Parse_Input_Message(SDL_Event event)
 		current_mouse_x = event.button.x;
 		current_mouse_y = event.button.y;
 	}
+	else if (event.type == SDL_MOUSEWHEEL)
+	{
+		if (event.wheel.y > 0 && camera.w <= 50) camera.w++;
+		else if (event.wheel.y < 0 && camera.w > 0) camera.w--;
+	}
+	else if (event.type == SDL_KEYDOWN)
+	{
+		if (event.key.keysym.sym == SDLK_a) camera.x += 20;
+		else if (event.key.keysym.sym == SDLK_d) camera.x -= 20;
+		else if (event.key.keysym.sym == SDLK_w) camera.y += 20;
+		else if (event.key.keysym.sym == SDLK_s) camera.y -= 20;
+		else if (event.key.keysym.sym == SDLK_MINUS && camera.w > DISPLAY_MIN_ZOOM) camera.w -= 4;
+		else if (event.key.keysym.sym == SDLK_EQUALS && camera.w <= DISPLAY_MAX_ZOOM) camera.w += 4;
+	}
 }
 
 void Cursor::Set_Currently_Clicked_Component(Console_Component* component)
 {
 	currently_clicked_component = component;
-}
-
-void Cursor::Clear_Messages()
-{
-	// Set the index of input messages back to 0 so it starts empty essentially
-	current_num_input_messages = 0;
 }

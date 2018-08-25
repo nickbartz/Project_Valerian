@@ -1,9 +1,14 @@
 #include <Message.h>
 #include <iostream>
 
-Message::Message()
+Message::Message(string new_message)
 {
+	message = new_message;
+}
 
+string Message::Get_Message_String()
+{
+	return message;
 }
 
 SDL_Event Input_Message::Return_Event()
@@ -35,7 +40,6 @@ string Input_Message::Return_Event_String()
 		else if (sdl_event.wheel.y > 0) new_string = "Mouse Wheel Scroll Down";
 		break;
 	}
-	
 	
 	return new_string;
 }

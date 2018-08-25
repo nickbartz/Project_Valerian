@@ -5,9 +5,10 @@
 
 #include<UI.h>
 #include<Cursor.h>
-#include<Message_Bus.h>
 #include<Draw_System.h>
 #include<Service_Locator.h>
+#include<Message_Array.h>
+#include<Scene_Graph.h>
 
 #include<Timer.h>
 
@@ -74,7 +75,7 @@ bool init()
 					success = false;
 				}
 
-				// We will disable the cursor later once we returna new icon for the mouse, but for now leave it on
+				// We will disable the cursor later once we returna new icon for the mouse, but for now let's leave it on
 				//SDL_ShowCursor(SDL_DISABLE);
 			}
 		}
@@ -149,7 +150,11 @@ int main(int argc, char *args[])
 	unique_ptr<Cursor> cursor(new Cursor(service_locator.get()));
 
 	// Create Message Bus
-	unique_ptr<Message_Bus> main_bus(new Message_Bus(service_locator.get()));
+	unique_ptr<Message_Array> main_bus(new Message_Array(service_locator.get()));
+
+	// Create World Map
+	unique_ptr<Scene_Graph> scene_graph(new Scene_Graph(service_locator.get()));
+
 
 	// Register pointers with the service locator
 	service_locator->Register_Draw_System_Pointer(draw_system.get());
@@ -161,8 +166,16 @@ int main(int argc, char *args[])
 	int countedFrames = 0;
 	fpsTimer.start();
 
+	// TEST VARIABLES
+
+	//Structure test_structure = Structure(service_locator.get(), 0, 0, 1, 1);
+	//test_structure.Assign_Simple_Clip_Renderer(SPRITESHEET_BASE, { 0,0,32,32 });
+
+	// END TEST VARIABLES
+
 	while (!quit)
 	{	
+		// SUBSYSTEMS PUSH MESSAGES INTO THE BUS
 		while (SDL_PollEvent(&e) != 0)
 		{			
 			//User requests quit
@@ -171,26 +184,20 @@ int main(int argc, char *args[])
 				quit = true;
 			}
 
-			if ((e.type >= 768 && e.type <= 772) || (e.type >= 1024 && e.type <= 1027)) main_bus->Add_Input_Message(e);
+			if ((e.type >= 768 && e.type <= 772) || (e.type >= 1024 && e.type <= 1027)) main_bus->Add_Input_Message(Input_Message(e));
 		}
 
-		// Push Messages From the Main Bus Out to All Subsystems
-		main_bus->Push_Messages();
-
-		// Update components - they will also send messages back into the Main Bus
 		cursor->Update();
 		user_interface->Update();
-
-		draw_system->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_BASE, { 0,0,32,32 }, { 0,0,32,32 });
+		
+		// END SUBSYSTEM PUSHING MESSAGES TO BUS
 
 		//Clear screen
 		SDL_SetRenderDrawColor(Game_Renderer, 0x0, 0x0, 0x0, 0x0);
 		SDL_RenderClear(Game_Renderer);
-		
+
 		// Draw objects on screen
-		draw_system->Draw_Sprites(Game_Renderer);
-		draw_system->Draw_Primitives(Game_Renderer);
-		draw_system->Draw_Text_Strings(Game_Renderer);
+		draw_system->Draw(Game_Renderer);
 
 		// Draw FPS
 		int avgFPS = countedFrames / (fpsTimer.getTicks() / 10000.f);
@@ -201,12 +208,16 @@ int main(int argc, char *args[])
 		//Update screen
 		SDL_RenderPresent(Game_Renderer);
 
+		scene_graph->Draw();
+
 		// Clear Draw Instructions
 		draw_system->Clear_Primitive_Instruction_Array();
 		draw_system->Clear_Text_Instruction_Array();
 
-		// Clear the message bus
-		main_bus->Clear_Input_Messages();
+		// SUBSYSTEMS COLLECT MESSAGES FROM THE BUS 
+
+
+		main_bus->Clear_All();
 
 		++countedFrames;
 	}
@@ -222,7 +233,7 @@ int main(int argc, char *args[])
 	// Unload all major systems
 	close();
 
-	cout << "Successfully Closed Application" << endl;
+	std::cout << "Successfully Closed Application" << endl;
 
 	return 0;
 }

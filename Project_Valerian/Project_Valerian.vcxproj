@@ -128,27 +128,36 @@
     <ClCompile Include="Draw_System.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Message.cpp" />
-    <ClCompile Include="Message_Bus.cpp" />
+    <ClCompile Include="Message_Array.cpp" />
+    <ClCompile Include="Render_Component.cpp" />
     <ClCompile Include="SDL_FontCache.c" />
     <ClCompile Include="Console_Component.cpp" />
     <ClCompile Include="Service_Locator.cpp" />
+    <ClCompile Include="Object.cpp" />
     <ClCompile Include="Spritesheet.cpp" />
+    <ClCompile Include="Tile.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="UI.cpp" />
+    <ClCompile Include="Scene_Graph.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AI_Component.h" />
     <ClInclude Include="Console_Component.h" />
     <ClInclude Include="Console_Panel.h" />
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="Draw_System.h" />
     <ClInclude Include="Global_Constants.h" />
     <ClInclude Include="Console_Window.h" />
+    <ClInclude Include="Object.h" />
     <ClInclude Include="Message.h" />
-    <ClInclude Include="Message_Bus.h" />
+    <ClInclude Include="Message_Array.h" />
+    <ClInclude Include="Render_Component.h" />
     <ClInclude Include="Service_Locator.h" />
     <ClInclude Include="Spritesheet.h" />
+    <ClInclude Include="Tile.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UI.h" />
+    <ClInclude Include="Scene_Graph.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

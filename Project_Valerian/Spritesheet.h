@@ -18,13 +18,13 @@ public:
 		SDL_Rect position_rect = { 0,0,0,0 };
 		SDL_Rect clip_rect = { 0,0,0,0 };
 		double angle = 0.0;
-		SDL_Point center = { 0,0 };
+		SDL_Point* center = NULL;
 		SDL_RendererFlip flip = SDL_FLIP_NONE;
 	};
 
 	void Draw(SDL_Renderer* game_renderer);
 
-	void Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point center = { 0,0 }, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
+	void Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
 
 	void free();
 

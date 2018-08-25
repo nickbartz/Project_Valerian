@@ -1,30 +1,33 @@
 #include<UI.h>
 #include<Service_Locator.h>
-#include<Message_Bus.h>
 #include<algorithm>
 #include<Cursor.h>
 
 
 UI::UI(Service_Locator* srvc_pointer)
 {
-	current_num_input_messages = 0;
 	service_pointer = srvc_pointer;
 }
 
 // External API functions having to do with communicating with the UI
 
-void UI::Push_Message_To_UI(Message message)
+void UI::Push_Bus_Messages_To_Console()
 {
+	Message_Array* bus_pointer = service_pointer->get_MB_Pointer();
 
+	if (bus_pointer == NULL)
+	{
+		cout << "ERROR: UI::null pointer in Push_Bus_Messages_To_Console()" << endl;
+		return;
+	}
+
+	for (int i = 0; i < bus_pointer->count_input_messages; i++) Push_Message_To_Console(bus_pointer->Input_Message_Array[i].Return_Event_String());
+	for (int i = 0; i < bus_pointer->count_chatter_message; i++) Push_Message_To_Console(bus_pointer->Chatter_Array[i].Get_Message_String());
 }
 
-void UI::Push_Message_To_UI(Input_Message message)
+void UI::Push_Message_To_Console(string message)
 {
-	input_message_local[current_num_input_messages] = message;
-
-	current_num_input_messages++;
-	if (current_num_input_messages > MAX_INPUT_MESSAGES) current_num_input_messages = 0;
-
+	player_console.Push_Message_Into_Stream(message);
 }
 
 void UI::Push_Message_To_Message_Bus()
@@ -34,27 +37,14 @@ void UI::Push_Message_To_Message_Bus()
 
 // Internal functions having to do with the update of the UI
 
-void UI::Push_Input_Messages_To_Console()
-{
-	for (int i = 0; i < current_num_input_messages; i++)
-	{
-		string event_string = input_message_local[i].Return_Event_String();
-		if (event_string.size() > 0)
-		{
-			string message = "INPUT: " + event_string;
-			Push_Message_To_Console(message);
-		}
-	}
-}
-
-void UI::Push_Message_To_Console(string message)
-{
-	if (message.size() > 0) player_console.Push_Message_Into_Stream(message);
-}
-
 bool UI::Mouse_Event()
 {
 	Cursor* cursor = service_pointer->get_Cursor_Pointer();
+
+	if (cursor == NULL) {
+		cout << "Null pointer in UI::Mouse_Event()" << endl;
+		return false;
+	}
 
 	if (cursor->left_button == 1)
 	{
@@ -73,7 +63,7 @@ bool UI::Mouse_Event()
 void UI::Update()
 {		
 	// Send relevant input messages to player console window
-	Push_Input_Messages_To_Console();
+	Push_Bus_Messages_To_Console();
 
 	// Check Cursor For Clicks
 	if (Mouse_Event() == true) Update_UI_With_Mouse_Action(service_pointer->get_Cursor_Pointer());
@@ -82,14 +72,6 @@ void UI::Update()
 	Push_Message_To_Message_Bus();
 
 	player_console.Draw(service_pointer->get_Draw_System_Pointer());
-
-	Clear_Messages();
-}
-
-void UI::Clear_Messages()
-{
-	// Set the index of input messages back to -1 so it starts empty essentially
-	current_num_input_messages = 0;
 }
 
 // UI Mouse_Click Management

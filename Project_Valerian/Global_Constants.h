@@ -2,14 +2,35 @@
 
 // DISPLAY CONSTANTS
 // Store constants having to do with the display on the screen
+
+const int MAX_NUM_FONTS = 10;
+
+// Draw Enums
+enum font_types
+{
+	FONT_DEFAULT,
+	FONT_LARGE,
+	FONT_LARGE_BOLD,
+	FONT_SMALL
+};
+
 const int SCREEN_WIDTH = 1920;
 const int SCREEN_HEIGHT = 1080;
+
+const int TILE_SIZE = 32;
+
+const int DISPLAY_MAX_ZOOM = 64;
+const int DISPLAY_MIN_ZOOM = 16;
+
 const int MAX_NUM_PRIMITIVES = 100;
 const int MAX_NUM_TEXT_PRINT = 100;
 const int MAX_SPRITE_INSTRUCTIONS = 4000;
 
+
+
 enum spritesheets
 {
+	SPRITESHEET_BACKGROUND,
 	SPRITESHEET_BASE,
 	SPRITESHEET_BASE_OVERLAY,
 	SPRITESHEET_MID_1,
@@ -23,10 +44,12 @@ enum spritesheets
 // MESSAGE BUS CONSTANTS
 // Store constants having to do with the message bus
 const int MAX_INPUT_MESSAGES = 100;
+const int MAX_CHATTER_MESSAGES = 100;
 
 // Message type enums
 enum message_types
 {
+	MESSAGE_TROUBLESHOOT,
 	MESSAGE_TYPE_INPUT
 };
 
@@ -66,15 +89,9 @@ enum button_actions
 	BUTTON_ACTION_CLOSE_WINDOW
 };
 
-// DRAW CONFIGS
-// Draw Constants
-const int MAX_NUM_FONTS = 10;
+// WORLD MAP CONSTANTS
 
-// Draw Enums
-enum font_types
-{
-	FONT_DEFAULT,
-	FONT_LARGE,
-	FONT_LARGE_BOLD,
-	FONT_SMALL
-};
+const int WORLD_MAX_NUM_STRUCTURES = 1000;
+
+// Each background object takes about 1 FPS off the total so adjust judiciously
+const int WORLD_MAX_NUM_BACKGROUND_OBJECTS = 500;

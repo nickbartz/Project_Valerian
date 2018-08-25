@@ -2,6 +2,7 @@
 #include<SDL.h>
 #include<Message.h>
 #include<Global_Constants.h>
+#include<Message_Array.h>
 
 class Console_Component;
 class Service_Locator;
@@ -10,6 +11,8 @@ class Cursor
 {
 public:
 	Cursor(Service_Locator* sPointer);
+	
+	SDL_Rect Get_Camera();
 	void Draw();
 
 	bool left_button = false;
@@ -23,18 +26,16 @@ public:
 	int last_mouse_x = 0;
 	int last_mouse_y = 0;
 
-	void Push_Message_To_Cursor(Input_Message message);
 	void Set_Currently_Clicked_Component(Console_Component* component);
 
 	void Update();
 
 private:
-
-	int current_num_input_messages = 0;
-	Input_Message input_message_local[UI_MAX_INPUT_MESSAGES];
+	void Parse_Input_Message(SDL_Event e);
 	void Age_Mouse();
-	void Parse_Input_Message(SDL_Event event);
-	void Clear_Messages();
+
+	// Camera is instantiated as a simple rect where the "w" variables is equal to the zoom;
+	SDL_Rect camera = { 0,0,0,0 };
 
 	Service_Locator * service_pointer;
 	Console_Component* currently_clicked_component = NULL;

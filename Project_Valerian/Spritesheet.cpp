@@ -42,13 +42,13 @@ void Spritesheet::Draw(SDL_Renderer* game_renderer)
 {
 	for (int i = 0; i < current_num_instructions; i++)
 	{
-		SDL_RenderCopyEx(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect, instruction_array[i].angle, NULL, instruction_array[i].flip);
+		SDL_RenderCopyEx(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect, instruction_array[i].angle, instruction_array[i].center, instruction_array[i].flip);
 	}
 	
 	current_num_instructions = 0;
 }
 
-void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point center, SDL_RendererFlip render_flip)
+void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip)
 {
 	Sprite_Instructions new_instruction = { position_rect, clip_rect,angle,center,render_flip };
 	if (current_num_instructions < MAX_SPRITE_INSTRUCTIONS)

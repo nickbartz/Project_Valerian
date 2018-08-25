@@ -1,8 +1,8 @@
 #include <Service_Locator.h>
-#include<Message_Bus.h>
 #include<UI.h>
 #include<Draw_System.h>
 #include<Cursor.h>
+#include<Message_Array.h>
 
 Service_Locator::Service_Locator()
 {
@@ -14,7 +14,7 @@ UI * Service_Locator::get_UI_pointer()
 	return UI_pointer;
 }
 
-Message_Bus* Service_Locator::get_MB_Pointer()
+Message_Array* Service_Locator::get_MB_Pointer()
 {
 	return msg_bus_pointer;
 }
@@ -34,7 +34,7 @@ void Service_Locator::Register_UI_Pointer(UI* ui_pointer)
 	UI_pointer = ui_pointer;
 }
 
-void Service_Locator::Register_MB_Pointer(Message_Bus* msg_pointer)
+void Service_Locator::Register_MB_Pointer(Message_Array* msg_pointer)
 {
 	msg_bus_pointer = msg_pointer;
 }
