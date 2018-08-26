@@ -1,5 +1,7 @@
 #pragma once
+#include<Global_Constants.h>
 #include<Render_Component.h>
+#include<AI_Component.h>
 
 class SDL_Renderer;
 class Service_Locator;
@@ -7,32 +9,35 @@ class Service_Locator;
 class Object
 {
 public:
-	Object(Service_Locator* service_locator = NULL, int x_grid = 0, int y_grid =0, int tile_width = 0, int tile_height = 0);
+	Object(SDL_Rect location = { 0,0,0,0 }, Service_Locator* service_locator = NULL);
 
-	void Draw(SDL_Rect camera);
-	void Draw_From_Instance(SDL_Rect pos_rect);
+	void Draw(SDL_Rect camera, SDL_Rect pos_rect);
 
-	void Assign_Simple_Clip_Renderer(int spritesheet, SDL_Rect clip, double ang = 0.0, SDL_Point* point = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
+	void Assign_Simple_Clip_Tile_Renderer(Service_Locator* service_locator, SDL_Rect tile_specs, int spritesheet, SDL_Rect clip, double ang = 0.0, SDL_Point* point = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
+	void Assign_Background_Renderer(Service_Locator* service_locator, int spritesheet, SDL_Rect clip, double ang = 0.0, SDL_Point* point = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
 	void free();
 
 private:
 	Service_Locator* service_locator;
 
-	int grid_x = 0;
-	int grid_y = 0;
-	int tile_width = 0;
-	int tile_height = 0;
+	int object_type = OBJECT_UNASSIGNED;
+
+	SDL_Rect object_pos;
 	
-	// Render Components
+	// Core Render Component
 	Core_Render * core_render = NULL;
-	Simple_Clip_Render * simple_clip = NULL;
-	Multi_Clip_Render * multi_clip = NULL;
 
-	// AI Components
+	// Optional Render Components
+	Simple_Clip_Tile_Renderer * simple_tile_clip = NULL;
+	Multi_Clip_Tile_Renderer * tile_multi_clip = NULL;
+	Background_Renderer * background_clip = NULL;
 
-
+	// Core AI Component
+	Core_AI_Component* core_AI_component = NULL;
 
 	// Physics Components
+
+
 };
 

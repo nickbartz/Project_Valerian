@@ -6,19 +6,29 @@
 Scene_Graph::Scene_Graph(Service_Locator* sLocator)
 {
 	service_locator = sLocator;
+	Create_Background();
 
-	background_star_1 = Object(sLocator, 0, 0, 1, 1);
-	background_star_1.Assign_Simple_Clip_Renderer(SPRITESHEET_BACKGROUND, { 0,0,32,32 });
 
-	background_star_2 = Object(sLocator, 0, 0, 1, 1);
-	background_star_2.Assign_Simple_Clip_Renderer(SPRITESHEET_BACKGROUND, { 32,0,32,32 });
+	// Adding in some test variables for the time being
+	entity_array[0] = Object({ 0,0,32,32 }, sLocator);
+	current_num_entities++;
 
-	background_planetoid = Object(sLocator, 0, 0, 1, 1);
-	background_planetoid.Assign_Simple_Clip_Renderer(SPRITESHEET_BACKGROUND, { 0,32,32,32 });
+}
+
+void Scene_Graph::Create_Background()
+{
+	background_star_1 = Object({ 0,0,0,0 },service_locator);
+	background_star_1.Assign_Background_Renderer(service_locator, SPRITESHEET_BACKGROUND, { 0,0,32,32 });
+
+	background_star_2 = Object({ 0,0,0,0 }, service_locator);
+	background_star_2.Assign_Background_Renderer(service_locator, SPRITESHEET_BACKGROUND, { 32,0,32,32 });
+
+	background_planetoid = Object({ 0,0,0,0 }, service_locator);
+	background_planetoid.Assign_Background_Renderer(service_locator, SPRITESHEET_BACKGROUND, { 0,32,32,32 });
 
 	for (int i = 0; i < WORLD_MAX_NUM_BACKGROUND_OBJECTS; i++)
 	{
-		background_objects[i] = { rand() % SCREEN_WIDTH - SCREEN_WIDTH/2, rand() % SCREEN_HEIGHT - SCREEN_HEIGHT/2, rand() % 10 + 1,rand() % 2 };
+		background_objects[i] = { rand() % SCREEN_WIDTH - SCREEN_WIDTH / 2, rand() % SCREEN_HEIGHT - SCREEN_HEIGHT / 2, rand() % 10 + 1,rand() % 2 };
 		if (background_objects[i].depth > 7)
 		{
 			if (rand() % 10 > 7) background_objects[i].type = 3; // Set some of the stars further back to be planetoids
@@ -42,10 +52,15 @@ void Scene_Graph::Draw_Background()
 			TILE_SIZE/background_objects[i].depth
 		};
 
-		if (background_objects[i].type == 0) background_star_1.Draw_From_Instance(pos_rect);
-		else if (background_objects[i].type == 1) background_star_2.Draw_From_Instance(pos_rect);
-		else if (background_objects[i].type == 3) background_planetoid.Draw_From_Instance(pos_rect);
+		if (background_objects[i].type == 0) background_star_1.Draw(camera, pos_rect);
+		else if (background_objects[i].type == 1) background_star_2.Draw(camera, pos_rect);
+		else if (background_objects[i].type == 3) background_planetoid.Draw(camera, pos_rect);
 	}
+}
+
+void Scene_Graph::Update_Tile_Map()
+{
+	service_locator->get_MB_Pointer()->Add_Message(Message_SG_Tile_Update(0, 0, 0, 0));
 }
 
 void Scene_Graph::Draw()
@@ -56,6 +71,24 @@ void Scene_Graph::Draw()
 
 	for (int i = 0; i < current_num_structures; i++)
 	{
-		structure_array[i].Draw(camera);
+		structure_array[i].Draw(camera, { 0,0,0,0 });
 	}
+}
+
+void Scene_Graph::free()
+{
+	for (int i = 0; i < current_num_structures; i++)
+	{
+		structure_array[i].free();
+	}
+
+	background_star_1.free();
+	background_star_2.free();
+	background_planetoid.free();
+
+	for (int i = 0; i < current_num_entities; i++)
+	{
+		entity_array[i].free();
+	}
+
 }

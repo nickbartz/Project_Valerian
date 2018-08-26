@@ -15,14 +15,17 @@ SDL_Rect Cursor::Get_Camera()
 	return camera;
 }
 
+void Cursor::Collect_Bus_Messages()
+{
+	for (int i = 0; i < service_pointer->get_MB_Pointer()->count_input_messages; i++)
+	{
+		Parse_Input_Message(service_pointer->get_MB_Pointer()->Input_Message_Array[i].Return_Event());
+	}
+}
+
 void Cursor::Update()
 {
 	Age_Mouse();
-
-	for (int i = 0; i < service_pointer->get_MB_Pointer()->count_input_messages; i++)
-	{		
-		Parse_Input_Message(service_pointer->get_MB_Pointer()->Input_Message_Array[i].Return_Event());
-	}
 
 	if (left_button_previous == 1 && left_button == 0 && currently_clicked_component != NULL)
 	{

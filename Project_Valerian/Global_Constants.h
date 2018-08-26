@@ -43,8 +43,9 @@ enum spritesheets
 
 // MESSAGE BUS CONSTANTS
 // Store constants having to do with the message bus
-const int MAX_INPUT_MESSAGES = 100;
-const int MAX_CHATTER_MESSAGES = 100;
+const int MAX_INPUT_MESSAGES = 10;
+const int MAX_CHATTER_MESSAGES = 10;
+const int MAX_SG_TILE_UPDATE_MESSAGES = 10;
 
 // Message type enums
 enum message_types
@@ -89,9 +90,27 @@ enum button_actions
 	BUTTON_ACTION_CLOSE_WINDOW
 };
 
-// WORLD MAP CONSTANTS
+// SCENE GRAPH CONSTANTS
 
 const int WORLD_MAX_NUM_STRUCTURES = 1000;
+const int WORLD_MAX_NUM_ENTITIES = 100;
 
 // Each background object takes about 1 FPS off the total so adjust judiciously
 const int WORLD_MAX_NUM_BACKGROUND_OBJECTS = 500;
+
+enum Entity_Types
+{
+	OBJECT_UNASSIGNED,
+	OBJECT_STRUCTURE,
+	OBJECT_ENTITY,
+	OBJECT_ITEM,
+	OBJECT_CONTAINER,
+	OBJECT_PROJECTILE
+};
+
+enum Tile_Layers
+{
+	TILE_LAYER_BASE,
+	TILE_LAYER_MID,
+	TILE_LAYER_ROOF
+};

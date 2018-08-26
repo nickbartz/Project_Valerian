@@ -11,7 +11,7 @@ UI::UI(Service_Locator* srvc_pointer)
 
 // External API functions having to do with communicating with the UI
 
-void UI::Push_Bus_Messages_To_Console()
+void UI::Collect_Bus_Messages()
 {
 	Message_Array* bus_pointer = service_pointer->get_MB_Pointer();
 
@@ -21,8 +21,9 @@ void UI::Push_Bus_Messages_To_Console()
 		return;
 	}
 
-	for (int i = 0; i < bus_pointer->count_input_messages; i++) Push_Message_To_Console(bus_pointer->Input_Message_Array[i].Return_Event_String());
+	for (int i = 0; i < bus_pointer->count_input_messages; i++) Push_Message_To_Console(bus_pointer->Input_Message_Array[i].Get_Message_String());
 	for (int i = 0; i < bus_pointer->count_chatter_message; i++) Push_Message_To_Console(bus_pointer->Chatter_Array[i].Get_Message_String());
+	for (int i = 0; i < bus_pointer->count_SG_tile_map_update_messages; i++) Push_Message_To_Console(bus_pointer->SG_Tile_Update_MSG_Array[i].Get_Message_String());
 }
 
 void UI::Push_Message_To_Console(string message)
@@ -62,9 +63,6 @@ bool UI::Mouse_Event()
 
 void UI::Update()
 {		
-	// Send relevant input messages to player console window
-	Push_Bus_Messages_To_Console();
-
 	// Check Cursor For Clicks
 	if (Mouse_Event() == true) Update_UI_With_Mouse_Action(service_pointer->get_Cursor_Pointer());
 

@@ -19,7 +19,7 @@ public:
 
 	void Push_Message_To_Console(string message);
 
-	void Push_Bus_Messages_To_Console();
+	void Collect_Bus_Messages();
 
 private:
 	int last_clicked_window = WINDOW_NULL;

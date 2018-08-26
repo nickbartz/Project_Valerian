@@ -15,10 +15,14 @@ public:
 	Scene_Graph(Service_Locator* service_locator);
 	void Draw();
 	void Draw_Background();
+	void Update_Tile_Map();
+
+	void free();
 
 private:
 	Service_Locator * service_locator;
-	
+	void Create_Background();
+
 	// Structure for the background
 	struct Background_Object
 	{
@@ -39,5 +43,8 @@ private:
 
 	int current_num_structures = 0;
 	Object structure_array[WORLD_MAX_NUM_STRUCTURES];
+
+	int current_num_entities = 0;
+	Object entity_array[WORLD_MAX_NUM_ENTITIES];
 };
 

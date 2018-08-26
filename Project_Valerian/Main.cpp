@@ -109,6 +109,20 @@ void free_assets()
 	}
 }
 
+void Update_Input(SDL_Event &e, bool &quit, Message_Array* main_bus)
+{
+	while (SDL_PollEvent(&e) != 0)
+	{
+		//User requests quit
+		if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE))
+		{
+			quit = true;
+		}
+
+		if ((e.type >= 768 && e.type <= 772) || (e.type >= 1024 && e.type <= 1027)) main_bus->Add_Message(Message_Input(e));
+	}
+}
+
 void close()
 {
 	//Destroy window	
@@ -168,33 +182,25 @@ int main(int argc, char *args[])
 
 	// TEST VARIABLES
 
-	//Structure test_structure = Structure(service_locator.get(), 0, 0, 1, 1);
-	//test_structure.Assign_Simple_Clip_Renderer(SPRITESHEET_BASE, { 0,0,32,32 });
+
 
 	// END TEST VARIABLES
 
 	while (!quit)
 	{	
-		// SUBSYSTEMS PUSH MESSAGES INTO THE BUS
-		while (SDL_PollEvent(&e) != 0)
-		{			
-			//User requests quit
-			if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE))
-			{
-				quit = true;
-			}
-
-			if ((e.type >= 768 && e.type <= 772) || (e.type >= 1024 && e.type <= 1027)) main_bus->Add_Input_Message(Input_Message(e));
-		}
-
+		// Update subsystems 
+		Update_Input(e, quit, main_bus.get());
 		cursor->Update();
 		user_interface->Update();
-		
-		// END SUBSYSTEM PUSHING MESSAGES TO BUS
 
+		//scene_graph->Update_Tile_Map();
+		
 		//Clear screen
 		SDL_SetRenderDrawColor(Game_Renderer, 0x0, 0x0, 0x0, 0x0);
 		SDL_RenderClear(Game_Renderer);
+
+		// Send draw jobs from scene graph
+		scene_graph->Draw();
 
 		// Draw objects on screen
 		draw_system->Draw(Game_Renderer);
@@ -208,15 +214,15 @@ int main(int argc, char *args[])
 		//Update screen
 		SDL_RenderPresent(Game_Renderer);
 
-		scene_graph->Draw();
-
 		// Clear Draw Instructions
 		draw_system->Clear_Primitive_Instruction_Array();
 		draw_system->Clear_Text_Instruction_Array();
 
-		// SUBSYSTEMS COLLECT MESSAGES FROM THE BUS 
+		// Have subsystems collect messages from the bus
+		cursor->Collect_Bus_Messages();
+		user_interface->Collect_Bus_Messages();
 
-
+		// Clear the message bus
 		main_bus->Clear_All();
 
 		++countedFrames;

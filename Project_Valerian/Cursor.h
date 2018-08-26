@@ -28,6 +28,7 @@ public:
 
 	void Set_Currently_Clicked_Component(Console_Component* component);
 
+	void Collect_Bus_Messages();
 	void Update();
 
 private:

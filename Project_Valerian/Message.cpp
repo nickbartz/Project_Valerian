@@ -1,22 +1,27 @@
 #include <Message.h>
 #include <iostream>
 
-Message::Message(string new_message)
+Message_Core::Message_Core(string new_message)
 {
 	message = new_message;
 }
 
-string Message::Get_Message_String()
+string Message_Core::Get_Message_String()
 {
 	return message;
 }
 
-SDL_Event Input_Message::Return_Event()
+void Message_Core::Update_Message(string new_message)
+{
+	message = new_message;
+}
+
+SDL_Event Message_Input::Return_Event()
 {
 	return sdl_event;
 }
 
-string Input_Message::Return_Event_String()
+string Message_Input::Return_Event_String()
 {
 	string new_string;
 	
@@ -42,4 +47,25 @@ string Input_Message::Return_Event_String()
 	}
 	
 	return new_string;
+}
+
+int Message_SG_Tile_Update::Get_Grid_X()
+{
+	return grid_x;
+}
+int Message_SG_Tile_Update::Get_Grid_Y()
+{
+	return grid_y;
+}
+int Message_SG_Tile_Update::Get_Tile_Layer()
+{
+	return tile_layer;
+}
+int Message_SG_Tile_Update::Get_Structure_Name()
+{
+	return new_structure_name;
+}
+int Message_SG_Tile_Update::Get_Structure_Type()
+{
+	return new_structure_type;
 }

@@ -45,6 +45,7 @@ void Spritesheet::Draw(SDL_Renderer* game_renderer)
 		SDL_RenderCopyEx(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect, instruction_array[i].angle, instruction_array[i].center, instruction_array[i].flip);
 	}
 	
+	// After the spritesheet draws it also automatically flushes its instuctions array so no need for a dedicated clear instructions function
 	current_num_instructions = 0;
 }
 

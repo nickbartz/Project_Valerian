@@ -25,6 +25,7 @@ public:
 	void Draw(SDL_Renderer* game_renderer);
 
 	void Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
+	// No need for clear sprite functions since draw automatically flushes the array when complete
 
 	void free();
 
