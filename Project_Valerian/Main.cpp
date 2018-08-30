@@ -9,7 +9,7 @@
 #include<Service_Locator.h>
 #include<Message_Array.h>
 #include<Scene_Graph.h>
-
+#include<Game_Library.h>
 #include<Timer.h>
 
 using namespace std;
@@ -109,20 +109,6 @@ void free_assets()
 	}
 }
 
-void Update_Input(SDL_Event &e, bool &quit, Message_Array* main_bus)
-{
-	while (SDL_PollEvent(&e) != 0)
-	{
-		//User requests quit
-		if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE))
-		{
-			quit = true;
-		}
-
-		if ((e.type >= 768 && e.type <= 772) || (e.type >= 1024 && e.type <= 1027)) main_bus->Add_Message(Message_Input(e));
-	}
-}
-
 void close()
 {
 	//Destroy window	
@@ -169,12 +155,16 @@ int main(int argc, char *args[])
 	// Create World Map
 	unique_ptr<Scene_Graph> scene_graph(new Scene_Graph(service_locator.get()));
 
+	// Load Game Library
+	unique_ptr<Game_Library> game_library(new Game_Library());
+
 
 	// Register pointers with the service locator
 	service_locator->Register_Draw_System_Pointer(draw_system.get());
 	service_locator->Register_MB_Pointer(main_bus.get());
 	service_locator->Register_UI_Pointer(user_interface.get());
 	service_locator->Register_Cursor_Pointer(cursor.get());
+	service_locator->Register_Game_Library(game_library.get());
 
 	//Start counting frames per second
 	int countedFrames = 0;
@@ -183,18 +173,24 @@ int main(int argc, char *args[])
 	// TEST VARIABLES
 
 
-
 	// END TEST VARIABLES
 
 	while (!quit)
 	{	
 		// Update subsystems 
-		Update_Input(e, quit, main_bus.get());
-		cursor->Update();
+		while (SDL_PollEvent(&e) != 0)
+		{
+			//User requests quit
+			if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE))
+			{
+				quit = true;
+			}
+
+			if ((e.type >= 768 && e.type <= 772) || (e.type >= 1024 && e.type <= 1027)) main_bus->Add_Message(Message_Input(e));
+		}
+
 		user_interface->Update();
 
-		//scene_graph->Update_Tile_Map();
-		
 		//Clear screen
 		SDL_SetRenderDrawColor(Game_Renderer, 0x0, 0x0, 0x0, 0x0);
 		SDL_RenderClear(Game_Renderer);
@@ -219,6 +215,7 @@ int main(int argc, char *args[])
 		draw_system->Clear_Text_Instruction_Array();
 
 		// Have subsystems collect messages from the bus
+		cursor->Update();
 		cursor->Collect_Bus_Messages();
 		user_interface->Collect_Bus_Messages();
 

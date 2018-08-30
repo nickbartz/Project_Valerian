@@ -27,14 +27,13 @@ void Cursor::Update()
 {
 	Age_Mouse();
 
-	if (left_button_previous == 1 && left_button == 0 && currently_clicked_component != NULL)
+	if ((left_button_previous == 1 || left_button_previous == 0) && left_button == 0 && currently_clicked_component != NULL)
 	{
 		currently_clicked_component->Currently_Clicked(false);
 		currently_clicked_component = NULL;
 	}
 
 	if (currently_clicked_component == NULL) Draw();
-
 }
 
 void Cursor::Draw()
@@ -77,7 +76,6 @@ void Cursor::Parse_Input_Message(SDL_Event event)
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
 	{
-
 		
 		if (event.button.button == SDL_BUTTON_LEFT)
 		{

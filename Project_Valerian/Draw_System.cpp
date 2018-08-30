@@ -12,7 +12,8 @@ Draw_System::Draw_System(SDL_Renderer* game_renderer, FC_Font* font_array_start[
 void Draw_System::Init_Sprites(SDL_Renderer* game_renderer)
 {
 	background_spritesheet.Init("Sprites/background_spritesheet.png", game_renderer);
-	base_spritesheet.Init("Sprites/base_spritesheet.png", game_renderer);
+	base_spritesheet.Init("Sprites/base_tile_spritesheet.png", game_renderer);
+	mid_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer);
 }
 
 // Query Functions

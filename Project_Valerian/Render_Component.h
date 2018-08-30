@@ -1,7 +1,10 @@
 #pragma once
 
 #include<SDL.h>
+#include<Adjacent_Type_Array.h>
+
 class Service_Locator;
+
 
 class Core_Render
 {
@@ -11,6 +14,16 @@ public:
 
 protected:
 	Service_Locator * service_locator = NULL;
+};
+
+class Overlay_Renderer : public Core_Render
+{
+public:
+	Overlay_Renderer(Service_Locator* service_locator) :Core_Render(service_locator)
+	{
+
+	}
+private:
 };
 
 class Background_Renderer: public Core_Render
@@ -60,8 +73,13 @@ private:
 class Multi_Clip_Tile_Renderer :public Core_Render
 {
 public:
-	Multi_Clip_Tile_Renderer(Service_Locator* service_locator = NULL, int tile_x = 0, int tile_y = 0) : Core_Render(service_locator)
+	Multi_Clip_Tile_Renderer(Service_Locator* service_locator = NULL, SDL_Rect tSpecs = { 0,0,0,0 }, SDL_Rect tClip = { 0,0,0,0 }, int ssheet = SPRITESHEET_NONE, int mclip_type = MULTICLIP_NONE, Adjacent_Structure_Array array = {}) : Core_Render(service_locator)
 	{
+		tile_specs = tSpecs;
+		tile_clip = tClip;
+		spritesheet = ssheet;
+		multi_clip_type = mclip_type;
+		adjacent_tile_type_array = array;
 	}
 
 	void Check_Bus_For_Surrounding_Tile_Updates();
@@ -69,10 +87,11 @@ public:
 
 private:
 	// 1st array vector is the tile layer, 2nd is x_diff, 3rd is y_diff, and the value is the tile_type
-	int Surrounding_Tile_Array[3][3][3];
-	int grid_x;
-	int grid_y;
-
+	Adjacent_Structure_Array adjacent_tile_type_array;
+	SDL_Rect tile_specs;
+	SDL_Rect tile_clip;
+	int spritesheet;
+	int multi_clip_type;
 };
 
 class Basic_Entity_Renderer :public Core_Render

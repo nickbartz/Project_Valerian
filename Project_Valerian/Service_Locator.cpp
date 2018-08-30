@@ -3,6 +3,7 @@
 #include<Draw_System.h>
 #include<Cursor.h>
 #include<Message_Array.h>
+#include<Game_Library.h>
 
 Service_Locator::Service_Locator()
 {
@@ -29,6 +30,11 @@ Cursor* Service_Locator::get_Cursor_Pointer()
 	return cursor_pointer;
 }
 
+Game_Library* Service_Locator::get_Game_Library()
+{
+	return game_library;
+}
+
 void Service_Locator::Register_UI_Pointer(UI* ui_pointer)
 {
 	UI_pointer = ui_pointer;
@@ -47,6 +53,11 @@ void Service_Locator::Register_Draw_System_Pointer(Draw_System* draw_pointer)
 void Service_Locator::Register_Cursor_Pointer(Cursor* cPointer)
 {
 	cursor_pointer = cPointer;
+}
+
+void Service_Locator::Register_Game_Library(Game_Library* gLibrary)
+{
+	game_library = gLibrary;
 }
 
 void Service_Locator::free()

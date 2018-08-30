@@ -65,6 +65,7 @@ private:
 	//Spritesheets
 	Spritesheet background_spritesheet;
 	Spritesheet base_spritesheet;
+	Spritesheet mid_spritesheet;
 
 	// Primitive array 
 	int count_num_primitives = -1;

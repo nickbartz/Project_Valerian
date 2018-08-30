@@ -64,10 +64,10 @@ bool UI::Mouse_Event()
 void UI::Update()
 {		
 	// Check Cursor For Clicks
-	if (Mouse_Event() == true) Update_UI_With_Mouse_Action(service_pointer->get_Cursor_Pointer());
-
-	// not implemented yet
-	Push_Message_To_Message_Bus();
+	if (Mouse_Event() == true)
+	{
+		Update_UI_With_Mouse_Action(service_pointer->get_Cursor_Pointer());
+	}
 
 	player_console.Draw(service_pointer->get_Draw_System_Pointer());
 }

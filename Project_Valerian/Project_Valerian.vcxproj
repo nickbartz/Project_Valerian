@@ -135,6 +135,7 @@
     <ClCompile Include="Console_Component.cpp" />
     <ClCompile Include="Service_Locator.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Game_Library.cpp" />
     <ClCompile Include="Spritesheet.cpp" />
     <ClCompile Include="Tile.cpp" />
     <ClCompile Include="Timer.cpp" />
@@ -142,9 +143,11 @@
     <ClCompile Include="Scene_Graph.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Adjacent_Type_Array.h" />
     <ClInclude Include="AI_Component.h" />
     <ClInclude Include="Console_Component.h" />
     <ClInclude Include="Console_Panel.h" />
+    <ClInclude Include="Coordinate.h" />
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="Draw_System.h" />
     <ClInclude Include="Global_Constants.h" />
@@ -152,6 +155,7 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="Message.h" />
     <ClInclude Include="Message_Array.h" />
+    <ClInclude Include="Game_Library.h" />
     <ClInclude Include="Render_Component.h" />
     <ClInclude Include="Service_Locator.h" />
     <ClInclude Include="Spritesheet.h" />
