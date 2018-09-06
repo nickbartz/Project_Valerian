@@ -1,19 +1,23 @@
 #include<Draw_System.h>
 
-Draw_System::Draw_System(SDL_Renderer* game_renderer, FC_Font* font_array_start[])
+Draw_System::Draw_System(Service_Locator* sLocator, FC_Font* font_array_start[], Uint32 wFormat)
 {
 	count_num_primitives = 0;
 	count_num_print_text = 0;
 
 	// MUST REMEMBER TO ADD THIS WHEN DELETING FONTS
 	for (int p = 0; p < MAX_NUM_FONTS; ++p) { font_array[p] = font_array_start[p]; };
+
+	service_locator = sLocator;
+
+	window_format = wFormat;
 }
 
 void Draw_System::Init_Sprites(SDL_Renderer* game_renderer)
 {
-	background_spritesheet.Init("Sprites/background_spritesheet.png", game_renderer);
-	base_spritesheet.Init("Sprites/base_tile_spritesheet.png", game_renderer);
-	mid_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer);
+	background_spritesheet.Init("Sprites/background_spritesheet.png", game_renderer, window_format );
+	base_spritesheet.Init("Sprites/base_tile_spritesheet.png", game_renderer, window_format);
+	mid_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer, window_format);
 }
 
 // Query Functions
@@ -21,6 +25,61 @@ void Draw_System::Init_Sprites(SDL_Renderer* game_renderer)
 int Draw_System::Return_Text_Width(int font_type, string text)
 {
 	return FC_GetWidth(font_array[font_type], text.c_str());
+}
+
+// Multisprite Functions
+
+int Draw_System::Add_New_Spritesheet_To_Multisprite(int spritesheet, SDL_Renderer* game_renderer)
+{	
+	if (spritesheet == SPRITESHEET_BASE)
+	{
+		current_num_base_multisprites++;
+		for (int i = 0; i < current_num_base_multisprites; i++)
+		{
+			if (base_multisprite[i].is_init() == false)
+			{
+				base_multisprite[i].Init_As_Multisprite(game_renderer); 
+				return i;
+			}
+		}
+	}
+	else if (spritesheet == SPRITESHEET_MID_1)
+	{
+		current_num_mid_multisprites++;
+		for (int i = 0; i < current_num_mid_multisprites; i++)
+		{
+			if (mid_multisprite[i].is_init() == false)
+			{
+				mid_multisprite[i].Init_As_Multisprite(game_renderer);
+
+				return i;
+			}
+		}
+	}
+}
+
+void Draw_System::Stamp_Sprite_Onto_Multisprite(int spritesheet_num, int multisprite_num, SDL_Rect clip)
+{
+	// Set the render target to the SDL_Texture on the multisprite of our choice
+	if (spritesheet_num == SPRITESHEET_BASE) 	base_multisprite[multisprite_num].Set_Sprite_As_Render_Target(service_locator->get_Game_Renderer());
+	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multisprite_num].Set_Sprite_As_Render_Target(service_locator->get_Game_Renderer());
+	
+	// Draw diretly to that SDL_Texture using another spritesheet
+	Draw_Spritesheet_Directly(service_locator->get_Game_Renderer(), spritesheet_num, { 0,0,TILE_SIZE,TILE_SIZE }, clip);
+
+	// Reset our render target to our screen
+	SDL_SetRenderTarget(service_locator->get_Game_Renderer(), NULL);
+}
+
+void Draw_System::Clear_Multisprite()
+{
+
+}
+
+void Draw_System::Remove_Multisprite(int spritesheet_num, int multisprite_num)
+{
+	if (spritesheet_num == SPRITESHEET_BASE) base_multisprite[multisprite_num].Deinitialize();
+	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multisprite_num].Deinitialize();
 }
 
 
@@ -35,7 +94,28 @@ void Draw_System::Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rec
 	case SPRITESHEET_BASE:
 		base_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
 		break;
+	case SPRITESHEET_BASE_OVERLAY:
+		base_overlay.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		break;
+	case SPRITESHEET_MID_1:
+		mid_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		break;
+	case SPRITESHEET_MID_1_OVERLAY:
+		mid_overlay_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		break;
+	case SPRITESHEET_MID_2:
+		mid_2_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		break;
+	case SPRITESHEET_ENTITY:
+		entity.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		break;
 	}
+}
+
+void Draw_System::Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect)
+{
+	if (spritesheet_num == SPRITESHEET_BASE) base_multisprite[multi_tile_num].Add_Sprite_Instructions(pos_rect, { 0,0,TILE_SIZE,TILE_SIZE });
+	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multi_tile_num].Add_Sprite_Instructions(pos_rect, { 0,0,TILE_SIZE,TILE_SIZE });
 }
 
 void Draw_System::Add_Primitive_To_Render_Cycle(Primitive_Instruction primitive)
@@ -85,10 +165,42 @@ void Draw_System::Draw(SDL_Renderer* render_target)
 
 // Functions for drawing primitives
 
+void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip)
+{
+	switch (spritesheet_num)
+	{
+	case SPRITESHEET_BACKGROUND:
+		break;
+	case SPRITESHEET_BASE:
+		base_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
+		break;
+	case SPRITESHEET_BASE_OVERLAY:
+		break;
+	case SPRITESHEET_MID_1:
+		mid_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
+		break;
+	case SPRITESHEET_MID_1_OVERLAY:
+		break;
+	case SPRITESHEET_MID_2:
+		break;
+	case SPRITESHEET_ENTITY:
+		break;
+	case SPRITESHEET_ROOF:
+		break;
+	}
+}
+
 void Draw_System::Draw_Sprites(SDL_Renderer* render_target)
 {
-	background_spritesheet.Draw(render_target);
-	base_spritesheet.Draw(render_target);
+	if (background_spritesheet.is_init() == true) background_spritesheet.Draw(render_target);
+	if (base_spritesheet.is_init() == true) base_spritesheet.Draw(render_target);
+	for (int i = 0; i < current_num_base_multisprites; i++) base_multisprite[i].Draw(render_target);
+	//if (base_overlay.is_init() == true) base_overlay.Draw(render_target);
+	if (mid_spritesheet.is_init() == true) mid_spritesheet.Draw(render_target);
+	for (int i = 0; i < current_num_mid_multisprites; i++) mid_multisprite[i].Draw(render_target);
+	//if (mid_overlay_spritesheet.is_init() == true) mid_overlay_spritesheet.Draw(render_target);
+	//if (mid_2_spritesheet.is_init() == true) mid_2_spritesheet.Draw(render_target);
+	//if (entity.is_init() == true) entity.Draw(render_target);
 }
 
 void Draw_System::Draw_Primitives(SDL_Renderer* render_target)

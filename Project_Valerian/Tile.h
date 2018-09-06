@@ -9,6 +9,7 @@ class Tile
 public:
 	Tile(Coordinate grid_point = { 0,0 });
 
+	int Return_Tile_Type_By_Layer(int tile_layer);
 	bool Update_Tile_Structure(Object* new_structure, int tile_layer);
 
 private:

@@ -13,26 +13,42 @@ class Object
 public:
 	Object(int array_index =0, SDL_Rect location = { 0,0,0,0 }, Service_Locator* service_locator = NULL);
 
+	// Accessors
 	int Get_Array_Index();
 	int Get_Assigned_Flag();
+	int Get_Structure_Type();
 
-	void Draw(SDL_Rect camera, SDL_Rect pos_rect);
+	void Draw(SDL_Rect camera, SDL_Rect overwrite_pos);
 
-	void Assign_Overlay_Renderer();
-	void Assign_Simple_Clip_Tile_Renderer(Service_Locator* service_locator, Object_Config object_config);
-	void Assign_Multi_Clip_Tile_Renderer(Service_Locator* service_locator, Object_Config object_config, Adjacent_Structure_Array neighbors );
-	void Assign_Background_Renderer(Service_Locator* service_locator, Object_Config object_config);
-	
-	void Assign_Core_AI_Component(Service_Locator* service_locator, Object_Config object_config);
-	void Assign_Basic_Structure_AI_Component(Service_Locator* service_locator, Object_Config object_config);
+	void Init_From_Object_Config(Object_Config object_config, Adjacent_Structure_Array neighbors);
 
 	// Unassigning an object means we're setting its type to unassigned so that it can be overwritten in whatever array it is in
 	void Set_Assigned_Flag(int assigned_flag);
 
+
 	void free();
+	int uniq_id;
 
 private:
+
+	
 	Service_Locator* service_locator;
+
+	// MICRO COMPONENT ASSIGNMENT FUNCTIONS
+
+	void Assign_Overlay_Renderer();
+	void Assign_Simple_Clip_Tile_Renderer(Service_Locator* service_locator, Object_Config object_config);
+	void Assign_Multi_Clip_Tile_Renderer(Service_Locator* service_locator, Object_Config object_config, Adjacent_Structure_Array neighbors);
+	void Assign_Background_Renderer(Service_Locator* service_locator, Object_Config object_config);
+
+	void Assign_Core_AI_Component(Service_Locator* service_locator, Object_Config object_config);
+	void Assign_Basic_Structure_AI_Component(Service_Locator* service_locator, Object_Config object_config);
+
+	// MACRO COMPONENT ASSIGNMENT FUNCTIONS
+
+	void Assign_AI_Components(Object_Config object_config);
+	void Assign_Physics_Components(Object_Config object_config);
+	void Assign_Render_Components(Object_Config object_config, Adjacent_Structure_Array neighbors);
 
 	int SG_object_array_index;
 
@@ -46,7 +62,7 @@ private:
 
 	// Optional Render Components
 	Simple_Clip_Tile_Renderer * simple_tile_clip = NULL;
-	Multi_Clip_Tile_Renderer * tile_multi_clip = NULL;
+	Multisprite_Tile_Renderer * tile_multi_clip = NULL;
 	Background_Renderer * background_clip = NULL;
 
 	// Core AI Component

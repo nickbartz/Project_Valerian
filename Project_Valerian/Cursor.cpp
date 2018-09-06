@@ -107,8 +107,8 @@ void Cursor::Parse_Input_Message(SDL_Event event)
 	}
 	else if (event.type == SDL_MOUSEWHEEL)
 	{
-		if (event.wheel.y > 0 && camera.w <= 50) camera.w++;
-		else if (event.wheel.y < 0 && camera.w > 0) camera.w--;
+		if (event.wheel.y > 0 && camera.w <= 48) camera.w++;
+		else if (event.wheel.y < 0 && camera.w > 16) camera.w--;
 	}
 	else if (event.type == SDL_KEYDOWN)
 	{

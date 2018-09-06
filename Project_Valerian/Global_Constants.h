@@ -25,6 +25,7 @@ const int DISPLAY_MIN_ZOOM = 16;
 const int MAX_NUM_PRIMITIVES = 100;
 const int MAX_NUM_TEXT_PRINT = 100;
 const int MAX_SPRITE_INSTRUCTIONS = 4000;
+const int MAX_SPRITES_PER_MULTISPRITE = 400;
 
 
 
@@ -94,7 +95,6 @@ enum button_actions
 // GAME LIBRARY CONSTANTS
 
 const int MAX_NUM_TILE_TEMPLATES = 50;
-
 
 // SCENE GRAPH CONSTANTS
 

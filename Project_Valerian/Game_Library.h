@@ -25,6 +25,7 @@ struct Object_Config
 	int num_animation_frame = 0;
 };
 
+
 enum class CSVState {
 	UnquotedField,
 	QuotedField,
@@ -36,10 +37,15 @@ class Game_Library
 {
 public:
 	Game_Library();
-	Object_Config loaded_tiles[MAX_NUM_TILE_TEMPLATES];
+
+	Object_Config Fetch_Tile_Object_Config(int tile_id);
+	void Load_Tiles_From_Data_File(string path);
+	vector<vector<int>> Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename);
 
 private:
-	void Load_Tiles_From_Data_File(string path);
+
+	Object_Config loaded_tiles[MAX_NUM_TILE_TEMPLATES];
+	int num_loaded_tiles = 0;
 
 	vector<string> readCSVRow(const std::string &row);
 	vector<vector<string>> readCSV(string path);

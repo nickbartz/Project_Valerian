@@ -35,6 +35,16 @@ Game_Library* Service_Locator::get_Game_Library()
 	return game_library;
 }
 
+SDL_Renderer* Service_Locator::get_Game_Renderer()
+{
+	return game_renderer;
+}
+
+SDL_Window* Service_Locator::get_Game_Window()
+{
+	return game_window;
+}
+
 void Service_Locator::Register_UI_Pointer(UI* ui_pointer)
 {
 	UI_pointer = ui_pointer;
@@ -60,10 +70,23 @@ void Service_Locator::Register_Game_Library(Game_Library* gLibrary)
 	game_library = gLibrary;
 }
 
+void Service_Locator::Register_Game_Renderer(SDL_Renderer* gRenderer)
+{
+	game_renderer = gRenderer;
+}
+
+void Service_Locator::Register_Game_Window(SDL_Window* gWindow)
+{
+	game_window = gWindow;
+}
+
 void Service_Locator::free()
 {
 	draw_system_pointer = NULL;
 	msg_bus_pointer = NULL;
 	UI_pointer = NULL;
 	cursor_pointer = NULL;
+	game_library = NULL;
+	game_renderer = NULL;
+	game_window = NULL;
 }

@@ -1,4 +1,6 @@
 #include<AI_Component.h>
+#include<iostream>
+using namespace std;
 
 AI_Component::AI_Component()
 {

@@ -16,32 +16,53 @@ void Game_Library::Load_Tiles_From_Data_File(string path)
 {
 	vector<vector<string>> loaded_csv = readCSV(path);
 
-	for (int i = 1; i < loaded_csv.size(); i++)
+	for (int i = 0; i < loaded_csv.size()-1; i++)
 	{
 		Object_Config new_config;
 
-		new_config.tile_layer = loaded_csv[i][2][0] - '0';
+		new_config.object_type = OBJECT_TYPE_STRUCTURE;
+		new_config.tile_layer = stoi(loaded_csv[i+1][2]);
 		
-		new_config.structure_type = loaded_csv[i][6][0] - '0';
-		new_config.structure_id = loaded_csv[i][0][0] - '0';
-		new_config.render_component_type = loaded_csv[i][7][0] - '0';
-		new_config.spritesheet = loaded_csv[i][11][0] - '0';
+		new_config.structure_type = stoi(loaded_csv[i + 1][5]);
 
-		new_config.tile_specs.x = loaded_csv[i][12][0] - '0';
-		new_config.tile_specs.y = loaded_csv[i][13][0] - '0';
-		new_config.tile_specs.w = loaded_csv[i][14][0] - '0';
-		new_config.tile_specs.h = loaded_csv[i][15][0] - '0';
+		new_config.structure_id = stoi(loaded_csv[i + 1][0]);
+		new_config.render_component_type = stoi(loaded_csv[i + 1][7]);
+		new_config.spritesheet = stoi(loaded_csv[i + 1][11]);
+		new_config.tile_specs.x = stoi(loaded_csv[i + 1][12]);
+		new_config.tile_specs.y = stoi(loaded_csv[i + 1][13]);
+		new_config.tile_specs.w = stoi(loaded_csv[i + 1][14]);
+		new_config.tile_specs.h = stoi(loaded_csv[i + 1][15]);
 
-		new_config.tile_clip.x = loaded_csv[i][16][0] - '0';
-		new_config.tile_clip.y = loaded_csv[i][17][0] - '0';
-		new_config.tile_clip.w = loaded_csv[i][18][0] - '0';
-		new_config.tile_clip.h = loaded_csv[i][19][0] - '0';
-		new_config.multiclip_type = loaded_csv[i][9][0] - '0';
-		new_config.num_animation_frame = loaded_csv[i][20][0] - '0';
+		new_config.tile_clip.x = stoi(loaded_csv[i + 1][16]);
+		new_config.tile_clip.y = stoi(loaded_csv[i + 1][17]);
+		new_config.tile_clip.w = stoi(loaded_csv[i + 1][18]);
+		new_config.tile_clip.h = stoi(loaded_csv[i + 1][19]);
+		new_config.multiclip_type = stoi(loaded_csv[i + 1][9]);
+		new_config.num_animation_frame = stoi(loaded_csv[i + 1][20]);
 		
-		loaded_tiles[i - 1] = new_config;
+		loaded_tiles[i] = new_config;
+		num_loaded_tiles++;
 	}
 
+}
+
+vector<vector<int>> Game_Library::Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename)
+{
+	vector<vector<string>> room_tiles = readCSV(filename);
+	vector<vector<int>> room_tiles_int;
+
+	for (int p = 0; p < room_tiles.size(); p++)
+	{
+		vector<int> new_vec;
+		
+		for (int i = 0; i < room_tiles[p].size(); i++)
+		{
+			new_vec.push_back(stoi(room_tiles[p][i]));
+		}
+
+		room_tiles_int.push_back(new_vec);
+	}
+	return room_tiles_int;
 }
 
 vector<string> Game_Library::readCSVRow(const string &row) {
@@ -98,6 +119,7 @@ vector<vector<string>> Game_Library::readCSV(string path) {
 	{
 		istream in(&fb);
 
+
 		string row;
 
 		while (!in.eof()) {
@@ -113,4 +135,18 @@ vector<vector<string>> Game_Library::readCSV(string path) {
 	}
 
 	return table;
+}
+
+Object_Config Game_Library::Fetch_Tile_Object_Config(int tile_id)
+{
+	if (tile_id < num_loaded_tiles)
+	{
+		return loaded_tiles[tile_id];
+	}
+
+	else
+	{
+		cout << "tile id out of range, returning null tile" << endl;
+		return loaded_tiles[0];
+	}
 }

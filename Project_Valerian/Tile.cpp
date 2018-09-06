@@ -1,4 +1,6 @@
 #include<Tile.h>
+#include <iostream>
+using namespace std;
 
 Tile::Tile(Coordinate gPoint)
 {
@@ -38,4 +40,12 @@ bool Tile::Update_Tile_Structure(Object* new_structure, int tile_layer)
 	}
 
 	return replacement;
+}
+
+int Tile::Return_Tile_Type_By_Layer(int tile_layer)
+{
+	if (tile_layer == TILE_LAYER_BASE && base_structure != NULL) return base_structure->Get_Structure_Type();
+	else if (tile_layer == TILE_LAYER_MID && mid_structure != NULL) return mid_structure->Get_Structure_Type();
+	else if (tile_layer == TILE_LAYER_ROOF && roof_structure != NULL) return roof_structure->Get_Structure_Type();
+	else return STRUCTURE_TYPE_NULL;
 }

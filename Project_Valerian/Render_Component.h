@@ -56,13 +56,13 @@ public:
 		sprite_clip = clip;
 		angle = ang;
 		center = point;
-		tile_specs = tspecs;
+		tile_coords = tspecs;
 	}
 
-	void Draw();
+	void Draw(SDL_Rect pos_rect);
 
 private:
-	SDL_Rect tile_specs;
+	SDL_Rect tile_coords;
 	int spritesheet_num;
 	SDL_Rect sprite_clip;
 	double angle;
@@ -70,28 +70,34 @@ private:
 	SDL_Point* center = NULL;
 };
 
-class Multi_Clip_Tile_Renderer :public Core_Render
+class Multisprite_Tile_Renderer :public Core_Render
 {
 public:
-	Multi_Clip_Tile_Renderer(Service_Locator* service_locator = NULL, SDL_Rect tSpecs = { 0,0,0,0 }, SDL_Rect tClip = { 0,0,0,0 }, int ssheet = SPRITESHEET_NONE, int mclip_type = MULTICLIP_NONE, Adjacent_Structure_Array array = {}) : Core_Render(service_locator)
+	Multisprite_Tile_Renderer(Service_Locator* service_locator = NULL, SDL_Rect tCoords = { 0,0,0,0 }, int spritehseet_n = SPRITESHEET_BASE, int mclip_type = MULTICLIP_NONE, Adjacent_Structure_Array array = {}) : Core_Render(service_locator)
 	{
-		tile_specs = tSpecs;
-		tile_clip = tClip;
-		spritesheet = ssheet;
+		spritesheet_num = spritehseet_n;
 		multi_clip_type = mclip_type;
 		adjacent_tile_type_array = array;
+		tile_coords = tCoords;
+		Initialize_Dedicated_Multisprite();
+		Adjust_Multisprite_To_Surroundings(array);
 	}
 
+	void Initialize_Dedicated_Multisprite();
+	void Deinitialize_Dedicated_Multisprite();
+	bool Is_Init();
+
+	void Adjust_Multisprite_To_Surroundings(Adjacent_Structure_Array neighbors);
 	void Check_Bus_For_Surrounding_Tile_Updates();
-	void Draw();
+	void Draw(SDL_Rect pos_rect);
 
 private:
-	// 1st array vector is the tile layer, 2nd is x_diff, 3rd is y_diff, and the value is the tile_type
+	bool init = false;
+	int dedicated_multisprite_num;
 	Adjacent_Structure_Array adjacent_tile_type_array;
-	SDL_Rect tile_specs;
-	SDL_Rect tile_clip;
-	int spritesheet;
+	SDL_Rect tile_coords;
 	int multi_clip_type;
+	int spritesheet_num;
 };
 
 class Basic_Entity_Renderer :public Core_Render

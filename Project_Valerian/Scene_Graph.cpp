@@ -6,28 +6,20 @@
 Scene_Graph::Scene_Graph(Service_Locator* sLocator)
 {
 	service_locator = sLocator;
-	Create_Background();
 }
 
 void Scene_Graph::Create_Background()
 {
+	Adjacent_Structure_Array neighbors = {};
+	
 	background_star_1 = Object(0,{ 0,0,0,0 },service_locator);
-	Object_Config background_star_1_object_config;
-	background_star_1_object_config.spritesheet = SPRITESHEET_BACKGROUND;
-	background_star_1_object_config.tile_clip = { 0,0,32,32 };
-	background_star_1.Assign_Background_Renderer(service_locator, background_star_1_object_config);
+	background_star_1.Init_From_Object_Config(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(1), neighbors);
 
 	background_star_2 = Object(0,{ 0,0,0,0 }, service_locator);
-	Object_Config background_star_2_object_config;
-	background_star_2_object_config.spritesheet = SPRITESHEET_BACKGROUND;
-	background_star_2_object_config.tile_clip = { 32,0,32,32 };
-	background_star_2.Assign_Background_Renderer(service_locator, background_star_2_object_config);
+	background_star_2.Init_From_Object_Config(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(2), neighbors);
 
 	background_planetoid = Object(0,{ 0,0,0,0 }, service_locator);
-	Object_Config background_planetoid_config;
-	background_planetoid_config.spritesheet = SPRITESHEET_BACKGROUND;
-	background_planetoid_config.tile_clip = { 0,32,32,32 };
-	background_planetoid.Assign_Background_Renderer(service_locator, background_planetoid_config);
+	background_planetoid.Init_From_Object_Config(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(3), neighbors);
 
 	for (int i = 0; i < WORLD_MAX_NUM_BACKGROUND_OBJECTS; i++)
 	{
@@ -72,7 +64,7 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Object_Config stru
 		// we place the object in the first array index with an "OBJECT_UNASSIGNED" type so we can overwrite objects no longer being used
 		if (structure_array[i].Get_Assigned_Flag() == OBJECT_UNASSIGNED)
 		{
-			structure_array[i] = Object(i, { 0,0,0,0 }, service_locator);
+			structure_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, structure_config.tile_specs.w*TILE_SIZE, structure_config.tile_specs.h*TILE_SIZE }, service_locator);
 
 			structure_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
 
@@ -81,51 +73,26 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Object_Config stru
 		}
 	}
 	
+	// Now we initialize the object we just created in the structure array with an objecT_config
+	structure_array[array_index].Init_From_Object_Config(structure_config, Return_Neighboring_Tiles(grid_point));
 
-	// Now we edit the object we just created in the structure array
-	Assign_AI_Components(&structure_array[array_index], structure_config);
-	Assign_Physics_Components(&structure_array[array_index], structure_config);
-	Assign_Render_Components(&structure_array[array_index], structure_config);
-
-	// We update the tile map with a pointer to the new object we just created which sends a 
+	// We update the tile map with a pointer to the new object
 	Update_Tile_Map(grid_point, structure_config.tile_layer, &structure_array[array_index]);
 
 	// Finally we send a SG tile update message is sent to the main bus outlining what happened
 	service_locator->get_MB_Pointer()->Add_Message(Message_SG_Tile_Update(grid_point.x, grid_point.y, structure_config.tile_layer, structure_config.structure_id, structure_config.structure_type));
 }
 
-void Scene_Graph::Assign_AI_Components(Object* object, Object_Config object_config)
+void Scene_Graph::Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset)
 {
-	object->Assign_Core_AI_Component(service_locator, object_config);
-	
-	if (object_config.object_type == OBJECT_TYPE_STRUCTURE)
+	for (int p = 0; p < room_array.size(); p++)
 	{
-		object->Assign_Basic_Structure_AI_Component(service_locator, object_config);
-	}
-}
-
-void Scene_Graph::Assign_Physics_Components(Object* object, Object_Config object_config)
-{
-
-}
-
-void Scene_Graph::Assign_Render_Components(Object* object, Object_Config object_config) 
-{
-	object->Assign_Overlay_Renderer();
-
-	Adjacent_Structure_Array neighbors = {};
-
-	switch (object_config.render_component_type)
-	{
-	case RENDER_COMPONENT_BACKGROUND:
-		object->Assign_Background_Renderer(service_locator, object_config);
-		break;
-	case RENDER_COMPONENT_SIMPLECLIP:
-		object->Assign_Simple_Clip_Tile_Renderer(service_locator, object_config);
-		break;
-	case RENDER_COMPONENT_MULTICLIP:
-		object->Assign_Multi_Clip_Tile_Renderer(service_locator, object_config, neighbors);
-		break;
+		for (int i = 0; i < room_array[p].size(); i++)
+		{
+			Coordinate new_coord = { i + x_tile_offset,p + y_tile_offset };
+			Object_Config object_config = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(room_array[p][i]);
+			Create_New_Structure(new_coord, object_config);
+		}
 	}
 }
 
@@ -139,9 +106,9 @@ void Scene_Graph::Update_Tile_Map(Coordinate grid_point, int tile_layer, Object*
 
 	if (tile_layer == TILE_LAYER_BASE) if (tile_map[grid_point].Update_Tile_Structure(structure, TILE_LAYER_BASE) == true) current_num_structures--;
 		
-	if (tile_layer == TILE_LAYER_MID) if (tile_map[grid_point].Update_Tile_Structure(structure, TILE_LAYER_BASE) == true) current_num_structures--;
+	if (tile_layer == TILE_LAYER_MID) if (tile_map[grid_point].Update_Tile_Structure(structure, TILE_LAYER_MID) == true) current_num_structures--;
 
-	if (tile_layer == TILE_LAYER_ROOF) if (tile_map[grid_point].Update_Tile_Structure(structure, TILE_LAYER_BASE) == true) current_num_structures--;
+	if (tile_layer == TILE_LAYER_ROOF) if (tile_map[grid_point].Update_Tile_Structure(structure, TILE_LAYER_ROOF) == true) current_num_structures--;
 
 }
 
@@ -151,11 +118,36 @@ void Scene_Graph::Draw()
 	
 	Draw_Background();
 
-	for (int i = 0; i < current_num_structures; i++) structure_array[i].Draw(camera, { 0,0,0,0 });
-
+	for (int i = 0; i < current_num_structures; i++)
+	{
+		structure_array[i].Draw(camera, { 0,0,0,0 });
+	}
 }
 
 // Accessors 
+
+Adjacent_Structure_Array Scene_Graph::Return_Neighboring_Tiles(Coordinate grid_point)
+{
+	Adjacent_Structure_Array neighbor_array = {};
+	
+
+	for (int b = 0; b < 3; b++)
+	{
+		for (int c = 0; c < 3; c++)
+		{
+			Coordinate test_coord = { grid_point.x + c - 1, grid_point.y + b - 1 };
+			if (!(b == 1 && c== 1) && tile_map.count(test_coord) > 0)
+			{
+				for (int a = 1; a < 4; a++)
+				{
+					neighbor_array.adjacent_structure_array[a-1][b][c] = tile_map[test_coord].Return_Tile_Type_By_Layer(a);
+				}
+			}
+		}
+	}
+
+	return neighbor_array;
+}
 
 int Scene_Graph::Return_Current_Structure_Count()
 {

@@ -20,21 +20,18 @@ public:
 	void Draw_Background();
 	void Update_Tile_Map(Coordinate grid_point, int tile_layer, Object* structure);
 
+	// Create Objects
+	void Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset);
 	void Create_New_Structure(Coordinate grid_point, Object_Config structure);
+	void Create_Background();
 
 	// Accessors
+	Adjacent_Structure_Array Return_Neighboring_Tiles(Coordinate grid_point);
 	int Return_Current_Structure_Count();
 
 	void free();
 private:
 	Service_Locator * service_locator;
-
-	void Assign_AI_Components(Object* object, Object_Config object_config);
-	void Assign_Physics_Components(Object* object, Object_Config object_config);
-	void Assign_Render_Components(Object* object, Object_Config object_config);
-	
-	
-	void Create_Background();
 
 	// Structure for the background
 	struct Background_Object

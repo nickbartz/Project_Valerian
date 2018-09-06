@@ -49,7 +49,7 @@ bool init()
 		else
 		{
 			//Create renderer for window
-			Game_Renderer = SDL_CreateRenderer(Game_Window, -1, (SDL_RENDERER_ACCELERATED ) | SDL_RENDERER_TARGETTEXTURE);
+			Game_Renderer = SDL_CreateRenderer(Game_Window, -1, (SDL_RENDERER_ACCELERATED) | SDL_RENDERER_TARGETTEXTURE);
 			if (Game_Renderer == NULL)
 			{
 				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
@@ -139,8 +139,11 @@ int main(int argc, char *args[])
 	// Create Service Locator
 	unique_ptr<Service_Locator> service_locator(new Service_Locator());
 
+	// Load Game Library
+	unique_ptr<Game_Library> game_library(new Game_Library());
+
 	// Create Draw System & Load Sprites
-	unique_ptr<Draw_System> draw_system(new Draw_System{Game_Renderer, font_array});
+	unique_ptr<Draw_System> draw_system(new Draw_System{service_locator.get(), font_array, SDL_GetWindowPixelFormat(Game_Window) });
 	draw_system.get()->Init_Sprites(Game_Renderer);
 
 	// Create UI System
@@ -155,23 +158,30 @@ int main(int argc, char *args[])
 	// Create World Map
 	unique_ptr<Scene_Graph> scene_graph(new Scene_Graph(service_locator.get()));
 
-	// Load Game Library
-	unique_ptr<Game_Library> game_library(new Game_Library());
-
-
 	// Register pointers with the service locator
+
+	service_locator->Register_Game_Window(Game_Window);
+	service_locator->Register_Game_Renderer(Game_Renderer);
 	service_locator->Register_Draw_System_Pointer(draw_system.get());
 	service_locator->Register_MB_Pointer(main_bus.get());
 	service_locator->Register_UI_Pointer(user_interface.get());
 	service_locator->Register_Cursor_Pointer(cursor.get());
 	service_locator->Register_Game_Library(game_library.get());
 
+	scene_graph->Create_Background();
+
 	//Start counting frames per second
 	int countedFrames = 0;
 	fpsTimer.start();
 
 	// TEST VARIABLES
+	vector<vector<int>> new_room = game_library->Create_Room_From_Data_File(0, 0, "Data/test_room.csv");
 
+	//Object_Config wall_tile = game_library->Fetch_Tile_Object_Config(8);
+	//scene_graph->Create_New_Structure({ 0,0 }, wall_tile);
+	//scene_graph->Create_New_Structure({ 0,1 }, wall_tile);
+
+	scene_graph->Stamp_Room_From_Array(new_room, -8, -8);
 
 	// END TEST VARIABLES
 

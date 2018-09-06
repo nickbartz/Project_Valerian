@@ -4,10 +4,10 @@
 
 Spritesheet::Spritesheet()
 {
-
+	uniq_id = rand() % 1000;
 }
 
-void Spritesheet::Init(std::string path, SDL_Renderer* game_renderer)
+void Spritesheet::Init(std::string path, SDL_Renderer* game_renderer, Uint32 window_format)
 {
 	SDL_Texture* newTexture = NULL;
 
@@ -20,6 +20,8 @@ void Spritesheet::Init(std::string path, SDL_Renderer* game_renderer)
 	else
 	{
 		SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0, 0xFF, 0xFF));
+		//SDL_PixelFormat* mappingFormat = SDL_AllocFormat(window_format);
+		//SDL_ConvertSurface(loadedSurface, mappingFormat, NULL);
 
 		newTexture = SDL_CreateTextureFromSurface(game_renderer, loadedSurface);
 		if (newTexture == NULL)
@@ -36,6 +38,29 @@ void Spritesheet::Init(std::string path, SDL_Renderer* game_renderer)
 	}
 
 	spritesheet_texture = newTexture;
+	init = true;
+}
+
+void Spritesheet::Init_As_Multisprite(SDL_Renderer* game_renderer)
+{
+	if (spritesheet_texture != NULL) SDL_DestroyTexture(spritesheet_texture);
+	spritesheet_texture = SDL_CreateTexture(game_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, TILE_SIZE, TILE_SIZE);
+	init = true;
+}
+
+void Spritesheet::Deinitialize()
+{
+	init = false;
+}
+
+bool Spritesheet::is_init()
+{
+	return init;
+}
+
+void Spritesheet::Draw_Directly(SDL_Renderer* game_renderer, SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip)
+{
+	SDL_RenderCopyEx(game_renderer, spritesheet_texture, &clip_rect, &position_rect, angle, center, render_flip);
 }
 
 void Spritesheet::Draw(SDL_Renderer* game_renderer)
@@ -43,6 +68,7 @@ void Spritesheet::Draw(SDL_Renderer* game_renderer)
 	for (int i = 0; i < current_num_instructions; i++)
 	{
 		SDL_RenderCopyEx(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect, instruction_array[i].angle, instruction_array[i].center, instruction_array[i].flip);
+		//SDL_RenderCopy(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect);
 	}
 	
 	// After the spritesheet draws it also automatically flushes its instuctions array so no need for a dedicated clear instructions function
@@ -64,6 +90,11 @@ void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_
 
 }
 
+void Spritesheet::Set_Sprite_As_Render_Target(SDL_Renderer* game_renderer)
+{
+	SDL_SetRenderTarget(game_renderer, spritesheet_texture);
+}
+
 void Spritesheet::free()
 {
 	if (spritesheet_texture != NULL)
@@ -75,3 +106,7 @@ void Spritesheet::free()
 	}
 }
 
+int Spritesheet::return_uniq_id()
+{
+	return uniq_id;
+}
