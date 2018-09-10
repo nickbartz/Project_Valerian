@@ -228,6 +228,7 @@ int main(int argc, char *args[])
 		cursor->Update();
 		cursor->Collect_Bus_Messages();
 		user_interface->Collect_Bus_Messages();
+		scene_graph->Collect_Bus_Messages();
 
 		// Clear the message bus
 		main_bus->Clear_All();

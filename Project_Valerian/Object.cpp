@@ -5,12 +5,16 @@
 #include<Game_Library.h>
 #include<Adjacent_Type_Array.h>
 #include<iostream> 
+#include<Service_Locator.h>
+#include<Message_Array.h>
 using namespace std;
 
 Object::Object(int index, SDL_Rect location, Service_Locator* sLocator)
 {
 	service_locator = sLocator;
 	object_pos = location;
+	grid_x = object_pos.x / TILE_SIZE;
+	grid_y = object_pos.y / TILE_SIZE;
 
 	// set the array index of the object so we know where to find it in the scene graph object array later
 	SG_object_array_index = index;
@@ -66,7 +70,8 @@ void Object::Assign_Background_Renderer(Service_Locator* service_locator, Object
 
 void Object::Assign_Multi_Clip_Tile_Renderer(Service_Locator* service_locator, Object_Config object_config, Adjacent_Structure_Array neighbors)
 {
-	tile_multi_clip = new Multisprite_Tile_Renderer(service_locator, object_config.tile_specs, object_config.spritesheet , object_config.multiclip_type, neighbors);
+	SDL_Rect tile_coords = { grid_x,grid_y,object_config.tile_specs.w, object_config.tile_specs.h };
+	tile_multi_clip = new Multisprite_Tile_Renderer(service_locator, tile_coords, object_config.spritesheet , object_config.multiclip_type, neighbors);
 }
 
 void Object::Assign_Core_AI_Component(Service_Locator* service_locator, Object_Config object_config)
@@ -117,6 +122,11 @@ void Object::Assign_Render_Components(Object_Config object_config, Adjacent_Stru
 
 
 // Core Object Functions
+
+void Object::Collect_Bus_Messages()
+{
+	if (tile_multi_clip != NULL) tile_multi_clip->Check_Bus_For_Surrounding_Tile_Updates();
+}
 
 void Object::Set_Assigned_Flag(int aFlag)
 {

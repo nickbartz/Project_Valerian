@@ -23,7 +23,7 @@ void UI::Collect_Bus_Messages()
 
 	for (int i = 0; i < bus_pointer->count_input_messages; i++) Push_Message_To_Console(bus_pointer->Input_Message_Array[i].Get_Message_String());
 	for (int i = 0; i < bus_pointer->count_chatter_message; i++) Push_Message_To_Console(bus_pointer->Chatter_Array[i].Get_Message_String());
-	for (int i = 0; i < bus_pointer->count_SG_tile_map_update_messages; i++) Push_Message_To_Console(bus_pointer->SG_Tile_Update_MSG_Array[i].Get_Message_String());
+	for (int i = 0; i < bus_pointer->SG_Tile_Update_MSG_Array.size(); i++) Push_Message_To_Console(bus_pointer->SG_Tile_Update_MSG_Array[i].Get_Message_String());
 }
 
 void UI::Push_Message_To_Console(string message)

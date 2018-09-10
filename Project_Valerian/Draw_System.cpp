@@ -58,22 +58,24 @@ int Draw_System::Add_New_Spritesheet_To_Multisprite(int spritesheet, SDL_Rendere
 	}
 }
 
-void Draw_System::Stamp_Sprite_Onto_Multisprite(int spritesheet_num, int multisprite_num, SDL_Rect clip)
+void Draw_System::Stamp_Sprite_Onto_Multisprite(int spritesheet_num, int multisprite_num, SDL_Rect clip, SDL_Rect stamp_rect, bool clear_sprite)
 {
 	// Set the render target to the SDL_Texture on the multisprite of our choice
 	if (spritesheet_num == SPRITESHEET_BASE) 	base_multisprite[multisprite_num].Set_Sprite_As_Render_Target(service_locator->get_Game_Renderer());
 	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multisprite_num].Set_Sprite_As_Render_Target(service_locator->get_Game_Renderer());
 	
-	// Draw diretly to that SDL_Texture using another spritesheet
-	Draw_Spritesheet_Directly(service_locator->get_Game_Renderer(), spritesheet_num, { 0,0,TILE_SIZE,TILE_SIZE }, clip);
+	if (!clear_sprite)
+	{
+		// Draw diretly to that SDL_Texture using another spritesheet
+		Draw_Spritesheet_Directly(service_locator->get_Game_Renderer(), spritesheet_num, stamp_rect, clip);
+	}
+	else
+	{
+		SDL_RenderClear(service_locator->get_Game_Renderer());
+	}
 
 	// Reset our render target to our screen
 	SDL_SetRenderTarget(service_locator->get_Game_Renderer(), NULL);
-}
-
-void Draw_System::Clear_Multisprite()
-{
-
 }
 
 void Draw_System::Remove_Multisprite(int spritesheet_num, int multisprite_num)

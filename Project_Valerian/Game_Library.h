@@ -41,6 +41,9 @@ public:
 	Object_Config Fetch_Tile_Object_Config(int tile_id);
 	void Load_Tiles_From_Data_File(string path);
 	vector<vector<int>> Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename);
+	bool is_wall(int tile_type);
+	bool is_null(int tile_type);
+	bool is_floor(int tile_type);
 
 private:
 

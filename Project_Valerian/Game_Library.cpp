@@ -150,3 +150,19 @@ Object_Config Game_Library::Fetch_Tile_Object_Config(int tile_id)
 		return loaded_tiles[0];
 	}
 }
+
+bool Game_Library::is_wall(int tile_type)
+{
+	if (tile_type == 20) return true;
+	else return false;
+}
+bool Game_Library::is_null(int tile_type)
+{
+	if (tile_type == STRUCTURE_TYPE_NULL) return true;
+	else return false;
+}
+bool Game_Library::is_floor(int tile_type)
+{
+	if (tile_type == 10) return true;
+	else return false;
+}

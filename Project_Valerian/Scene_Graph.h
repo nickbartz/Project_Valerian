@@ -16,6 +16,7 @@ class Scene_Graph
 {
 public:
 	Scene_Graph(Service_Locator* service_locator);
+	void Collect_Bus_Messages();
 	void Draw();
 	void Draw_Background();
 	void Update_Tile_Map(Coordinate grid_point, int tile_layer, Object* structure);

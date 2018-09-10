@@ -8,6 +8,14 @@ Scene_Graph::Scene_Graph(Service_Locator* sLocator)
 	service_locator = sLocator;
 }
 
+void Scene_Graph::Collect_Bus_Messages()
+{
+	for (int i = 0; i < current_num_structures; i++)
+	{
+		if (structure_array[i].Get_Assigned_Flag()== OBJECT_ASSIGNED) structure_array[i].Collect_Bus_Messages();
+	}
+}
+
 void Scene_Graph::Create_Background()
 {
 	Adjacent_Structure_Array neighbors = {};
@@ -80,7 +88,7 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Object_Config stru
 	Update_Tile_Map(grid_point, structure_config.tile_layer, &structure_array[array_index]);
 
 	// Finally we send a SG tile update message is sent to the main bus outlining what happened
-	service_locator->get_MB_Pointer()->Add_Message(Message_SG_Tile_Update(grid_point.x, grid_point.y, structure_config.tile_layer, structure_config.structure_id, structure_config.structure_type));
+	service_locator->get_MB_Pointer()->Add_SG_Tile_Update_Message(grid_point.x, grid_point.y, structure_config.tile_layer, structure_config.structure_id, structure_config.structure_type);
 }
 
 void Scene_Graph::Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset)
@@ -130,7 +138,6 @@ Adjacent_Structure_Array Scene_Graph::Return_Neighboring_Tiles(Coordinate grid_p
 {
 	Adjacent_Structure_Array neighbor_array = {};
 	
-
 	for (int b = 0; b < 3; b++)
 	{
 		for (int c = 0; c < 3; c++)
@@ -140,7 +147,7 @@ Adjacent_Structure_Array Scene_Graph::Return_Neighboring_Tiles(Coordinate grid_p
 			{
 				for (int a = 1; a < 4; a++)
 				{
-					neighbor_array.adjacent_structure_array[a-1][b][c] = tile_map[test_coord].Return_Tile_Type_By_Layer(a);
+					neighbor_array.asa[a-1][c][b] = tile_map[test_coord].Return_Tile_Type_By_Layer(a);
 				}
 			}
 		}

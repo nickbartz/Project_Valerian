@@ -13,25 +13,25 @@ class Object
 public:
 	Object(int array_index =0, SDL_Rect location = { 0,0,0,0 }, Service_Locator* service_locator = NULL);
 
+	//Update Functions
+	void Collect_Bus_Messages();
+
 	// Accessors
 	int Get_Array_Index();
 	int Get_Assigned_Flag();
 	int Get_Structure_Type();
 
+	// Draw functions
 	void Draw(SDL_Rect camera, SDL_Rect overwrite_pos);
 
+	// Init Functions
 	void Init_From_Object_Config(Object_Config object_config, Adjacent_Structure_Array neighbors);
-
-	// Unassigning an object means we're setting its type to unassigned so that it can be overwritten in whatever array it is in
-	void Set_Assigned_Flag(int assigned_flag);
-
+	void Set_Assigned_Flag(int assigned_flag); 	// Unassigning an object means we're setting its type to unassigned so that it can be overwritten in whatever array it is in
 
 	void free();
 	int uniq_id;
 
 private:
-
-	
 	Service_Locator* service_locator;
 
 	// MICRO COMPONENT ASSIGNMENT FUNCTIONS
@@ -56,6 +56,8 @@ private:
 	int assigned_flag = OBJECT_UNASSIGNED;
 
 	SDL_Rect object_pos;
+	int grid_x;
+	int grid_y;
 	
 	// Overlay Render Component
 	Overlay_Renderer * overlay_renderer = NULL;

@@ -40,8 +40,7 @@ public:
 
 	// Multisprite functions
 	int Add_New_Spritesheet_To_Multisprite(int spritesheet_num, SDL_Renderer* game_renderer);
-	void Stamp_Sprite_Onto_Multisprite(int spritesheet_num, int multisprite_num, SDL_Rect clip);
-	void Clear_Multisprite();
+	void Stamp_Sprite_Onto_Multisprite(int spritesheet_num, int multisprite_num, SDL_Rect clip, SDL_Rect stamp_rect, bool clear_sprite = false);
 	void Remove_Multisprite(int spritesheet_num, int multisprite_num);
 
 	// Functions to Add or Remove From the Draw Array

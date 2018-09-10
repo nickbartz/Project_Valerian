@@ -47,7 +47,7 @@ enum spritesheets
 // Store constants having to do with the message bus
 const int MAX_INPUT_MESSAGES = 10;
 const int MAX_CHATTER_MESSAGES = 10;
-const int MAX_SG_TILE_UPDATE_MESSAGES = 10;
+const int MAX_SG_TILE_UPDATE_MESSAGES = 300;
 
 // Message type enums
 enum message_types

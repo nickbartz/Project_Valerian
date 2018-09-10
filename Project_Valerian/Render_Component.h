@@ -77,24 +77,35 @@ public:
 	{
 		spritesheet_num = spritehseet_n;
 		multi_clip_type = mclip_type;
-		adjacent_tile_type_array = array;
+		neighbors = array;
 		tile_coords = tCoords;
 		Initialize_Dedicated_Multisprite();
-		Adjust_Multisprite_To_Surroundings(array);
+		Adjust_Multisprite_To_Surroundings();
 	}
 
 	void Initialize_Dedicated_Multisprite();
 	void Deinitialize_Dedicated_Multisprite();
 	bool Is_Init();
 
-	void Adjust_Multisprite_To_Surroundings(Adjacent_Structure_Array neighbors);
+	void Update_Neighbor_Array(Adjacent_Structure_Array new_neighbors);
+	void Adjust_Multisprite_To_Surroundings();
 	void Check_Bus_For_Surrounding_Tile_Updates();
 	void Draw(SDL_Rect pos_rect);
+
+	// function for different multiclip types
+	void Clear_Sprite();
+	void Stamp(SDL_Rect spritesheet_clip, SDL_Rect pos_rect, int tile_offset_x = 0, int tile_offset_y = 0);
+	void Build_Wall_Multisprite();
+	void Build_Wall_Multisprite_Handle_Exterior_Walls(int num_space_walls, int num_surrounding_walls);
+	void Build_Wall_Multisprite_Handle_Simple_Interior_Walls(int num_surrounding_walls);
+	void Build_Wall_Multisprite_Handle_Complex_Exterior_Walls(int num_surrounding_walls, int num_diagonal_vacuum);
+	void Build_Floor_Multisprite();
+
 
 private:
 	bool init = false;
 	int dedicated_multisprite_num;
-	Adjacent_Structure_Array adjacent_tile_type_array;
+	Adjacent_Structure_Array neighbors;
 	SDL_Rect tile_coords;
 	int multi_clip_type;
 	int spritesheet_num;
