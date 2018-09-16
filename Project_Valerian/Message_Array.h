@@ -4,15 +4,15 @@
 #include<Global_Constants.h>
 #include<vector>
 
-class Service_Locator;
+class Global_Service_Locator;
 
 class Message_Array {
 public:
-	Message_Array(Service_Locator* sLocator);
+	Message_Array(Global_Service_Locator* sLocator);
 
 	void Add_Message(Message_Core message);
 	void Add_Message(Message_Input message);
-	void Add_SG_Tile_Update_Message(int grid_point_x, int grid_point_y, int tile_layer, int structure_id, int structure_type);
+	void Add_Custom_Message(int message_lenth, int custom_message[]);
 
 	void Clear_All();
 
@@ -21,12 +21,13 @@ public:
 
 	int count_input_messages = 0;
 	Message_Input Input_Message_Array[MAX_INPUT_MESSAGES];
-
-	vector<Message_SG_Tile_Update> SG_Tile_Update_MSG_Array;
+	
+	int count_custom_messages = 0;
+	Custom_Message Custom_Message_Array[MAX_NUM_CUSTOM_MESSAGES];
 
 	void free();
 
 private:
-	Service_Locator * service_locator = NULL;
+	Global_Service_Locator * service_locator = NULL;
 
 };

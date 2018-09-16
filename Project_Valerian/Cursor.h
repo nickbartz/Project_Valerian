@@ -5,12 +5,12 @@
 #include<Message_Array.h>
 
 class Console_Component;
-class Service_Locator;
+class Global_Service_Locator;
 
 class Cursor
 {
 public:
-	Cursor(Service_Locator* sPointer);
+	Cursor(Global_Service_Locator* sPointer);
 	
 	SDL_Rect Get_Camera();
 	void Draw();
@@ -38,7 +38,7 @@ private:
 	// Camera is instantiated as a simple rect where the "w" variables is equal to the zoom;
 	SDL_Rect camera = { 0,0,0,0 };
 
-	Service_Locator * service_pointer;
+	Global_Service_Locator * service_pointer;
 	Console_Component* currently_clicked_component = NULL;
 	SDL_Rect drag_rect = { 0,0,0,0 };
 };

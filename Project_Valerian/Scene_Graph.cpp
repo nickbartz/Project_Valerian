@@ -2,10 +2,24 @@
 #include<Service_Locator.h>
 #include<Cursor.h>
 #include<iostream>
+#include<Game_Library.h>
 
-Scene_Graph::Scene_Graph(Service_Locator* sLocator)
+Scene_Graph::Scene_Graph(Global_Service_Locator* sLocator)
 {
 	service_locator = sLocator;
+}
+
+void Scene_Graph::Update()
+{
+	for (int i = 0; i < current_num_structures; i++)
+	{
+		if (structure_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) structure_array[i].Update();
+	}
+
+	for (int i = 0; i < current_num_entities; i++)
+	{
+		if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Update();
+	}
 }
 
 void Scene_Graph::Collect_Bus_Messages()
@@ -14,6 +28,10 @@ void Scene_Graph::Collect_Bus_Messages()
 	{
 		if (structure_array[i].Get_Assigned_Flag()== OBJECT_ASSIGNED) structure_array[i].Collect_Bus_Messages();
 	}
+	for (int i = 0; i < current_num_entities; i++)
+	{
+		if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Collect_Bus_Messages();
+	}
 }
 
 void Scene_Graph::Create_Background()
@@ -21,13 +39,13 @@ void Scene_Graph::Create_Background()
 	Adjacent_Structure_Array neighbors = {};
 	
 	background_star_1 = Object(0,{ 0,0,0,0 },service_locator);
-	background_star_1.Init_From_Object_Config(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(1), neighbors);
+	background_star_1.Init_Structure_From_Template(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(1), neighbors);
 
 	background_star_2 = Object(0,{ 0,0,0,0 }, service_locator);
-	background_star_2.Init_From_Object_Config(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(2), neighbors);
+	background_star_2.Init_Structure_From_Template(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(2), neighbors);
 
 	background_planetoid = Object(0,{ 0,0,0,0 }, service_locator);
-	background_planetoid.Init_From_Object_Config(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(3), neighbors);
+	background_planetoid.Init_Structure_From_Template(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(3), neighbors);
 
 	for (int i = 0; i < WORLD_MAX_NUM_BACKGROUND_OBJECTS; i++)
 	{
@@ -55,13 +73,13 @@ void Scene_Graph::Draw_Background()
 			TILE_SIZE/background_objects[i].depth
 		};
 
-		if (background_objects[i].type == 0) background_star_1.Draw(camera, pos_rect);
-		else if (background_objects[i].type == 1) background_star_2.Draw(camera, pos_rect);
-		else if (background_objects[i].type == 3) background_planetoid.Draw(camera, pos_rect);
+		if (background_objects[i].type == 0) background_star_1.Draw(pos_rect);
+		else if (background_objects[i].type == 1) background_star_2.Draw(pos_rect);
+		else if (background_objects[i].type == 3) background_planetoid.Draw(pos_rect);
 	}
 }
 
-void Scene_Graph::Create_New_Structure(Coordinate grid_point, Object_Config structure_config)
+void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template structure_config)
 {
 	// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
 	int array_index = 0;
@@ -82,13 +100,14 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Object_Config stru
 	}
 	
 	// Now we initialize the object we just created in the structure array with an objecT_config
-	structure_array[array_index].Init_From_Object_Config(structure_config, Return_Neighboring_Tiles(grid_point));
+	structure_array[array_index].Init_Structure_From_Template(structure_config, Return_Neighboring_Tiles(grid_point));
 
 	// We update the tile map with a pointer to the new object
 	Update_Tile_Map(grid_point, structure_config.tile_layer, &structure_array[array_index]);
 
 	// Finally we send a SG tile update message is sent to the main bus outlining what happened
-	service_locator->get_MB_Pointer()->Add_SG_Tile_Update_Message(grid_point.x, grid_point.y, structure_config.tile_layer, structure_config.structure_id, structure_config.structure_type);
+	int update_message[8] = { MESSAGE_TYPE_SG_TILE_UPDATE , OBJECT_TYPE_ANY, FOCUS_ALL,grid_point.x,grid_point.y,structure_config.tile_layer,structure_config.structure_type,structure_config.structure_id };
+	service_locator->get_MB_Pointer()->Add_Custom_Message(8, update_message);
 }
 
 void Scene_Graph::Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset)
@@ -98,7 +117,7 @@ void Scene_Graph::Stamp_Room_From_Array(vector<vector<int>> room_array, int x_ti
 		for (int i = 0; i < room_array[p].size(); i++)
 		{
 			Coordinate new_coord = { i + x_tile_offset,p + y_tile_offset };
-			Object_Config object_config = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(room_array[p][i]);
+			Structure_Template object_config = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(room_array[p][i]);
 			Create_New_Structure(new_coord, object_config);
 		}
 	}
@@ -120,15 +139,55 @@ void Scene_Graph::Update_Tile_Map(Coordinate grid_point, int tile_layer, Object*
 
 }
 
+// Entity Creation Commands
+
+void Scene_Graph::Create_Entity(Coordinate grid_point, Entity_Template entity)
+{
+	if (entity.entity_id != 0)
+	{
+		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
+		int array_index = 0;
+		current_num_entities++;
+
+		for (int i = 0; i < WORLD_MAX_NUM_ENTITIES; i++)
+		{
+			// we place the object in the first array index with an "OBJECT_UNASSIGNED" type so we can overwrite objects no longer being used
+			if (entity_array[i].Get_Assigned_Flag() == OBJECT_UNASSIGNED)
+			{
+				entity_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, TILE_SIZE, TILE_SIZE }, service_locator);
+
+				entity_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
+
+				array_index = i;
+				break;
+			}
+		}
+
+		entity_array[array_index].Init_Entity_From_Template(entity);
+
+		// Finally we send a SG entity update message to the main bus outlining what happened
+		int update_message[5] = { MESSAGE_TYPE_SG_ENTITY_CREATE , OBJECT_TYPE_ANY, FOCUS_ALL, grid_point.x,grid_point.y };
+		service_locator->get_MB_Pointer()->Add_Custom_Message(5, update_message);
+	}
+	else
+	{
+		cout << "Cannot create null entity" << endl;
+	}
+
+}
+
 void Scene_Graph::Draw()
 {
-	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
-	
 	Draw_Background();
 
 	for (int i = 0; i < current_num_structures; i++)
 	{
-		structure_array[i].Draw(camera, { 0,0,0,0 });
+		structure_array[i].Draw();
+	}
+
+	for (int i = 0; i < current_num_entities; i++)
+	{
+		entity_array[i].Draw();
 	}
 }
 
@@ -177,4 +236,50 @@ void Scene_Graph::free()
 		entity_array[i].free();
 	}
 
+}
+
+// Queries
+
+void Scene_Graph::Return_Tiles_Without_Leaks(Coordinate start_tile, vector<Coordinate> &tiles_to_oxygenate,map<Coordinate, bool> &checked_tiles, bool &is_leak)
+{
+	checked_tiles[start_tile] = true;
+
+	if (!Tile_Has_Leak(start_tile) && is_leak == false)
+	{		
+		tiles_to_oxygenate.push_back(start_tile);
+		for (int p = -1; p < 2; p++)
+		{
+			for (int i = -1; i < 2; i++)
+			{
+				if (!(i == 0 && p == 0))
+				{
+					Coordinate new_start_tile = { start_tile.x + i, start_tile.y + p };
+					if (checked_tiles.count(new_start_tile) == 0 && !Tile_Is_Wall_Or_Closed_Door(new_start_tile))
+					{
+						Return_Tiles_Without_Leaks(new_start_tile, tiles_to_oxygenate, checked_tiles, is_leak);
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		is_leak = true;
+	}
+}
+
+bool Scene_Graph::Tile_Has_Leak(Coordinate tile)
+{
+	if (service_locator->get_Game_Library()->is_null(tile_map[tile].Return_Tile_Type_By_Layer(1)) && service_locator->get_Game_Library()->is_null(tile_map[tile].Return_Tile_Type_By_Layer(2)))
+	{
+		return true;
+	}
+	else return false;
+}
+
+bool Scene_Graph::Tile_Is_Wall_Or_Closed_Door(Coordinate tile)
+{
+	// will need to add in functionality for doors later
+	if (service_locator->get_Game_Library()->is_wall(tile_map[tile].Return_Tile_Type_By_Layer(2))) return true;
+	else return false;
 }

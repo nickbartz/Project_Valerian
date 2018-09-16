@@ -7,12 +7,13 @@ class Message_Array;
 class Draw_System;
 class Cursor;
 class Game_Library;
+class Scene_Graph;
 
 
-class Service_Locator
+class Global_Service_Locator
 {
 public:
-	Service_Locator();
+	Global_Service_Locator();
 
 	UI * get_UI_pointer();
 	Message_Array* get_MB_Pointer();
@@ -21,6 +22,8 @@ public:
 	Game_Library* get_Game_Library();
 	SDL_Renderer* get_Game_Renderer();
 	SDL_Window* get_Game_Window();
+	Scene_Graph* get_Scene_Graph();
+
 
 	void Register_UI_Pointer(UI* ui_pointer);
 	void Register_MB_Pointer(Message_Array* msg_pointer);
@@ -29,6 +32,7 @@ public:
 	void Register_Game_Library(Game_Library* game_library);
 	void Register_Game_Renderer(SDL_Renderer* game_renderer);
 	void Register_Game_Window(SDL_Window* gWindow);
+	void Register_Scene_Graph(Scene_Graph* sGraph);
 
 	void free();
 
@@ -40,4 +44,23 @@ private:
 	Game_Library* game_library;
 	SDL_Renderer* game_renderer;
 	SDL_Window* game_window;
+	Scene_Graph* scene_pointer;
+};
+
+
+class Render_Component;
+class AI_Stats_Component;
+
+class Object_Service_Locator
+{
+public:
+	void Register_Pointer(Render_Component* Simple_Render_Pointer);
+	void Register_Pointer(AI_Stats_Component* Basic_Structure_AI_Pointer);
+
+	Render_Component* Return_Render_Pointer();
+	AI_Stats_Component* Return_AI_Stats_Pointer();
+
+private:
+	Render_Component * Render_Pointer;
+	AI_Stats_Component* AI_Stats_Pointer;
 };

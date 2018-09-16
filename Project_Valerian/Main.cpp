@@ -137,7 +137,7 @@ int main(int argc, char *args[])
 	load_assets(Game_Renderer);
 
 	// Create Service Locator
-	unique_ptr<Service_Locator> service_locator(new Service_Locator());
+	unique_ptr<Global_Service_Locator> service_locator(new Global_Service_Locator());
 
 	// Load Game Library
 	unique_ptr<Game_Library> game_library(new Game_Library());
@@ -167,6 +167,7 @@ int main(int argc, char *args[])
 	service_locator->Register_UI_Pointer(user_interface.get());
 	service_locator->Register_Cursor_Pointer(cursor.get());
 	service_locator->Register_Game_Library(game_library.get());
+	service_locator->Register_Scene_Graph(scene_graph.get());
 
 	scene_graph->Create_Background();
 
@@ -176,12 +177,11 @@ int main(int argc, char *args[])
 
 	// TEST VARIABLES
 	vector<vector<int>> new_room = game_library->Create_Room_From_Data_File(0, 0, "Data/test_room.csv");
+	scene_graph->Stamp_Room_From_Array(new_room, -2, -2);
 
-	//Object_Config wall_tile = game_library->Fetch_Tile_Object_Config(8);
-	//scene_graph->Create_New_Structure({ 0,0 }, wall_tile);
-	//scene_graph->Create_New_Structure({ 0,1 }, wall_tile);
-
-	scene_graph->Stamp_Room_From_Array(new_room, -8, -8);
+	scene_graph->Create_New_Structure({ 0,-1 }, game_library->Fetch_Tile_Object_Config(4));
+	
+	scene_graph->Create_Entity({ 1,-1 }, game_library->Fetch_Entity_Template(1));
 
 	// END TEST VARIABLES
 
@@ -200,6 +200,8 @@ int main(int argc, char *args[])
 		}
 
 		user_interface->Update();
+		scene_graph->Update();
+
 
 		//Clear screen
 		SDL_SetRenderDrawColor(Game_Renderer, 0x0, 0x0, 0x0, 0x0);

@@ -14,7 +14,7 @@ using namespace std;
 class Draw_System
 {
 public:
-	Draw_System(Service_Locator* service_locator, FC_Font* font_array_start[], Uint32 window_format);
+	Draw_System(Global_Service_Locator* service_locator, FC_Font* font_array_start[], Uint32 window_format);
 	void Init_Sprites(SDL_Renderer* game_renderer);
 
 	// The standard primitive rectangle that will be used to instruct the renderer
@@ -47,7 +47,7 @@ public:
 	void Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
 	void Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect);
 
-	void Add_Primitive_To_Render_Cycle(Primitive_Instruction primitive);
+	void Add_Primitive_To_Render_Cycle(int init, SDL_Rect pos_rect, bool filled, SDL_Color primitive_color);
 	void Clear_Primitive_Instruction_Array();
 
 	void Add_Text_Job_To_Render_Cycle(Text_Instruction string);
@@ -65,7 +65,7 @@ public:
 	void free();
 
 private:
-	Service_Locator * service_locator;
+	Global_Service_Locator * service_locator;
 
 	int count_num_fonts = 0;
 
@@ -90,7 +90,7 @@ private:
 	Spritesheet mid_spritesheet;
 	Spritesheet mid_overlay_spritesheet;
 	Spritesheet mid_2_spritesheet;
-	Spritesheet entity;
+	Spritesheet entity_spritesheet;
 
 	// Primitive array 
 	int count_num_primitives = -1;

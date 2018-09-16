@@ -6,60 +6,212 @@
 #include<Cursor.h>
 #include<algorithm>
 #include<Game_Library.h>
+#include<AI_Stats_Component.h>>
 
 using namespace std;
 
-Core_Render::Core_Render(Service_Locator* sLocator)
+// Init for Structures
+Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator,  Structure_Template object_config, Adjacent_Structure_Array neighbor_array)
+{
+	render_component = object_config.render_component_type;
+	multiclip_type = object_config.multiclip_type;
+	spritesheet = object_config.spritesheet;
+
+	service_locator = sLocator;
+	object_locator = oLocator;
+
+	sprite_clip = object_config.tile_clip;
+	sprite_coords = object_config.tile_specs;
+
+	max_structure_animation_frames = object_config.num_animation_frame;
+
+	if (render_component == RENDER_COMPONENT_MULTICLIP)
+	{
+		neighbors = neighbor_array;
+		Initialize_Dedicated_Multisprite();
+		Adjust_Multisprite_To_Surroundings();
+	}
+}
+
+// Init for Entities
+Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Entity_Template entity_config)
 {
 	service_locator = sLocator;
+	object_locator = oLocator;
+	
+	render_component = entity_config.render_component;
+	num_entity_animations = entity_config.num_entity_animations;
+	num_entity_components = entity_config.num_entity_components;
+
+	for (int i = 0; i < entity_config.num_entity_animations; i++)
+	{
+		for (int p = 0; p < entity_config.num_entity_components; p++)
+		{
+			entity_animations[i][p] = entity_config.entity_animations[i][p];
+		}
+	}
 }
 
-void Core_Render::Draw()
+// Main draw function
+void Render_Component::Draw(SDL_Rect pos_rect)
+{	
+	switch (render_component)
+	{
+	case RENDER_COMPONENT_NONE:
+		break;
+	case RENDER_COMPONENT_BACKGROUND:
+		Draw_With_Background_Renderer(pos_rect);
+		break;
+	case RENDER_COMPONENT_SIMPLECLIP:
+		Draw_With_Simple_Clip(pos_rect);
+		break;
+	case RENDER_COMPONENT_MULTICLIP:
+		Draw_With_Multi_Clip(pos_rect);
+		break;
+	case RENDER_COMPONENT_ANIMATED_CLIP:
+		Draw_With_Animated_Simple_Clip(pos_rect);
+		break;
+	case RENDER_COMPONENT_ENTITY_SIMPLE:
+		break;
+	case RENDER_COMPONENT_ENTITY_COMPLEX:
+		Draw_With_Complex_Entity_Animation(pos_rect);
+		break;
+	}
+
+	Draw_Overlays(pos_rect);
+}
+
+// Component draw functions
+void Render_Component::Draw_With_Background_Renderer(SDL_Rect pos_rect)
 {
-
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, pos_rect, sprite_clip, 0.0, NULL, SDL_FLIP_NONE);
 }
 
-void Background_Renderer::Draw(SDL_Rect pos_rect)
-{
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet_num, pos_rect, sprite_clip, angle, center, flip);
-}
-
-void Simple_Clip_Tile_Renderer::Draw(SDL_Rect pos_rect)
+void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 {
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
 
-	SDL_Rect draw_rect = { (pos_rect.x*camera.w/TILE_SIZE) + SCREEN_WIDTH/2 + camera.x, (pos_rect.y*camera.w/TILE_SIZE) + SCREEN_HEIGHT/2 + camera.y, tile_coords.w*camera.w, tile_coords.h*camera.w };
+	// Adjust the draw rectangle by the camera position and camera zoom
+	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
 
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet_num, draw_rect, sprite_clip, angle, center,flip);
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, sprite_clip, 0.0, NULL, SDL_FLIP_NONE);
+
+	// If the sprite is several stories high, the 2nd story needs to be printed seperately and later so that i will appear to float above any people walking around so they appear to go behind it
+	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
+	{
+		// As a first step, change the clip to the 2nd story of the sprite on the sprite sheet 
+		SDL_Rect new_clip = { sprite_clip.x, sprite_clip.y - SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
+
+		// Now re-do the draw rect and send a new instruction to the draw system to draw that 2nd story 
+		draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((pos_rect.y - TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE);
+	}
 }
 
-void Multisprite_Tile_Renderer::Initialize_Dedicated_Multisprite()
+void Render_Component::Draw_With_Multi_Clip(SDL_Rect pos_rect)
+{
+	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
+
+	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, sprite_coords.w*camera.w, sprite_coords.h*camera.w };
+
+	service_locator->get_Draw_System_Pointer()->Add_Multisprite_Render_Job_To_Render_Cycle(spritesheet, dedicated_multisprite_num, draw_rect);
+}
+
+void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
+{	
+
+	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
+
+	SDL_Rect anim_clip = { sprite_clip.x + structure_animation_frame * SPRITE_SIZE, sprite_clip.y, sprite_clip.w, sprite_clip.h };
+
+	// Adjust the draw rectangle by the camera position and camera zoom
+	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE);
+
+	// If the sprite is several stories high, the 2nd story needs to be printed seperately and later so that i will appear to float above any people walking around so they appear to go behind it
+	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
+	{
+		// As a first step, change the clip to the 2nd story of the sprite on the sprite sheet 
+		SDL_Rect new_clip = { sprite_clip.x + structure_animation_frame, sprite_clip.y - SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
+
+		// Now re-do the draw rect and send a new instruction to the draw system to draw that 2nd story 
+		draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((pos_rect.y - TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE);
+	}
+}
+
+void Render_Component::Draw_With_Complex_Entity_Animation(SDL_Rect pos_rect)
+{
+	for (int i = 0; i < num_entity_components; i++)
+	{
+		Draw_Entity_Animation_Component(pos_rect, entity_animations[current_entity_anim][i].component_clip, entity_animations[current_entity_anim][i].component_current_frame, SPRITESHEET_ENTITY);
+	}
+}
+
+// Draw function sub-functions
+
+void Render_Component::Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Rect sprite_clip, int animation_frame, int spritesheet)
+{
+	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
+
+	SDL_Rect anim_clip = { sprite_clip.x + animation_frame * SPRITE_SIZE, sprite_clip.y, sprite_clip.w, sprite_clip.h };
+
+	// Adjust the draw rectangle by the camera position and camera zoom
+	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE);
+}
+
+void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
+{
+	if (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)
+	{
+		int oxygen_level = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_OXYGEN_LEVEL);
+		if (oxygen_level > 0) Handle_Oxygenation_Overlay(pos_rect, oxygen_level);
+	}
+}
+
+void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level)
+{
+	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
+
+	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+
+	SDL_Color overlay_color = { 0,0,255,oxygenation_level * 5 };
+
+	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, true, overlay_color);
+}
+
+// Functions that support multisprites
+
+void Render_Component::Initialize_Dedicated_Multisprite()
 {
 	// This creates a dedicated spritesheet for this multitileconfig with a blank SDL_Texture the size of one tile
-	dedicated_multisprite_num = service_locator->get_Draw_System_Pointer()->Add_New_Spritesheet_To_Multisprite(spritesheet_num, service_locator->get_Game_Renderer());
+	dedicated_multisprite_num = service_locator->get_Draw_System_Pointer()->Add_New_Spritesheet_To_Multisprite(spritesheet, service_locator->get_Game_Renderer());
 	if (dedicated_multisprite_num >= 0 && dedicated_multisprite_num <= MAX_SPRITES_PER_MULTISPRITE) init = true;
 }
 
-void Multisprite_Tile_Renderer::Deinitialize_Dedicated_Multisprite()
+void Render_Component::Deinitialize_Dedicated_Multisprite()
 {
 	// This frees up the spritesheet currently being used and puts it back into free rotation for others
-	service_locator->get_Draw_System_Pointer()->Remove_Multisprite(spritesheet_num,dedicated_multisprite_num);
+	service_locator->get_Draw_System_Pointer()->Remove_Multisprite(spritesheet,dedicated_multisprite_num);
 	init = false;
 }
 
-bool Multisprite_Tile_Renderer::Is_Init()
+bool Render_Component::Is_Init()
 {
 	return init;
 }
 
-void Multisprite_Tile_Renderer::Update_Neighbor_Array(Adjacent_Structure_Array new_neighbors)
+void Render_Component::Update_Neighbor_Array(Adjacent_Structure_Array new_neighbors)
 {
 	neighbors = new_neighbors;
 }
 
-void Multisprite_Tile_Renderer::Adjust_Multisprite_To_Surroundings()
+void Render_Component::Adjust_Multisprite_To_Surroundings()
 {
-	switch (multi_clip_type)
+	switch (multiclip_type)
 	{
 	case MULTI_CLIP_FLOOR:
 		Stamp({ 0,0,32,32 }, { 0,0,32,32 });
@@ -70,48 +222,53 @@ void Multisprite_Tile_Renderer::Adjust_Multisprite_To_Surroundings()
 	}
 }
 
-void Multisprite_Tile_Renderer::Check_Bus_For_Surrounding_Tile_Updates()
+void Render_Component::Check_For_Messages(int grid_x, int grid_y)
 {
-	for (int i = 0; i < service_locator->get_MB_Pointer()->SG_Tile_Update_MSG_Array.size(); i++)
+	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
 	{
-		int message_tile_x = service_locator->get_MB_Pointer()->SG_Tile_Update_MSG_Array[i].Get_Grid_X();
-		int message_tile_y = service_locator->get_MB_Pointer()->SG_Tile_Update_MSG_Array[i].Get_Grid_Y();
-
-		int delta_x = message_tile_x - tile_coords.x;
-		int delta_y = message_tile_y - tile_coords.y;
-
-		if (abs(delta_x) <= 1 && abs(delta_y) <= 1 && !(delta_x == 0 && delta_y == 0))
+		if (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE)
 		{
-			int message_tile_layer = service_locator->get_MB_Pointer()->SG_Tile_Update_MSG_Array[i].Get_Tile_Layer();
-			int message_tile_type = service_locator->get_MB_Pointer()->SG_Tile_Update_MSG_Array[i].Get_Structure_Type();
-	
-			neighbors.asa[message_tile_layer-1][delta_x + 1][delta_y + 1] = message_tile_type;
-
-			Adjust_Multisprite_To_Surroundings();
+			Check_Tile_Update_Message(&service_locator->get_MB_Pointer()->Custom_Message_Array[i]);
 		}
 	}
 }
 
-void Multisprite_Tile_Renderer::Draw(SDL_Rect pos_rect)
+void Render_Component::Check_Tile_Update_Message(Custom_Message* tile_update)
 {
-	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
-
-	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, tile_coords.w*camera.w, tile_coords.h*camera.w };
+	int grid_x = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_GRID_X);
+	int grid_y = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_GRID_Y);
 	
-	service_locator->get_Draw_System_Pointer()->Add_Multisprite_Render_Job_To_Render_Cycle(spritesheet_num, dedicated_multisprite_num, draw_rect);
+	bool sprite_update = false;
+
+	int message_tile_x = tile_update->Read_Message(3);
+	int message_tile_y = tile_update->Read_Message(4);
+
+	int delta_x = message_tile_x - grid_x;
+	int delta_y = message_tile_y - grid_y;
+
+	if (abs(delta_x) <= 1 && abs(delta_y) <= 1 && !(delta_x == 0 && delta_y == 0))
+	{
+		int message_tile_layer = tile_update->Read_Message(5);
+		int message_tile_type = tile_update->Read_Message(6);
+
+		neighbors.asa[message_tile_layer - 1][delta_x + 1][delta_y + 1] = message_tile_type;
+		sprite_update = true;
+	}
+
+	if (sprite_update == true) Adjust_Multisprite_To_Surroundings();
 }
 
-void Multisprite_Tile_Renderer::Stamp(SDL_Rect spritesheet_clip, SDL_Rect pos_rect, int tile_offset_x, int tile_offset_y)
+void Render_Component::Stamp(SDL_Rect spritesheet_clip, SDL_Rect pos_rect, int tile_offset_x, int tile_offset_y)
 {
-	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet_num, dedicated_multisprite_num, spritesheet_clip, pos_rect);
+	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet, dedicated_multisprite_num, spritesheet_clip, pos_rect);
 }
 
-void Multisprite_Tile_Renderer::Clear_Sprite()
+void Render_Component::Clear_Sprite()
 {
-	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet_num, dedicated_multisprite_num, { 0,0,0,0 }, { 0,0,0,0 }, true);
+	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet, dedicated_multisprite_num, { 0,0,0,0 }, { 0,0,0,0 }, true);
 }
 
-void Multisprite_Tile_Renderer::Build_Wall_Multisprite()
+void Render_Component::Build_Wall_Multisprite()
 {
 	Clear_Sprite();
 	
@@ -136,7 +293,7 @@ void Multisprite_Tile_Renderer::Build_Wall_Multisprite()
 	else Build_Wall_Multisprite_Handle_Simple_Interior_Walls(num_surrounding_walls);
 }
 
-void Multisprite_Tile_Renderer::Build_Wall_Multisprite_Handle_Exterior_Walls(int num_space_walls, int num_surrounding_walls)
+void Render_Component::Build_Wall_Multisprite_Handle_Exterior_Walls(int num_space_walls, int num_surrounding_walls)
 {
 	Game_Library* gl = service_locator->get_Game_Library();
 	int TW = TILE_SIZE;
@@ -221,7 +378,7 @@ void Multisprite_Tile_Renderer::Build_Wall_Multisprite_Handle_Exterior_Walls(int
 
 }
 
-void Multisprite_Tile_Renderer::Build_Wall_Multisprite_Handle_Simple_Interior_Walls(int num_surrounding_walls)
+void Render_Component::Build_Wall_Multisprite_Handle_Simple_Interior_Walls(int num_surrounding_walls)
 {
 	Game_Library* gl = service_locator->get_Game_Library();
 	int TQ = TILE_SIZE / 2; // TQ is a unit representing a quarter of a tile
@@ -293,7 +450,7 @@ void Multisprite_Tile_Renderer::Build_Wall_Multisprite_Handle_Simple_Interior_Wa
 
 }
 
-void Multisprite_Tile_Renderer::Build_Wall_Multisprite_Handle_Complex_Exterior_Walls(int num_surrounding_walls, int num_diagonal_vacuum)
+void Render_Component::Build_Wall_Multisprite_Handle_Complex_Exterior_Walls(int num_surrounding_walls, int num_diagonal_vacuum)
 {
 	Game_Library* gl = service_locator->get_Game_Library();
 	int TQ = TILE_SIZE / 2; // TQ is a unit representing a quarter of a tile
@@ -317,7 +474,25 @@ void Multisprite_Tile_Renderer::Build_Wall_Multisprite_Handle_Complex_Exterior_W
 
 }
 
-void Multisprite_Tile_Renderer::Build_Floor_Multisprite()
+void Render_Component::Build_Floor_Multisprite()
 {
 
+}
+
+// Animation Commands
+void Render_Component::Increment_Structure_Animation_Frame()
+{
+	structure_animation_frame++;
+	if (structure_animation_frame >= max_structure_animation_frames)
+	{
+		structure_animation_frame = 0;
+	}
+}
+void Render_Component::Decrement_Structure_Animation_Frame()
+{
+	structure_animation_frame--;
+	if (structure_animation_frame < 0)
+	{
+		structure_animation_frame = max_structure_animation_frames - 1;
+	}
 }

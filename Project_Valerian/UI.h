@@ -7,13 +7,13 @@
 #include<Console_Window.h>
 #include<Message_Array.h>
 
-class Service_Locator;
+class Global_Service_Locator;
 class Message_Bus;
 
 class UI
 {
 public:
-	UI(Service_Locator* service_locator);
+	UI(Global_Service_Locator* service_locator);
 
 	void Update();
 
@@ -34,7 +34,7 @@ private:
 	// Internal Click Management Functions
 	void Update_UI_With_Mouse_Action(Cursor* cursor);
 	
-	Service_Locator* service_pointer;
+	Global_Service_Locator* service_pointer;
 
 	Player_Diagnostic_Window player_console;
 };

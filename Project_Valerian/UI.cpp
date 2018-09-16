@@ -4,7 +4,7 @@
 #include<Cursor.h>
 
 
-UI::UI(Service_Locator* srvc_pointer)
+UI::UI(Global_Service_Locator* srvc_pointer)
 {
 	service_pointer = srvc_pointer;
 }
@@ -23,7 +23,6 @@ void UI::Collect_Bus_Messages()
 
 	for (int i = 0; i < bus_pointer->count_input_messages; i++) Push_Message_To_Console(bus_pointer->Input_Message_Array[i].Get_Message_String());
 	for (int i = 0; i < bus_pointer->count_chatter_message; i++) Push_Message_To_Console(bus_pointer->Chatter_Array[i].Get_Message_String());
-	for (int i = 0; i < bus_pointer->SG_Tile_Update_MSG_Array.size(); i++) Push_Message_To_Console(bus_pointer->SG_Tile_Update_MSG_Array[i].Get_Message_String());
 }
 
 void UI::Push_Message_To_Console(string message)

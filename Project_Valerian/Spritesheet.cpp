@@ -87,7 +87,6 @@ void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_
 	{
 		std::cout << "warning, sprite instruction overflow" << std::endl;
 	}
-
 }
 
 void Spritesheet::Set_Sprite_As_Render_Target(SDL_Renderer* game_renderer)

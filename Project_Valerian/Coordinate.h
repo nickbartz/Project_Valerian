@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iostream>
+using namespace std;
+
 struct Coordinate
 {
 	int x;
@@ -14,5 +17,10 @@ struct Coordinate
 		//x == coord.x && y == coord.y
 		//*this == coord
 		return false;
+	}
+
+	void print()
+	{
+		cout << x << ", " << y << endl;
 	}
 };

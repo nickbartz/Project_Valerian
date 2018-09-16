@@ -3,94 +3,52 @@
 #include<SDL.h>
 #include<Adjacent_Type_Array.h>
 
-class Service_Locator;
+class Global_Service_Locator;
+class Object_Service_Locator;
+class Structure_Template;
+class Entity_Template;
+class Custom_Message;
 
-
-class Core_Render
+struct Animation_State
 {
-public:
-	Core_Render(Service_Locator* service_locator = NULL);
-	void Draw();
-
-protected:
-	Service_Locator * service_locator = NULL;
+	SDL_Rect component_clip = {0,0,0,0};
+	int component_current_frame = 0;
+	int component_max_frames = 0;
 };
 
-class Overlay_Renderer : public Core_Render
+class Render_Component
 {
 public:
-	Overlay_Renderer(Service_Locator* service_locator) :Core_Render(service_locator)
-	{
+	// Init for structures
+	Render_Component(Global_Service_Locator* service_locator, Object_Service_Locator* oLocator, Structure_Template object_config, Adjacent_Structure_Array neighbors);
 
-	}
-private:
-};
+	// Init for entities
+	Render_Component(Global_Service_Locator* service_locator, Object_Service_Locator* oLocator, Entity_Template entity_config);
 
-class Background_Renderer: public Core_Render
-{
-public :
-	Background_Renderer(Service_Locator* service_locator, int sheet_num, SDL_Rect clip, double ang = 0.0, SDL_Point* point = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE) : Core_Render(service_locator)
-	{
-		spritesheet_num = sheet_num;
-		sprite_clip = clip;
-		angle = ang;
-		center = point;
-	}
 
 	void Draw(SDL_Rect pos_rect);
+	void Draw_With_Background_Renderer(SDL_Rect pos_rect);
+	void Draw_With_Simple_Clip(SDL_Rect pos_rect);
+	void Draw_With_Multi_Clip(SDL_Rect pos_rect);
+	void Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect);
 
-private:
-	int spritesheet_num;
-	SDL_Rect sprite_clip;
-	double angle;
-	SDL_RendererFlip flip;
-	SDL_Point* center = NULL;
-};
+	void Draw_With_Complex_Entity_Animation(SDL_Rect pos_rect);
+	void Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Rect sprite_clip, int animation_frame, int spritesheet);
 
-class Simple_Clip_Tile_Renderer :public Core_Render
-{
-public:
-	Simple_Clip_Tile_Renderer(SDL_Rect tspecs, Service_Locator* service_locator, int sheet_num, SDL_Rect clip, double ang = 0.0, SDL_Point* point = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE) :Core_Render(service_locator)
-	{
-		spritesheet_num = sheet_num;
-		sprite_clip = clip;
-		angle = ang;
-		center = point;
-		tile_coords = tspecs;
-	}
+	void Draw_Overlays(SDL_Rect pos_rect);
 
-	void Draw(SDL_Rect pos_rect);
-
-private:
-	SDL_Rect tile_coords;
-	int spritesheet_num;
-	SDL_Rect sprite_clip;
-	double angle;
-	SDL_RendererFlip flip;
-	SDL_Point* center = NULL;
-};
-
-class Multisprite_Tile_Renderer :public Core_Render
-{
-public:
-	Multisprite_Tile_Renderer(Service_Locator* service_locator = NULL, SDL_Rect tCoords = { 0,0,0,0 }, int spritehseet_n = SPRITESHEET_BASE, int mclip_type = MULTICLIP_NONE, Adjacent_Structure_Array array = {}) : Core_Render(service_locator)
-	{
-		spritesheet_num = spritehseet_n;
-		multi_clip_type = mclip_type;
-		neighbors = array;
-		tile_coords = tCoords;
-		Initialize_Dedicated_Multisprite();
-		Adjust_Multisprite_To_Surroundings();
-	}
+	// Overlay Specific Functions
+	void Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level);
 
 	void Initialize_Dedicated_Multisprite();
 	void Deinitialize_Dedicated_Multisprite();
 	bool Is_Init();
 
+	// Update Functions
 	void Update_Neighbor_Array(Adjacent_Structure_Array new_neighbors);
 	void Adjust_Multisprite_To_Surroundings();
-	void Check_Bus_For_Surrounding_Tile_Updates();
-	void Draw(SDL_Rect pos_rect);
+	void Check_For_Messages(int grid_x, int grid_y);
+	void Check_Tile_Update_Message(Custom_Message* tile_update);
 
 	// function for different multiclip types
 	void Clear_Sprite();
@@ -101,26 +59,30 @@ public:
 	void Build_Wall_Multisprite_Handle_Complex_Exterior_Walls(int num_surrounding_walls, int num_diagonal_vacuum);
 	void Build_Floor_Multisprite();
 
+	// Structure_Animation Commands
+	void Increment_Structure_Animation_Frame();
+	void Decrement_Structure_Animation_Frame();
 
 private:
 	bool init = false;
+	Global_Service_Locator * service_locator;
+	Object_Service_Locator* object_locator;
+
+	int render_component;
+	int spritesheet;
+
+	// STRUCTURE_SPECIFIC VARIABLES
+	int multiclip_type;
 	int dedicated_multisprite_num;
+	int structure_animation_frame = 0;
+	int max_structure_animation_frames = 0;
+	SDL_Rect sprite_clip;
+	SDL_Rect sprite_coords;
 	Adjacent_Structure_Array neighbors;
-	SDL_Rect tile_coords;
-	int multi_clip_type;
-	int spritesheet_num;
-};
 
-class Basic_Entity_Renderer :public Core_Render
-{
-public:
-	Basic_Entity_Renderer(Service_Locator* service_locator) :Core_Render(service_locator)
-	{
-
-	}
-
-	void Draw(SDL_Rect pos_rect);
-
-private:
-
+	// ENTITY SPECIFIC VARIABLES
+	Animation_State entity_animations[MAX_NUM_ANIMATIONS][MAX_NUM_COMPONENTS];
+	int num_entity_animations = 0;
+	int num_entity_components = 0;
+	int current_entity_anim = ANIM_WALK_DOWN;
 };

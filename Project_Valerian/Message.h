@@ -5,6 +5,7 @@ using namespace std;
 #include<string>
 #include <sstream>
 #include<Global_Constants.h>
+#include<iostream>
 
 class Message_Core
 {
@@ -14,8 +15,8 @@ public:
 
 	void Update_Message(string string);
 
-private:
-	string message;
+protected:
+	string string_message;
 };
 
 class Message_Input: public Message_Core
@@ -67,3 +68,39 @@ private:
 	int new_structure_name;
 	int new_structure_type;
 };
+
+class Custom_Message : public Message_Core
+{
+public:
+	Custom_Message(int message_length = 0, int message_array[MAX_LENGTH_CUSTOM_MESSAGE] = NULL) :Message_Core()
+	{
+		for (int i = 0; i < message_length; i++)
+		{
+			message[i] = message_array[i];
+			string_message.push_back(message_array[i]);
+		}
+	}
+
+	int Read_Message(int message_column);
+
+private:
+	int message[MAX_LENGTH_CUSTOM_MESSAGE];
+};
+
+// Custom Message Documentation
+
+// General Formula: 
+// Message Type --> Audience Type --> Audience Focus (specific or range) --> Message type-specific data
+//
+// Existing Message Types:
+//
+// Message for requesting that a structure update its oxygen level
+// MESSAGE_TYPE_STAT_UPDATE_REQUEST --> OBJECT_TYPE_STRUCTURE --> FOCUS_TYPE_SPECIFIC --> GRID_X --> GRID_Y --> STAT_STRUCTURE_OXYGEN_LEVEL --> 10
+//
+//
+// Message for a tile update from the Scene Graph
+// MESSAGE_TYPE_SG_TILE_UPDATE --> OBJECT_TYPE_ALL --> FOCUS_TYPE_ALL --> GRID_X --> GRID_Y --> TILE_LAYER --> STRUCTURE_TYPE --> STRUCTURE_ID
+//
+// Message for an Entity Create from the Scene Graph
+//
+// MESSAGE_TYPE_SG_ENTITY_CREATE --> OBJECT_TYPE_ALL --> FOCUS_TYPE_ALL --> GRID_X --> GRID_Y

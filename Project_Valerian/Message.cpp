@@ -3,17 +3,17 @@
 
 Message_Core::Message_Core(string new_message)
 {
-	message = new_message;
+	string_message = new_message;
 }
 
 string Message_Core::Get_Message_String()
 {
-	return message;
+	return string_message;
 }
 
 void Message_Core::Update_Message(string new_message)
 {
-	message = new_message;
+	string_message = new_message;
 }
 
 SDL_Event Message_Input::Return_Event()
@@ -68,4 +68,9 @@ int Message_SG_Tile_Update::Get_Structure_Name()
 int Message_SG_Tile_Update::Get_Structure_Type()
 {
 	return new_structure_type;
+}
+
+int Custom_Message::Read_Message(int message_column)
+{
+	return message[message_column];
 }

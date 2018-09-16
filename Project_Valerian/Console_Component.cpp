@@ -125,14 +125,12 @@ void Console_Component::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 			new_fill.b -= 50;
 		}
 		
-		Draw_System::Primitive_Instruction new_instruction = { 1, draw_rect,true,new_fill };
-		draw_system->Add_Primitive_To_Render_Cycle(new_instruction);
+		draw_system->Add_Primitive_To_Render_Cycle(1, draw_rect, true, new_fill);
 	}
 
 	if (highlight == true)
 	{
-		Draw_System::Primitive_Instruction new_instruction = { 1, draw_rect,false,highlight_color };
-		draw_system->Add_Primitive_To_Render_Cycle(new_instruction);
+		draw_system->Add_Primitive_To_Render_Cycle(1, draw_rect, false, highlight_color);
 	}
 
 	if (draw_title == true)

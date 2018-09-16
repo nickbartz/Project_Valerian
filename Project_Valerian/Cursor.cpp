@@ -4,7 +4,7 @@
 #include<Service_Locator.h>
 #include<Console_Component.h>
 
-Cursor::Cursor(Service_Locator* sPointer)
+Cursor::Cursor(Global_Service_Locator* sPointer)
 {
 	service_pointer = sPointer;
 	camera = { 0, 0,32, 0 };
@@ -46,10 +46,8 @@ void Cursor::Draw()
 		int h = abs(current_mouse_y - held_mouse_y);
 		drag_rect = { x,y,w,h };
 
-		Draw_System::Primitive_Instruction drag_overlay = { 1, drag_rect, true,{ 100,100,255,100 } };
-		service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(drag_overlay);
-		drag_overlay = { 1, drag_rect, false,{ 255,255,255,255 } };
-		service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(drag_overlay);
+		service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, drag_rect, true, { 100,100,255,100 });
+		service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, drag_rect, false, { 255,255,255,255 });
 	}
 }
 

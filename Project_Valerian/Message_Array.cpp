@@ -1,7 +1,7 @@
 #include<Message_Array.h>
 #include<iostream>
 
-Message_Array::Message_Array(Service_Locator* sLocator)
+Message_Array::Message_Array(Global_Service_Locator* sLocator)
 {
 	service_locator = sLocator;
 }
@@ -31,16 +31,73 @@ void Message_Array::Add_Message(Message_Input input_event)
 
 }
 
-void Message_Array::Add_SG_Tile_Update_Message(int grid_point_x, int grid_point_y, int tile_layer, int structure_id, int structure_type)
+void Message_Array::Add_Custom_Message(int message_length, int message_array[])
 {
-	SG_Tile_Update_MSG_Array.push_back(Message_SG_Tile_Update(grid_point_x, grid_point_y, tile_layer, structure_id, structure_type));
+	bool message_valid = false;
+	switch (message_array[0])
+	{
+	case MESSAGE_TYPE_SG_TILE_UPDATE:
+		switch (message_array[1])
+		{
+		case OBJECT_TYPE_ANY:
+			switch (message_array[2])
+			{
+			case FOCUS_ALL:
+				Custom_Message_Array[count_custom_messages] = (Custom_Message(message_length, message_array));
+				message_valid = true;
+				break;
+			}
+			break;
+		}
+		break;
+	case MESSAGE_TYPE_SG_ENTITY_CREATE:
+		switch (message_array[1])
+		{
+		case OBJECT_TYPE_ANY:
+			switch (message_array[2])
+			{
+			case FOCUS_ALL:
+				Custom_Message_Array[count_custom_messages] = (Custom_Message(message_length, message_array));
+				message_valid = true;
+				break;
+			}
+		}
+	case MESSAGE_TYPE_STAT_UPDATE_REQUEST:
+		switch (message_array[1])
+		{
+		case OBJECT_TYPE_STRUCTURE:
+			switch (message_array[2])
+			{
+			case FOCUS_SPECIFC_OBJECT:
+				Custom_Message_Array[count_custom_messages] = (Custom_Message(message_length, message_array));
+				message_valid = true;
+				break;
+			}
+			break;
+		}
+		break;
+	}
+
+	if (message_valid == false)
+	{
+		cout << "Invalid Custom Message Submitted to Bus" << endl;
+	}
+	else
+	{
+		count_custom_messages++;
+		if (count_custom_messages >= MAX_NUM_CUSTOM_MESSAGES)
+		{
+			cout << "Custom message overflow" << endl;
+			count_custom_messages = 0;
+		}
+	}
 }
 
 void Message_Array::Clear_All()
 {
 	count_chatter_message = 0;
 	count_input_messages = 0;
-	SG_Tile_Update_MSG_Array.clear();
+	count_custom_messages = 0;
 }
 
 void Message_Array :: free()
