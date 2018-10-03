@@ -57,7 +57,7 @@ public:
 	void Draw(SDL_Renderer* render_target);
 
 	void Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
-	void Draw_Sprites(SDL_Renderer* render_target);
+	void Draw_Sprites(SDL_Renderer* render_target, int spritehsheet);
 	void Draw_Primitives(SDL_Renderer* render_target);
 	void Draw_Text_Strings(SDL_Renderer* render_target);
 
@@ -91,6 +91,7 @@ private:
 	Spritesheet mid_overlay_spritesheet;
 	Spritesheet mid_2_spritesheet;
 	Spritesheet entity_spritesheet;
+	Spritesheet icon_spritesheet;
 
 	// Primitive array 
 	int count_num_primitives = -1;

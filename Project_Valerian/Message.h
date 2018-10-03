@@ -95,8 +95,7 @@ private:
 // Existing Message Types:
 //
 // Message for requesting that a structure update its oxygen level
-// MESSAGE_TYPE_STAT_UPDATE_REQUEST --> OBJECT_TYPE_STRUCTURE --> FOCUS_TYPE_SPECIFIC --> GRID_X --> GRID_Y --> STAT_STRUCTURE_OXYGEN_LEVEL --> 10
-//
+// MESSAGE_TYPE_STAT_UPDATE_REQUEST --> OBJECT_TYPE_STRUCTURE --> FOCUS_TYPE_SPECIFIC --> STAT_ADJUST --> GRID_X --> GRID_Y --> STAT_STRUCTURE_OXYGEN_LEVEL --> 10
 //
 // Message for a tile update from the Scene Graph
 // MESSAGE_TYPE_SG_TILE_UPDATE --> OBJECT_TYPE_ALL --> FOCUS_TYPE_ALL --> GRID_X --> GRID_Y --> TILE_LAYER --> STRUCTURE_TYPE --> STRUCTURE_ID
@@ -104,3 +103,7 @@ private:
 // Message for an Entity Create from the Scene Graph
 //
 // MESSAGE_TYPE_SG_ENTITY_CREATE --> OBJECT_TYPE_ALL --> FOCUS_TYPE_ALL --> GRID_X --> GRID_Y
+//
+// Message to set a rally point for entities 
+//
+// MESSAGE_TYPE_SET_RALLY_POINT --> OBJECT_TYPE_ENTITY --> FOCUS_TYPE_RANGE --> ENTITY_FACTION --> GRID_X --> GRID_Y

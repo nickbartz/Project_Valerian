@@ -34,7 +34,6 @@ void Game_Library::Load_Tiles_From_Data_File(string path)
 		new_config.tile_specs.y = stoi(loaded_csv[i + 1][13]);
 		new_config.tile_specs.w = stoi(loaded_csv[i + 1][14]);
 		new_config.tile_specs.h = stoi(loaded_csv[i + 1][15]);
-
 		new_config.tile_clip.x = stoi(loaded_csv[i + 1][16])*SPRITE_SIZE;
 		new_config.tile_clip.y = stoi(loaded_csv[i + 1][17])*SPRITE_SIZE;
 		new_config.tile_clip.w = stoi(loaded_csv[i + 1][18])*SPRITE_SIZE;
@@ -42,11 +41,13 @@ void Game_Library::Load_Tiles_From_Data_File(string path)
 		new_config.multiclip_type = stoi(loaded_csv[i + 1][9]);
 		new_config.num_animation_frame = stoi(loaded_csv[i + 1][20]);
 		new_config.job_type = stoi(loaded_csv[i + 1][21]);
-		
+		new_config.ui_type = stoi(loaded_csv[i + 1][23]);
+		new_config.icon_clip_x = stoi(loaded_csv[i + 1][24])*SPRITE_SIZE;
+		new_config.icon_clip_y = stoi(loaded_csv[i + 1][25])*SPRITE_SIZE;
+		new_config.is_inaccessible = stoi(loaded_csv[i + 1][26]);
 		loaded_tiles[i] = new_config;
 		num_loaded_tiles++;
 	}
-
 }
 
 void Game_Library::Load_Entity_Templates(string entity_template_path, string entity_animation_path)
@@ -216,9 +217,14 @@ Entity_Template Game_Library::Fetch_Entity_Template(int entity_id)
 	}
 }
 
+int Game_Library::Get_Num_Structure_Template()
+{
+	return num_loaded_tiles;
+}
+
 bool Game_Library::is_wall(int tile_type)
 {
-	if (tile_type == 20) return true;
+	if (tile_type == 20 || tile_type == 8) return true;
 	else return false;
 }
 bool Game_Library::is_null(int tile_type)

@@ -11,6 +11,7 @@
 #include<Scene_Graph.h>
 #include<Game_Library.h>
 #include<Timer.h>
+#include<A_Star.h>
 
 using namespace std;
 
@@ -75,8 +76,7 @@ bool init()
 					success = false;
 				}
 
-				// We will disable the cursor later once we returna new icon for the mouse, but for now let's leave it on
-				//SDL_ShowCursor(SDL_DISABLE);
+				SDL_ShowCursor(SDL_DISABLE);
 			}
 		}
 	}
@@ -158,17 +158,22 @@ int main(int argc, char *args[])
 	// Create World Map
 	unique_ptr<Scene_Graph> scene_graph(new Scene_Graph(service_locator.get()));
 
+	// Create the Pathfinder 
+	unique_ptr<Path_Field> pathfinder(new Path_Field(service_locator.get()));
+
 	// Register pointers with the service locator
 
+	service_locator->Register_Game_Library(game_library.get());
 	service_locator->Register_Game_Window(Game_Window);
 	service_locator->Register_Game_Renderer(Game_Renderer);
 	service_locator->Register_Draw_System_Pointer(draw_system.get());
 	service_locator->Register_MB_Pointer(main_bus.get());
 	service_locator->Register_UI_Pointer(user_interface.get());
 	service_locator->Register_Cursor_Pointer(cursor.get());
-	service_locator->Register_Game_Library(game_library.get());
 	service_locator->Register_Scene_Graph(scene_graph.get());
+	service_locator->Register_Pathfinder(pathfinder.get());
 
+	user_interface.get()->Init();
 	scene_graph->Create_Background();
 
 	//Start counting frames per second
@@ -181,7 +186,10 @@ int main(int argc, char *args[])
 
 	scene_graph->Create_New_Structure({ 0,-1 }, game_library->Fetch_Tile_Object_Config(4));
 	
-	scene_graph->Create_Entity({ 1,-1 }, game_library->Fetch_Entity_Template(1));
+	scene_graph->Create_Entity({ 1,-1 }, game_library->Fetch_Entity_Template(2));
+	scene_graph->Create_Entity({ 2,-1 }, game_library->Fetch_Entity_Template(1));
+
+	//pathfinder.get()->run_A_star({ 10,-10 }, { 10,10 });
 
 	// END TEST VARIABLES
 
@@ -196,25 +204,30 @@ int main(int argc, char *args[])
 				quit = true;
 			}
 
-			if ((e.type >= 768 && e.type <= 772) || (e.type >= 1024 && e.type <= 1027)) main_bus->Add_Message(Message_Input(e));
+			if ((e.type >= 768 && e.type <= 772) || (e.type >= 1024 && e.type <= 1027))
+			{
+				main_bus->Add_Message(Message_Input(e));
+			}
 		}
 
 		user_interface->Update();
 		scene_graph->Update();
-
+		cursor->Update();
 
 		//Clear screen
 		SDL_SetRenderDrawColor(Game_Renderer, 0x0, 0x0, 0x0, 0x0);
 		SDL_RenderClear(Game_Renderer);
 
 		// Send draw jobs from scene graph
+
 		scene_graph->Draw();
+		cursor->Draw();
 
 		// Draw objects on screen
 		draw_system->Draw(Game_Renderer);
 
 		// Draw FPS
-		int avgFPS = countedFrames / (fpsTimer.getTicks() / 10000.f);
+		int avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
 		if (avgFPS > 2000000) avgFPS = 0;
 		string fps = std::to_string(avgFPS);
 		FC_Draw(font_array[FONT_DEFAULT], Game_Renderer, 0, 0, fps.c_str());
@@ -227,7 +240,7 @@ int main(int argc, char *args[])
 		draw_system->Clear_Text_Instruction_Array();
 
 		// Have subsystems collect messages from the bus
-		cursor->Update();
+
 		cursor->Collect_Bus_Messages();
 		user_interface->Collect_Bus_Messages();
 		scene_graph->Collect_Bus_Messages();

@@ -4,7 +4,7 @@
 #include<Global_Constants.h>
 #include<Game_Library.h>
 
-class Structure_Template;
+struct Structure_Template;
 
 class AI_Job_Component
 {

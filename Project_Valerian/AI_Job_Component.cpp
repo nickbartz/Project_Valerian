@@ -5,6 +5,7 @@
 #include<Scene_Graph.h>
 #include<AI_Stats_Component.h>
 #include<Message_Array.h>
+#include<AI_Movement_Component.h>
 
 AI_Job_Component::AI_Job_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Structure_Template sTemplate)
 {
@@ -18,7 +19,18 @@ AI_Job_Component::AI_Job_Component(Global_Service_Locator* sLocator, Object_Serv
 
 void AI_Job_Component::Check_For_Messages()
 {
-
+	switch (structure_template.job_type)
+	{
+	case JOB_OXYGENATE_SURROUNDINGS:
+		for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
+		{
+			if (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION)
+			{
+				next_goal_num = 0;
+			}
+		}
+		break;
+	}
 }
 
 void AI_Job_Component::Update()
@@ -78,6 +90,7 @@ void AI_Job_Component::Action_Triage(int goal[])
 		break;
 	}
 }
+
 void AI_Job_Component::Action_Create(int goal[])
 {
 
@@ -98,7 +111,6 @@ void AI_Job_Component::Action_Assess_Internal(int goal[])
 {
 
 }
-
 void AI_Job_Component::Action_Assess_External(int goal[])
 {
 	switch (goal[0])
@@ -107,13 +119,13 @@ void AI_Job_Component::Action_Assess_External(int goal[])
 		vector<Coordinate> oxygenation_vector;
 		map<Coordinate, bool> check_map;
 		bool leak_check = false;
-		service_locator->get_Scene_Graph()->Return_Tiles_Without_Leaks(object_locator->Return_AI_Stats_Pointer()->Get_Structure_Coordinate(), oxygenation_vector, check_map, leak_check);
+		service_locator->get_Scene_Graph()->Return_Tiles_Without_Leaks(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), oxygenation_vector, check_map, leak_check);
 		if (leak_check == false && oxygenation_vector.size() > 0)
 		{
 			for (int i = 0; i < oxygenation_vector.size(); i++)
 			{
-				int message_content[7] = { MESSAGE_TYPE_STAT_UPDATE_REQUEST, OBJECT_TYPE_STRUCTURE, FOCUS_SPECIFC_OBJECT, oxygenation_vector[i].x,oxygenation_vector[i].y,STAT_STRUCTURE_OXYGEN_LEVEL,10 };
-				service_locator->get_MB_Pointer()->Add_Custom_Message(7, message_content);
+				int message_content[8] = { MESSAGE_TYPE_STAT_UPDATE_REQUEST, OBJECT_TYPE_STRUCTURE, FOCUS_SPECIFC_OBJECT, STAT_ADJUST, oxygenation_vector[i].x,oxygenation_vector[i].y,STAT_STRUCTURE_OXYGEN_LEVEL,100/oxygenation_vector.size() };
+				service_locator->get_MB_Pointer()->Add_Custom_Message(8, message_content);
 			}
 		}
 		next_goal_num++;

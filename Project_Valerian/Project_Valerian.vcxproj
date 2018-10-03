@@ -122,12 +122,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AI_Item_Component.cpp" />
     <ClCompile Include="AI_Job_Component.cpp" />
+    <ClCompile Include="AI_Movement_Component.cpp" />
     <ClCompile Include="AI_Stats_Component.cpp" />
     <ClCompile Include="Console_Panel.cpp" />
     <ClCompile Include="Console_Window.cpp" />
     <ClCompile Include="Cursor.cpp" />
-    <ClCompile Include="Debug_Out.cpp" />
     <ClCompile Include="Draw_System.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Message.cpp" />
@@ -138,6 +139,7 @@
     <ClCompile Include="Service_Locator.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Game_Library.cpp" />
+    <ClCompile Include="A_Star.cpp" />
     <ClCompile Include="Spritesheet.cpp" />
     <ClCompile Include="Tile.cpp" />
     <ClCompile Include="Timer.cpp" />
@@ -146,16 +148,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Adjacent_Type_Array.h" />
+    <ClInclude Include="AI_Item_Component.h" />
+    <ClInclude Include="AI_Movement_Component.h" />
     <ClInclude Include="AI_Stats_Component.h" />
+    <ClInclude Include="A_Star.h" />
     <ClInclude Include="Console_Component.h" />
     <ClInclude Include="Console_Panel.h" />
     <ClInclude Include="Coordinate.h" />
     <ClInclude Include="Cursor.h" />
-    <ClInclude Include="Debug_Out.h" />
     <ClInclude Include="Draw_System.h" />
     <ClInclude Include="Global_Constants.h" />
     <ClInclude Include="Console_Window.h" />
     <ClInclude Include="AI_Job_Component.h" />
+    <ClInclude Include="Notes.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Message.h" />
     <ClInclude Include="Message_Array.h" />

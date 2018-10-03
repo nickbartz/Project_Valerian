@@ -3,6 +3,7 @@
 #include<algorithm>
 #include<Service_Locator.h>
 #include<Console_Component.h>
+#include<Coordinate.h>
 
 Cursor::Cursor(Global_Service_Locator* sPointer)
 {
@@ -13,6 +14,100 @@ Cursor::Cursor(Global_Service_Locator* sPointer)
 SDL_Rect Cursor::Get_Camera()
 {
 	return camera;
+}
+
+SDL_Point Cursor::Get_Mouse_Position()
+{
+	return SDL_Point{ current_mouse_x, current_mouse_y };
+}
+
+SDL_Point Cursor::Get_Mouse_World_Pos()
+{
+	int mouse_grid_x = 0;
+	int mouse_grid_y = 0;
+
+	int mouse_pos_x = (current_mouse_x - (SCREEN_WIDTH / 2) - camera.x);
+	int mouse_pos_y = (current_mouse_y - (SCREEN_HEIGHT / 2) - camera.y);
+
+	if (mouse_pos_x >= 0)
+	{
+		mouse_grid_x = mouse_pos_x / camera.w * TILE_SIZE;
+	}
+	else mouse_grid_x = mouse_pos_x / camera.w * TILE_SIZE;
+
+	if (mouse_pos_y >= 0)
+	{
+		mouse_grid_y = mouse_pos_y / camera.w * TILE_SIZE;
+	}
+	else mouse_grid_y = mouse_pos_y / camera.w * TILE_SIZE;
+
+	return SDL_Point{ mouse_grid_x,mouse_grid_y };
+}
+
+void Cursor::Change_Cursor_Icon(int icon_clip_x, int icon_clip_y)
+{
+	mouse_icon_clip_x = icon_clip_x;
+	mouse_icon_clip_y = icon_clip_y;
+}
+
+void Cursor::Update_Grid_Position()
+{
+	Coordinate grid_point = Get_Mouse_Grid_Coord();
+
+	grid_pos = { ((grid_point.x*TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((grid_point.y*TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+}
+
+int Cursor::Get_Recent_Mouse_Action()
+{
+	if (left_button == 1)
+	{
+		if (left_button_previous == 0)
+		{
+			return INPUT_LEFT_MOUSE_CLICK;
+		}
+		if (current_mouse_x != held_mouse_x || current_mouse_y != held_mouse_y)
+		{
+			return INPUT_LEFT_MOUSE_DRAG; // Left Click Drag
+		}
+	}
+	else if (right_button == 1)
+	{
+		if (right_button_previous == 0) return INPUT_RIGHT_MOUSE_CLICK; // Right Click
+		if (current_mouse_x != held_mouse_x || current_mouse_y != held_mouse_y) return INPUT_RIGHT_MOUSE_DRAG; // Right Click Drag
+	}
+	else if (right_button_previous == 1 && right_button == 0)
+	{
+		return INPUT_LEFT_MOUSE_UNCLICK; // Left Unclick
+	}
+	else if (left_button_previous == 1 && left_button == 0)
+	{
+		return INPUT_RIGHT_MOUSE_UNCLICK; // Right Unclick
+	}
+
+	return INPUT_NULL;
+}
+
+Coordinate Cursor::Get_Mouse_Grid_Coord()
+{
+	int mouse_grid_x = 0;
+	int mouse_grid_y = 0;
+	
+	int mouse_pos_x = (current_mouse_x - (SCREEN_WIDTH / 2) - camera.x);
+	int mouse_pos_y = (current_mouse_y - (SCREEN_HEIGHT / 2) - camera.y);
+	
+	if (mouse_pos_x >= 0)
+	{
+		mouse_grid_x = mouse_pos_x / camera.w;
+	}
+	else mouse_grid_x = mouse_pos_x / camera.w - 1;
+
+	if (mouse_pos_y >= 0)
+	{
+		mouse_grid_y = mouse_pos_y / camera.w;
+	}
+	else mouse_grid_y = mouse_pos_y / camera.w - 1;
+
+	return Coordinate{ mouse_grid_x,mouse_grid_y };
 }
 
 void Cursor::Collect_Bus_Messages()
@@ -32,13 +127,11 @@ void Cursor::Update()
 		currently_clicked_component->Currently_Clicked(false);
 		currently_clicked_component = NULL;
 	}
-
-	if (currently_clicked_component == NULL) Draw();
 }
 
 void Cursor::Draw()
 {
-	if (left_button == 1)
+	if (left_button == 1 && currently_clicked_component == NULL)
 	{
 		int x = min(current_mouse_x, held_mouse_x);
 		int y = min(current_mouse_y, held_mouse_y);
@@ -48,6 +141,19 @@ void Cursor::Draw()
 
 		service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, drag_rect, true, { 100,100,255,100 });
 		service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, drag_rect, false, { 255,255,255,255 });
+	}
+	else if (currently_clicked_component == NULL)
+	{
+		// For some reason this function to draw the grid highlight eats like 50fps on its own
+		//service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, grid_pos, true, { 100,100,255,100 });
+		///
+
+		service_pointer->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
+
+	}
+	else
+	{
+		service_pointer->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
 	}
 }
 
@@ -71,6 +177,7 @@ void Cursor::Parse_Input_Message(SDL_Event event)
 		last_mouse_y = current_mouse_y;		
 		current_mouse_x = event.motion.x;
 		current_mouse_y = event.motion.y;
+		Update_Grid_Position();
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
 	{
@@ -119,7 +226,7 @@ void Cursor::Parse_Input_Message(SDL_Event event)
 	}
 }
 
-void Cursor::Set_Currently_Clicked_Component(Console_Component* component)
+void Cursor::Set_Currently_Clicked_Component(UI_Component_Generic* component)
 {
 	currently_clicked_component = component;
 }

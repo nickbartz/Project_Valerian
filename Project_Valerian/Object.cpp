@@ -6,26 +6,27 @@
 #include<Adjacent_Type_Array.h>
 #include<iostream> 
 #include<Message_Array.h>
+#include<AI_Movement_Component.h>
+#include<Coordinate.h>
 using namespace std;
 
 Object::Object(int index, SDL_Rect location, Global_Service_Locator* sLocator)
 {
 	service_locator = sLocator;
-	object_pos = location;
-	grid_x = object_pos.x / TILE_SIZE;
-	grid_y = object_pos.y / TILE_SIZE;
 
 	// set the array index of the object so we know where to find it in the scene graph object array later
 	SG_object_array_index = index;
 
 	uniq_id = rand() % 1000;
+
+	temp_location = location;
 }
 
 void Object::Init_Structure_From_Template(Structure_Template object_config, Adjacent_Structure_Array neighbors)
 {
 	Structure_Stats structure_stats;
-	structure_stats.grid_x = grid_x;
-	structure_stats.grid_y = grid_y;
+	structure_stats.impassable = object_config.is_inaccessible;
+	
 	AI_Stats = new AI_Stats_Component(service_locator, &object_service_locator, object_config, structure_stats);
 	object_service_locator.Register_Pointer(AI_Stats);
 
@@ -33,6 +34,9 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	object_service_locator.Register_Pointer(render_component);
 
 	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, object_config);
+
+	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location);
+	object_service_locator.Register_Pointer(AI_Movement);
 }
 
 void Object::Init_Entity_From_Template(Entity_Template object_config)
@@ -42,6 +46,9 @@ void Object::Init_Entity_From_Template(Entity_Template object_config)
 
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config);
 	object_service_locator.Register_Pointer(render_component);
+
+	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location);
+	object_service_locator.Register_Pointer(AI_Movement);
 }
 
 int Object::Get_Assigned_Flag()
@@ -66,6 +73,13 @@ int Object::Get_Structure_Type()
 	}
 }
 
+bool Object::Is_Structure_Inaccessible()
+{
+	int inaccessible = AI_Stats->Return_Stat_Value(STAT_STRUCTURE_IMPASSABLE);
+
+	if (inaccessible == 1) return true;
+	else if (inaccessible == 0) return false;
+}
 
 
 // Core Object Functions
@@ -74,13 +88,16 @@ void Object::Update()
 {
 	if (AI_Stats != NULL) AI_Stats->Update();
 	if (AI_Job != NULL) AI_Job->Update();
+	if (AI_Movement != NULL) AI_Movement->Update();
 }
 
 void Object::Collect_Bus_Messages()
 {
-	if (render_component != NULL) render_component->Check_For_Messages(grid_x,grid_y);
+	Coordinate grid_coord = AI_Movement->Return_Grid_Coord();
+	if (render_component != NULL) render_component->Check_For_Messages(grid_coord.x,grid_coord.y);
 	if (AI_Stats != NULL) AI_Stats->Check_For_Messages();
 	if (AI_Job != NULL) AI_Job->Check_For_Messages();
+	if (AI_Movement != NULL) AI_Movement->Check_For_Messages();
 }
 
 void Object::Set_Assigned_Flag(int aFlag)
@@ -90,16 +107,18 @@ void Object::Set_Assigned_Flag(int aFlag)
 
 void Object::Draw()
 {
-	render_component->Draw(object_pos);
+	if(render_component != NULL) render_component->Draw(AI_Movement->Return_World_Pos());
 }
 
 void Object::Draw(SDL_Rect overwrite_pos)
 {		
-	render_component->Draw(overwrite_pos);
+	if (render_component != NULL) render_component->Draw(overwrite_pos);
 }
 
 void Object::free()
 {
 	if (render_component != NULL) delete render_component, render_component = NULL;
 	if (AI_Stats != NULL) delete AI_Stats, AI_Stats = NULL;
+	if (AI_Job != NULL) delete AI_Job, AI_Job = NULL;
+	if (AI_Movement != NULL) delete AI_Movement, AI_Movement = NULL;
 }

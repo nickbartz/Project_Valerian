@@ -5,9 +5,10 @@
 #include<AI_Job_Component.h>
 
 class SDL_Renderer;
-class Structure_Template;
+struct Structure_Template;
 struct Adjacent_Structure_Array;
 class AI_Stats_Component;
+class AI_Movement_Component;
 
 class Object
 {
@@ -22,6 +23,7 @@ public:
 	int Get_Array_Index();
 	int Get_Assigned_Flag();
 	int Get_Structure_Type();
+	bool Is_Structure_Inaccessible();
 
 	// Draw functions
 	void Draw();
@@ -40,19 +42,18 @@ private:
 	Global_Service_Locator* service_locator;
 	Object_Service_Locator object_service_locator;
 
+	SDL_Rect temp_location;
+
 	int SG_object_array_index;
 
 	// An unassigned object can be overwritten by a new object in an array
 	int assigned_flag = OBJECT_UNASSIGNED;
 
-	SDL_Rect object_pos;
-	int grid_x;
-	int grid_y;
-	
 	// Components	
 	Render_Component * render_component = NULL;
 	AI_Stats_Component* AI_Stats = NULL;
 	AI_Job_Component* AI_Job = NULL;
+	AI_Movement_Component* AI_Movement = NULL;
 
 };
 

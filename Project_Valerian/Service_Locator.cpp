@@ -46,6 +46,11 @@ Scene_Graph* Global_Service_Locator::get_Scene_Graph()
 	return scene_pointer;
 }
 
+Path_Field* Global_Service_Locator::get_Pathfinder()
+{
+	return pathfinder_pointer;
+}
+
 void Global_Service_Locator::Register_UI_Pointer(UI* ui_pointer)
 {
 	UI_pointer = ui_pointer;
@@ -86,6 +91,11 @@ void Global_Service_Locator::Register_Scene_Graph(Scene_Graph* sGraph)
 	scene_pointer = sGraph;
 }
 
+void Global_Service_Locator::Register_Pathfinder(Path_Field* pFind)
+{
+	pathfinder_pointer = pFind;
+}
+
 void Global_Service_Locator::free()
 {
 	draw_system_pointer = NULL;
@@ -96,6 +106,7 @@ void Global_Service_Locator::free()
 	game_renderer = NULL;
 	game_window = NULL;
 	scene_pointer = NULL;
+	pathfinder_pointer = NULL;
 }
 
 void Object_Service_Locator::Register_Pointer(Render_Component* sPointer)
@@ -108,6 +119,11 @@ void Object_Service_Locator::Register_Pointer(AI_Stats_Component* bPointer)
 	AI_Stats_Pointer = bPointer;
 }
 
+void Object_Service_Locator::Register_Pointer(AI_Movement_Component* mPointer)
+{
+	AI_Movement_Pointer = mPointer;
+}
+
 Render_Component* Object_Service_Locator::Return_Render_Pointer()
 {
 	return Render_Pointer;
@@ -116,4 +132,9 @@ Render_Component* Object_Service_Locator::Return_Render_Pointer()
 AI_Stats_Component* Object_Service_Locator::Return_AI_Stats_Pointer()
 {
 	return AI_Stats_Pointer;
+}
+
+AI_Movement_Component* Object_Service_Locator::Return_AI_Movement_Pointer()
+{
+	return AI_Movement_Pointer;
 }

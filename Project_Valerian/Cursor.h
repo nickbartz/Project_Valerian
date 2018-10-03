@@ -4,8 +4,10 @@
 #include<Global_Constants.h>
 #include<Message_Array.h>
 
-class Console_Component;
+
+class UI_Component_Generic;
 class Global_Service_Locator;
+class Coordinate;
 
 class Cursor
 {
@@ -13,6 +15,7 @@ public:
 	Cursor(Global_Service_Locator* sPointer);
 	
 	SDL_Rect Get_Camera();
+	SDL_Point Get_Mouse_Position();
 	void Draw();
 
 	bool left_button = false;
@@ -26,12 +29,22 @@ public:
 	int last_mouse_x = 0;
 	int last_mouse_y = 0;
 
-	void Set_Currently_Clicked_Component(Console_Component* component);
+	void Change_Cursor_Icon(int icon_clip_x, int icon_clip_y);
+
+	void Set_Currently_Clicked_Component(UI_Component_Generic* component);
+	int Get_Recent_Mouse_Action();
+
+	Coordinate Get_Mouse_Grid_Coord();
+	SDL_Point Get_Mouse_World_Pos();
 
 	void Collect_Bus_Messages();
 	void Update();
 
 private:
+	int mouse_icon_clip_x = 2 * SPRITE_SIZE;
+	int mouse_icon_clip_y = 0;
+
+	void Update_Grid_Position();
 	void Parse_Input_Message(SDL_Event e);
 	void Age_Mouse();
 
@@ -39,6 +52,7 @@ private:
 	SDL_Rect camera = { 0,0,0,0 };
 
 	Global_Service_Locator * service_pointer;
-	Console_Component* currently_clicked_component = NULL;
+	UI_Component_Generic* currently_clicked_component = NULL;
 	SDL_Rect drag_rect = { 0,0,0,0 };
+	SDL_Rect grid_pos = { 0,0,0,0 };
 };

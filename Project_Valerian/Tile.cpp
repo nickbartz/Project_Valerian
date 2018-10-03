@@ -1,5 +1,6 @@
 #include<Tile.h>
 #include <iostream>
+#include<Object.h>
 using namespace std;
 
 Tile::Tile(Coordinate gPoint)
@@ -48,4 +49,17 @@ int Tile::Return_Tile_Type_By_Layer(int tile_layer)
 	else if (tile_layer == TILE_LAYER_MID && mid_structure != NULL) return mid_structure->Get_Structure_Type();
 	else if (tile_layer == TILE_LAYER_ROOF && roof_structure != NULL) return roof_structure->Get_Structure_Type();
 	else return STRUCTURE_TYPE_NULL;
+}
+
+Object* Tile::Return_Tile_Object(int layer)
+{
+	switch (layer)
+	{
+	case TILE_LAYER_BASE:
+		return base_structure;
+	case TILE_LAYER_MID:
+		return mid_structure;
+	case TILE_LAYER_ROOF:
+		return roof_structure;
+	}
 }

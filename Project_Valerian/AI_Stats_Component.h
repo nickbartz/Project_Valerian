@@ -21,8 +21,6 @@ struct Entity_Stats
 
 struct Structure_Stats
 {
-	int grid_x = 0;
-	int grid_y = 0;
 	int built_level = 0;
 	int structure_health = 100;
 	int structure_max_health = 100;
@@ -40,9 +38,9 @@ public:
 
 	int Get_Structure_Name();
 	int Get_Structure_Type();
-	Coordinate Get_Structure_Coordinate();
 
-	void Update_Stat(int stat_name, int new_value);
+	void Update_Stat(int stat_name, int new_value );
+	void Adjust_Stat(int stat_name, int new_value);
 	int Return_Stat_Value(int stat_name);
 	int Return_Object_Type();
 
@@ -62,6 +60,6 @@ private:
 
 	int object_type;
 
-	void Handle_Stat_Update_Request(Custom_Message* array_message);
+	void Handle_Stat_Message(Custom_Message* array_message);
 
 };

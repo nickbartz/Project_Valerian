@@ -7,6 +7,7 @@
 #include<algorithm>
 #include<Game_Library.h>
 #include<AI_Stats_Component.h>>
+#include<AI_Movement_Component.h>
 
 using namespace std;
 
@@ -24,12 +25,18 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	sprite_coords = object_config.tile_specs;
 
 	max_structure_animation_frames = object_config.num_animation_frame;
+	neighbors = neighbor_array;
 
+	// If the object is a multiclip, handle multiclip
 	if (render_component == RENDER_COMPONENT_MULTICLIP)
 	{
-		neighbors = neighbor_array;
 		Initialize_Dedicated_Multisprite();
 		Adjust_Multisprite_To_Surroundings();
+	}
+	// If the object is a door, handle door
+	else if (object_config.structure_type == 8)
+	{
+		Adjust_Door_Orientation();
 	}
 }
 
@@ -119,7 +126,6 @@ void Render_Component::Draw_With_Multi_Clip(SDL_Rect pos_rect)
 
 void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 {	
-
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
 
 	SDL_Rect anim_clip = { sprite_clip.x + structure_animation_frame * SPRITE_SIZE, sprite_clip.y, sprite_clip.w, sprite_clip.h };
@@ -226,7 +232,7 @@ void Render_Component::Check_For_Messages(int grid_x, int grid_y)
 {
 	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
 	{
-		if (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE)
+		if (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION )
 		{
 			Check_Tile_Update_Message(&service_locator->get_MB_Pointer()->Custom_Message_Array[i]);
 		}
@@ -235,8 +241,9 @@ void Render_Component::Check_For_Messages(int grid_x, int grid_y)
 
 void Render_Component::Check_Tile_Update_Message(Custom_Message* tile_update)
 {
-	int grid_x = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_GRID_X);
-	int grid_y = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_GRID_Y);
+	Coordinate grid_point = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
+	int grid_x = grid_point.x;
+	int grid_y = grid_point.y;
 	
 	bool sprite_update = false;
 
@@ -260,7 +267,8 @@ void Render_Component::Check_Tile_Update_Message(Custom_Message* tile_update)
 
 void Render_Component::Stamp(SDL_Rect spritesheet_clip, SDL_Rect pos_rect, int tile_offset_x, int tile_offset_y)
 {
-	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet, dedicated_multisprite_num, spritesheet_clip, pos_rect);
+	SDL_Rect offset_clip = { spritesheet_clip.x + tile_offset_x, spritesheet_clip.y + tile_offset_y, spritesheet_clip.w, spritesheet_clip.h };
+	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet, dedicated_multisprite_num, offset_clip, pos_rect);
 }
 
 void Render_Component::Clear_Sprite()
@@ -272,206 +280,183 @@ void Render_Component::Build_Wall_Multisprite()
 {
 	Clear_Sprite();
 	
-	Game_Library* gl = service_locator->get_Game_Library();
+	Handle_Upper_Left_Wall_Quad(sprite_clip.x, sprite_clip.y);
 
-	int num_surrounding_vacuum = 0;
-	int num_surrounding_walls = 0;
-	int num_diagonal_walls = 0;
-	int num_diagonal_vacuum = 0;
+	Handle_Upper_Right_Wall_Quad(sprite_clip.x, sprite_clip.y);
 
-	// Check to see if there's an adjacent tile that is vacuum, if so, send this to the function that handles exterior tiles
-	for (int i = 0; i < 3; i++) for (int p = 0; p < 3; p++) if ((abs(i - 1) != abs(p - 1))) if (gl->is_null(neighbors.asa[0][p][i]) && gl->is_null(neighbors.asa[1][p][i])) num_surrounding_vacuum++;
-	for (int i = 0; i < 3; i++) for (int p = 0; p < 3; p++) if ((abs(i - 1) == abs(p - 1)) && !(i == 1 && p == 1))
-	{
-		if (gl->is_null(neighbors.asa[0][p][i]) && gl->is_null(neighbors.asa[1][p][i])) num_diagonal_vacuum++;
-	}
-	for (int i = 0; i < 3; i++) for (int p = 0; p < 3; p++) if ((abs(i - 1) != abs(p - 1))) if (gl->is_wall(neighbors.asa[1][p][i])) num_surrounding_walls++;
-	for (int i = 0; i < 3; i++) for (int p = 0; p < 3; p++) if ((abs(i - 1) == abs(p - 1)) && !(i == 0 && p == 0)) if (gl->is_wall(neighbors.asa[1][p][i])) num_diagonal_walls++;
+	Handle_Bottom_Left_Wall_Quad(sprite_clip.x, sprite_clip.y);
 
-	if (num_diagonal_vacuum == 1 && num_surrounding_vacuum == 0) Build_Wall_Multisprite_Handle_Complex_Exterior_Walls(num_surrounding_walls, num_diagonal_vacuum);
-	else if (num_surrounding_vacuum > 0) Build_Wall_Multisprite_Handle_Exterior_Walls(num_surrounding_vacuum, num_surrounding_walls);
-	else Build_Wall_Multisprite_Handle_Simple_Interior_Walls(num_surrounding_walls);
+	Handle_Bottom_Right_Wall_Quad(sprite_clip.x, sprite_clip.y);
 }
 
-void Render_Component::Build_Wall_Multisprite_Handle_Exterior_Walls(int num_space_walls, int num_surrounding_walls)
+void Render_Component::Handle_Upper_Left_Wall_Quad(int sprite_offset_x, int sprite_offset_y)
 {
 	Game_Library* gl = service_locator->get_Game_Library();
 	int TW = TILE_SIZE;
-	int cto_x = 0;
-	int cto_y = 0;
+	int TQ = TILE_SIZE / 2;
+	int cto_x = sprite_offset_x;
+	int cto_y = sprite_offset_y;
 
-	// Only one of the tiles around is vacuum
-	if (num_space_walls == 1)
-	{
-		if (num_surrounding_walls < 2)
-		{
-
-		}
-		else if (num_surrounding_walls == 2)
-		{
-			// One space wall is left
-			if (gl->is_null(neighbors.asa[1][0][1]) && gl->is_null(neighbors.asa[0][0][1])) Stamp({ 0 * TW,2 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-			// One space wall is right
-			else if (gl->is_null(neighbors.asa[1][2][1]) && gl->is_null(neighbors.asa[0][2][1])) Stamp({ 7 * TW,2 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-			// One space wall is above
-			else if (gl->is_null(neighbors.asa[1][1][0]) && gl->is_null(neighbors.asa[0][1][0]))  Stamp({ 1 * TW,0 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-			// One space wall is below
-			else if (gl->is_null(neighbors.asa[1][1][2]) && gl->is_null(neighbors.asa[0][1][2]))  Stamp({ 1 * TW,7 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-		}
-		else if (num_surrounding_walls == 3)
-		{
-			// Space wall is left and there's a wall to the right
-			if (gl->is_null(neighbors.asa[1][0][1])) Stamp({ 0 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-			// Space wall is right and there's a wall to the left
-			else if (gl->is_null(neighbors.asa[1][2][1])) Stamp({ 7 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-			// Space wall is above and there's a wall below
-			else if (gl->is_null(neighbors.asa[1][1][0])) Stamp({ 2 * TW,0 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-			// Space wall is below and there's a wall above
-			else if (gl->is_null(neighbors.asa[1][1][2])) Stamp({ 5 * TW,7 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-		}
-		
-
-	}
-	// Two of the tiles around is vacuum
-	else if (num_space_walls == 2)
-	{
-		// The space is above and to the right
-		if (gl->is_null(neighbors.asa[1][1][0]) && gl->is_null(neighbors.asa[0][1][0]) && gl->is_null(neighbors.asa[1][2][1]) && gl->is_null(neighbors.asa[0][2][1]))
-		{
-			Stamp({ 7 * TW,0 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-		}
-		// The space is above and to the left
-		else if (gl->is_null(neighbors.asa[1][1][0]) && gl->is_null(neighbors.asa[0][1][0]) && gl->is_null(neighbors.asa[1][0][1]) && gl->is_null(neighbors.asa[0][0][1]))
-		{
-			Stamp({ 0 * TW,0 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-		}
-		// Space is below and to the left
-		else if (gl->is_null(neighbors.asa[1][1][2]) && gl->is_null(neighbors.asa[0][1][2]) && gl->is_null(neighbors.asa[1][0][1]) && gl->is_null(neighbors.asa[0][0][1]))
-		{
-			Stamp({ 0 * TW,7 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-		}
-		// Space is below and to the right
-		else if (gl->is_null(neighbors.asa[1][1][2]) && gl->is_null(neighbors.asa[0][1][2]) && gl->is_null(neighbors.asa[1][2][1]) && gl->is_null(neighbors.asa[0][2][1]))
-		{
-			Stamp({ 7 * TW,7 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-		}
-	}
-	// Three of the tiles around is vacuum
-	else if (num_space_walls == 3)
-	{
-		// Need to add these for blocks that are stranded in space
-		Stamp({ 1 * TW,4 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-	}
-	// All four of the tiles around is vacuum
-	else if (num_space_walls == 4)
-	{
-		// need to add these for blocks that are stranded in space
-		Stamp({ 1 * TW,4 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-	}
-
-
-}
-
-void Render_Component::Build_Wall_Multisprite_Handle_Simple_Interior_Walls(int num_surrounding_walls)
-{
-	Game_Library* gl = service_locator->get_Game_Library();
-	int TQ = TILE_SIZE / 2; // TQ is a unit representing a quarter of a tile
-	int TW = TILE_SIZE;
-	int cto_x = 0;
-	int cto_y = 0;
-
-	// if everything around the tile is a wall 
-	if (num_surrounding_walls == 4)
-	{
-		Stamp({ 2 * TW,2 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-	}
+	bool left_space = false;
+	bool left_wall = false;
+	bool left_floor = false;
+	bool top_space = false;
+	bool top_wall = false;
+	bool top_floor = false;
+	bool top_left_space = false;
+	bool top_left_wall = false;
+	bool top_left_floor = false;
 	
-	// if there are no walls around the tile 
-	else if (num_surrounding_walls == 0) Stamp({ 1 * TW,3 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+	if (gl->is_null(neighbors.asa[0][0][1]) && gl->is_null(neighbors.asa[1][0][1])) left_space = true;
+	if (gl->is_wall(neighbors.asa[1][0][1])) left_wall = true;
+	if (gl->is_floor(neighbors.asa[0][0][1]) && !gl->is_wall(neighbors.asa[1][0][1])) left_floor = true;
 
-	// if there is one wall around the tile
-	else if (num_surrounding_walls == 1)
-	{
-		// If the wall is to the left
-		if (gl->is_wall(neighbors.asa[1][0][1])) Stamp({ 3 * TW,2 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+	if (gl->is_null(neighbors.asa[0][1][0]) && gl->is_null(neighbors.asa[1][1][0])) top_space = true;
+	if (gl->is_wall(neighbors.asa[1][1][0])) top_wall = true;
+	if (gl->is_floor(neighbors.asa[0][1][0]) && !gl->is_wall(neighbors.asa[1][1][0])) top_floor = true;
 
-		// If the wall is to the right
-		if (gl->is_wall(neighbors.asa[1][2][1])) Stamp({ 1 * TW,2 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+	if (gl->is_null(neighbors.asa[0][0][0]) && gl->is_null(neighbors.asa[1][0][0])) top_left_space = true;
+	if (gl->is_wall(neighbors.asa[1][0][0])) top_left_wall = true;
+	if (gl->is_floor(neighbors.asa[0][0][0]) && !gl->is_wall(neighbors.asa[1][0][0])) top_left_floor = true;
 
-		// If the wall is above
-		if (gl->is_wall(neighbors.asa[1][1][0])) Stamp({ 2 * TW,4 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-		// If the wall is below
-		if (gl->is_wall(neighbors.asa[1][1][2])) Stamp({ 3 * TW,3 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-	}
-
-	// if there are two walls around the tile
-	else if (num_surrounding_walls == 2)
-	{
-		// There is wall above and below
-		if (gl->is_wall(neighbors.asa[1][1][0]) && gl->is_wall(neighbors.asa[1][1][2])) Stamp({ 2 * TW,3 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-		// There is wall the the left and right
-		if (gl->is_wall(neighbors.asa[1][0][1]) && gl->is_wall(neighbors.asa[1][2][1])) Stamp({ 1 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-		// There is wall the the left and above
-		if (gl->is_wall(neighbors.asa[1][0][1]) && gl->is_wall(neighbors.asa[1][1][0])) Stamp({ 3 * TW,6 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-		// There is wall the the right and above
-		if (gl->is_wall(neighbors.asa[1][2][1]) && gl->is_wall(neighbors.asa[1][1][0])) Stamp({ 1 * TW,6 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-		// There is wall the the left and below
-		if (gl->is_wall(neighbors.asa[1][0][1]) && gl->is_wall(neighbors.asa[1][1][2])) Stamp({ 3 * TW,5 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-		// There is wall the the right and below
-		if (gl->is_wall(neighbors.asa[1][2][1]) && gl->is_wall(neighbors.asa[1][1][2])) Stamp({ 1 * TW,5 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-	}
-
-	else if (num_surrounding_walls == 3)
-	{
-		// the 3 surrounding walls are to the left
-		if (!gl->is_wall(neighbors.asa[1][2][1])) Stamp({ 5* TW,4 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-		// the 3 surrounding walls are to the right
-		if (!gl->is_wall(neighbors.asa[1][0][1])) Stamp({ 5 * TW,3 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-		// the 3 surrounding walls are above
-		if (!gl->is_wall(neighbors.asa[1][1][2])) Stamp({ 6 * TW,3 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-
-		// the 3 surrounding walls are below`
-		if (!gl->is_wall(neighbors.asa[1][1][0])) Stamp({ 5 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
-	}
-
+	if (left_space && top_space) Stamp({ 0 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_space && top_wall) Stamp({ 2 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_floor && top_wall) Stamp({ 5 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && top_wall && top_left_floor) Stamp({ 6 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && top_wall && top_left_space) Stamp({ 8 * TQ,1 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && top_wall && top_left_wall) Stamp({ 12 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && top_space) Stamp({ 3 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && top_floor) Stamp({ 4 * TQ,1 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_floor && top_floor) Stamp({ 11 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_floor && top_space) Stamp({ 0 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	else if (left_space && top_floor) Stamp({ 0 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
 }
-
-void Render_Component::Build_Wall_Multisprite_Handle_Complex_Exterior_Walls(int num_surrounding_walls, int num_diagonal_vacuum)
+void Render_Component::Handle_Upper_Right_Wall_Quad(int sprite_offset_x, int sprite_offset_y)
 {
 	Game_Library* gl = service_locator->get_Game_Library();
-	int TQ = TILE_SIZE / 2; // TQ is a unit representing a quarter of a tile
 	int TW = TILE_SIZE;
-	int cto_x = 0;
-	int cto_y = 0;
+	int TQ = TILE_SIZE / 2;
+	int cto_x = sprite_offset_x;
+	int cto_y = sprite_offset_y;
 
-	// If the diagonal vacuum is in the top left
-	if (gl->is_null(neighbors.asa[0][0][0]) && gl->is_null(neighbors.asa[1][0][0])) Stamp({ 6 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+	bool right_space = false;
+	bool right_wall = false;
+	bool right_floor = false;
+	bool top_space = false;
+	bool top_wall = false;
+	bool top_floor = false;
+	bool top_right_space = false;
+	bool top_right_wall = false;
+	bool top_right_floor = false;
 
-	// If the diagonal vacuum is in the top right
-	else if (gl->is_null(neighbors.asa[0][2][0]) && gl->is_null(neighbors.asa[1][2][0])) Stamp({ 4 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+	if (gl->is_null(neighbors.asa[0][2][1]) && gl->is_null(neighbors.asa[1][2][1])) right_space = true;
+	if (gl->is_wall(neighbors.asa[1][2][1])) right_wall = true;
+	if (gl->is_floor(neighbors.asa[0][2][1]) && !gl->is_wall(neighbors.asa[1][2][1])) right_floor = true;
 
-	// If the diagonal vacuum is in the bottom left
-	else if (gl->is_null(neighbors.asa[0][0][2]) && gl->is_null(neighbors.asa[1][0][2])) Stamp({ 6 * TW,6 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+	if (gl->is_null(neighbors.asa[0][1][0]) && gl->is_null(neighbors.asa[1][1][0])) top_space = true;
+	if (gl->is_wall(neighbors.asa[1][1][0])) top_wall = true;
+	if (gl->is_floor(neighbors.asa[0][1][0]) && !gl->is_wall(neighbors.asa[1][1][0])) top_floor = true;
 
-	// If the diagonal vacuum is in the bottom right
-	else if (gl->is_null(neighbors.asa[0][2][2]) && gl->is_null(neighbors.asa[1][2][2])) Stamp({ 4 * TW,6 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+	if (gl->is_null(neighbors.asa[0][2][0]) && gl->is_null(neighbors.asa[1][2][0])) top_right_space = true;
+	if (gl->is_wall(neighbors.asa[1][2][0])) top_right_wall = true;
+	if (gl->is_floor(neighbors.asa[0][2][0]) && !gl->is_wall(neighbors.asa[1][2][0])) top_right_floor = true;
 
+	if (right_space && top_space) Stamp({ 1 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_space && top_wall) Stamp({ 3 * TQ,1 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_floor && top_wall) Stamp({ 4 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && top_wall && top_right_floor) Stamp({ 7 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && top_wall && top_right_space) Stamp({ 9 * TQ,1 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && top_wall && top_right_wall) Stamp({ 12 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && top_space) Stamp({ 3 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && top_floor) Stamp({ 4 * TQ,1 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_floor && top_floor) Stamp({ 10 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_floor && top_space) Stamp({ 1 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	else if (right_space && top_floor) Stamp({ 1 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+}
+void Render_Component::Handle_Bottom_Left_Wall_Quad(int sprite_offset_x, int sprite_offset_y)
+{
+	Game_Library* gl = service_locator->get_Game_Library();
+	int TW = TILE_SIZE;
+	int TQ = TILE_SIZE / 2;
+	int cto_x = sprite_offset_x;
+	int cto_y = sprite_offset_y;
 
+	bool left_space = false;
+	bool left_wall = false;
+	bool left_floor = false;
+	bool bottom_space = false;
+	bool bottom_wall = false;
+	bool bottom_floor = false;
+	bool bottom_left_space = false;
+	bool bottom_left_wall = false;
+	bool bottom_left_floor = false;
 
+	if (gl->is_null(neighbors.asa[0][0][1]) && gl->is_null(neighbors.asa[1][0][1])) left_space = true;
+	if (gl->is_wall(neighbors.asa[1][0][1])) left_wall = true;
+	if (gl->is_floor(neighbors.asa[0][0][1]) && !gl->is_wall(neighbors.asa[1][0][1])) left_floor = true;
+
+	if (gl->is_null(neighbors.asa[0][1][2]) && gl->is_null(neighbors.asa[1][1][2])) bottom_space = true;
+	if (gl->is_wall(neighbors.asa[1][1][2])) bottom_wall = true;
+	if (gl->is_floor(neighbors.asa[0][1][2]) && !gl->is_wall(neighbors.asa[1][1][2])) bottom_floor = true;
+
+	if (gl->is_null(neighbors.asa[0][0][2]) && gl->is_null(neighbors.asa[1][0][2])) bottom_left_space = true;
+	if (gl->is_wall(neighbors.asa[1][0][2])) bottom_left_wall = true;
+	if (gl->is_floor(neighbors.asa[0][0][2]) && !gl->is_wall(neighbors.asa[1][0][2])) bottom_left_floor = true;
+
+	if (left_space && bottom_space) Stamp({ 0 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_space && bottom_wall) Stamp({ 2 * TQ,0 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_floor && bottom_wall) Stamp({ 5 * TQ,0 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && bottom_wall && bottom_left_floor) Stamp({ 6 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && bottom_wall && bottom_left_space) Stamp({ 8 * TQ,0 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && bottom_wall && bottom_left_wall) Stamp({ 12 * TQ,0 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && bottom_space) Stamp({ 2 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_wall && bottom_floor) Stamp({ 5 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_floor && bottom_floor) Stamp({ 11 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_floor && bottom_space) Stamp({ 0 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (left_space && bottom_floor) Stamp({ 0 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+
+}
+void Render_Component::Handle_Bottom_Right_Wall_Quad(int sprite_offset_x, int sprite_offset_y)
+{
+	Game_Library* gl = service_locator->get_Game_Library();
+	int TW = TILE_SIZE;
+	int TQ = TILE_SIZE / 2;
+	int cto_x = sprite_offset_x;
+	int cto_y = sprite_offset_y;
+
+	bool right_space = false;
+	bool right_wall = false;
+	bool right_floor = false;
+	bool bottom_space = false;
+	bool bottom_wall = false;
+	bool bottom_floor = false;
+	bool bottom_right_space = false;
+	bool bottom_right_wall = false;
+	bool bottom_right_floor = false;
+
+	if (gl->is_null(neighbors.asa[0][2][1]) && gl->is_null(neighbors.asa[1][2][1])) right_space = true;
+	if (gl->is_wall(neighbors.asa[1][2][1])) right_wall = true;
+	if (gl->is_floor(neighbors.asa[0][2][1]) && !gl->is_wall(neighbors.asa[1][2][1])) right_floor = true;
+
+	if (gl->is_null(neighbors.asa[0][1][2]) && gl->is_null(neighbors.asa[1][1][2])) bottom_space = true;
+	if (gl->is_wall(neighbors.asa[1][1][2])) bottom_wall = true;
+	if (gl->is_floor(neighbors.asa[0][1][2]) && !gl->is_wall(neighbors.asa[1][1][2])) bottom_floor = true;
+
+	if (gl->is_null(neighbors.asa[0][2][2]) && gl->is_null(neighbors.asa[1][2][2])) bottom_right_space = true;
+	if (gl->is_wall(neighbors.asa[1][2][2])) bottom_right_wall = true;
+	if (gl->is_floor(neighbors.asa[0][2][2]) && !gl->is_wall(neighbors.asa[1][2][2])) bottom_right_floor = true;
+
+	if (right_space && bottom_space) Stamp({ 1 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_space && bottom_wall) Stamp({ 3 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_floor && bottom_wall) Stamp({ 4 * TQ,0 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && bottom_wall && bottom_right_floor) Stamp({ 7 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && bottom_wall && bottom_right_space) Stamp({ 9 * TQ,0 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && bottom_wall && bottom_right_wall) Stamp({ 12 * TQ,0 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && bottom_space) Stamp({ 2 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_wall && bottom_floor) Stamp({ 5 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_floor && bottom_floor) Stamp({ 10* TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_floor && bottom_space) Stamp({ 1 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_space && bottom_floor) Stamp({ 1 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 }
 
 void Render_Component::Build_Floor_Multisprite()
@@ -495,4 +480,21 @@ void Render_Component::Decrement_Structure_Animation_Frame()
 	{
 		structure_animation_frame = max_structure_animation_frames - 1;
 	}
+}
+
+void Render_Component::Increment_Entity_Animation()
+{
+	for (int i = 0; i < num_entity_components; i++)
+	{
+		entity_animations[current_entity_anim][i].component_current_frame++;
+		if (entity_animations[current_entity_anim][i].component_current_frame >= entity_animations[current_entity_anim][i].component_max_frames)
+		{
+			entity_animations[current_entity_anim][i].component_current_frame = 0;
+		}
+	}
+}
+
+void Render_Component::Change_Entity_Current_Animation(int new_animation)
+{
+	current_entity_anim = new_animation;
 }

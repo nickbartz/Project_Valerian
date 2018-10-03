@@ -5,8 +5,8 @@
 
 class Global_Service_Locator;
 class Object_Service_Locator;
-class Structure_Template;
-class Entity_Template;
+struct Structure_Template;
+struct Entity_Template;
 class Custom_Message;
 
 struct Animation_State
@@ -53,15 +53,19 @@ public:
 	// function for different multiclip types
 	void Clear_Sprite();
 	void Stamp(SDL_Rect spritesheet_clip, SDL_Rect pos_rect, int tile_offset_x = 0, int tile_offset_y = 0);
-	void Build_Wall_Multisprite();
-	void Build_Wall_Multisprite_Handle_Exterior_Walls(int num_space_walls, int num_surrounding_walls);
-	void Build_Wall_Multisprite_Handle_Simple_Interior_Walls(int num_surrounding_walls);
-	void Build_Wall_Multisprite_Handle_Complex_Exterior_Walls(int num_surrounding_walls, int num_diagonal_vacuum);
+	void Build_Wall_Multisprite(); 
+	void Handle_Upper_Left_Wall_Quad(int sprite_offset_x, int sprite_offset_y);
+	void Handle_Upper_Right_Wall_Quad(int sprite_offset_x, int sprite_offset_y);
+	void Handle_Bottom_Left_Wall_Quad(int sprite_offset_x, int sprite_offset_y);
+	void Handle_Bottom_Right_Wall_Quad(int sprite_offset_x, int sprite_offset_y);
 	void Build_Floor_Multisprite();
+	void Adjust_Door_Orientation();
 
-	// Structure_Animation Commands
+	// Animation Commands
 	void Increment_Structure_Animation_Frame();
 	void Decrement_Structure_Animation_Frame();
+	void Increment_Entity_Animation();
+	void Change_Entity_Current_Animation(int new_animation);
 
 private:
 	bool init = false;

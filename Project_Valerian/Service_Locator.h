@@ -8,7 +8,7 @@ class Draw_System;
 class Cursor;
 class Game_Library;
 class Scene_Graph;
-
+class Path_Field;
 
 class Global_Service_Locator
 {
@@ -23,6 +23,7 @@ public:
 	SDL_Renderer* get_Game_Renderer();
 	SDL_Window* get_Game_Window();
 	Scene_Graph* get_Scene_Graph();
+	Path_Field* get_Pathfinder();
 
 
 	void Register_UI_Pointer(UI* ui_pointer);
@@ -33,6 +34,7 @@ public:
 	void Register_Game_Renderer(SDL_Renderer* game_renderer);
 	void Register_Game_Window(SDL_Window* gWindow);
 	void Register_Scene_Graph(Scene_Graph* sGraph);
+	void Register_Pathfinder(Path_Field* pFind);
 
 	void free();
 
@@ -45,22 +47,27 @@ private:
 	SDL_Renderer* game_renderer;
 	SDL_Window* game_window;
 	Scene_Graph* scene_pointer;
+	Path_Field* pathfinder_pointer;
 };
 
 
 class Render_Component;
 class AI_Stats_Component;
+class AI_Movement_Component;
 
 class Object_Service_Locator
 {
 public:
 	void Register_Pointer(Render_Component* Simple_Render_Pointer);
 	void Register_Pointer(AI_Stats_Component* Basic_Structure_AI_Pointer);
+	void Register_Pointer(AI_Movement_Component* AI_Movement_Pointer);
 
 	Render_Component* Return_Render_Pointer();
 	AI_Stats_Component* Return_AI_Stats_Pointer();
+	AI_Movement_Component* Return_AI_Movement_Pointer();
 
 private:
 	Render_Component * Render_Pointer;
 	AI_Stats_Component* AI_Stats_Pointer;
+	AI_Movement_Component* AI_Movement_Pointer;
 };

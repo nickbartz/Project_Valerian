@@ -24,9 +24,14 @@ public:
 	void Update_Tile_Map(Coordinate grid_point, int tile_layer, Object* structure);
 
 	// Create Objects
-	void Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset);
-	void Create_New_Structure(Coordinate grid_point, Structure_Template structure);
+	bool Check_Tile_Placement(Coordinate grid_point, Structure_Template structure);
 	void Create_Background();
+	void Create_New_Structure(Coordinate grid_point, Structure_Template structure, bool update_message = true);
+	void Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset);
+
+	// Delete Objects
+	void Delete_Structure(Coordinate grid_point, int tile_layer);
+	void Delete_Structure_Highest_Layer(Coordinate grid_point);
 
 	// Create Entities
 	void Create_Entity(Coordinate grid_point, Entity_Template entity);
@@ -39,6 +44,7 @@ public:
 	void Return_Tiles_Without_Leaks(Coordinate start_tile, vector<Coordinate> &tiles_to_oxygenate, map<Coordinate, bool> &checked_tiles, bool &is_leak);
 	bool Tile_Has_Leak(Coordinate tile);
 	bool Tile_Is_Wall_Or_Closed_Door(Coordinate tile);
+	bool Tile_Is_Inaccessible(Coordinate tile);
 
 	void free();
 private:

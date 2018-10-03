@@ -1,8 +1,13 @@
 #include<Console_Component.h>
 #include<Cursor.h>
+#include<Service_Locator.h>
+#include<Game_Library.h>
+#include<UI.h>
 
-Console_Component::Console_Component(SDL_Rect placement_rect, bool component_is_filled, SDL_Color bColor, bool is_highlight, SDL_Color hColor)
+UI_Component_Generic::UI_Component_Generic(Global_Service_Locator* sLocator, SDL_Rect placement_rect, bool component_is_filled, SDL_Color bColor, bool is_highlight, SDL_Color hColor)
 {
+	service_locator = sLocator;
+	
 	offset_rect = placement_rect;
 	filled = component_is_filled;
 	fill_color = bColor;
@@ -12,7 +17,24 @@ Console_Component::Console_Component(SDL_Rect placement_rect, bool component_is_
 
 // Functions that determine what type of component this becomes
 
-void Console_Component::Make_Button(string button_title, SDL_Rect tOffset, int bAction, SDL_Color tColor)
+void UI_Component_Generic::Init()
+{
+
+}
+
+void UI_Component_Generic::Set_Click_Message(int mLength, int mArray[])
+{
+	for (int i = 0; i < mLength; i++)
+	{
+		message_array[i] = mArray[i];
+	}
+
+	is_button = true;
+	message_length = mLength;
+}
+
+// DEPERECTATED DO NOT USE
+void UI_Component_Generic::Make_Button(string button_title, SDL_Rect tOffset, int bAction, SDL_Color tColor)
 {
 	title = button_title;
 	text_offset = tOffset;
@@ -20,22 +42,22 @@ void Console_Component::Make_Button(string button_title, SDL_Rect tOffset, int b
 	draw_title = true;
 }
 
-void Console_Component::Set_Font_Type(int fType)
+void UI_Component_Generic::Set_Font_Type(int fType)
 {
 	font_type = fType;
 }
 
-void Console_Component::Assign_Window(int window_name)
+void UI_Component_Generic::Assign_Window(int window_name)
 {
 	window = window_name;
 }
 
-void Console_Component::Assign_Panel(int panel_name) 
+void UI_Component_Generic::Assign_Panel(int panel_name) 
 {
 	panel = panel_name;
 }
 
-void Console_Component::Change_Offset_Rect(int argument, int new_value)
+void UI_Component_Generic::Change_Offset_Rect(int argument, int new_value)
 {
 	switch (argument)
 	{
@@ -56,47 +78,49 @@ void Console_Component::Change_Offset_Rect(int argument, int new_value)
 
 // Functions that access certain components
 
-SDL_Rect Console_Component::Return_Rect()
+SDL_Rect UI_Component_Generic::Return_Rect()
 {
 	return current_screen_rect;
 }
 
-int Console_Component::Get_Font_Type()
+int UI_Component_Generic::Get_Font_Type()
 {
 	return font_type;
 }
 
-string Console_Component::Get_Title()
+string UI_Component_Generic::Get_Title()
 {
 	return title;
 }
 
-int Console_Component::Get_Window()
+int UI_Component_Generic::Get_Window()
 {
 	return window;
 }
 
-int Console_Component::Get_Panel()
+int UI_Component_Generic::Get_Panel()
 {
 	return panel;
 }
 
 // Functions that check for clicks 
 
-bool Console_Component::Currently_Clicked()
+bool UI_Component_Generic::Currently_Clicked()
 {
 	return currently_clicked;
 }
 
-bool Console_Component::Currently_Clicked(bool state_override)
+bool UI_Component_Generic::Currently_Clicked(bool state_override)
 {
 	currently_clicked = state_override;
 	return currently_clicked;
 }
 
-void Console_Component::Check_For_Click(Cursor* cursor)
+void UI_Component_Generic::Check_For_Click()
 {
-	SDL_Point new_point = { cursor->current_mouse_x, cursor->current_mouse_y };
+	Cursor* cursor = service_locator->get_Cursor_Pointer();
+	
+	SDL_Point new_point = cursor->Get_Mouse_Position();
 
 	if (SDL_PointInRect(&new_point, &current_screen_rect))
 	{
@@ -104,13 +128,14 @@ void Console_Component::Check_For_Click(Cursor* cursor)
 		{
 			Currently_Clicked(true);
 			cursor->Set_Currently_Clicked_Component(this);
+			service_locator->get_UI_pointer()->Load_Action_To_UI(message_length, message_array);
 		}
 	}
 }
 
 // Draw Functions
 
-void Console_Component::Draw(Draw_System* draw_system, SDL_Rect base_rect)
+void UI_Component_Generic::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 {
 	SDL_Rect draw_rect = { base_rect.x + offset_rect.x, base_rect.y + offset_rect.y, offset_rect.w, offset_rect.h };
 	current_screen_rect = draw_rect;
@@ -143,9 +168,9 @@ void Console_Component::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 
 // Message_Stream Functions
 
-void Message_Stream::Draw(Draw_System* draw_system, SDL_Rect base_rect)
+void UI_Component_Message_Stream::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 {
-	Console_Component::Draw(draw_system, base_rect);
+	UI_Component_Generic::Draw(draw_system, base_rect);
 
 	int spacer = 0;
 	for (int i = 0; i < max_message_lines; i++)
@@ -157,7 +182,7 @@ void Message_Stream::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 	}
 }
 
-void Message_Stream::Push_Message_Into_Stream(string new_message)
+void UI_Component_Message_Stream::Push_Message_Into_Stream(string new_message)
 {
 	if (new_message.size() == 0) return;
 
@@ -167,4 +192,44 @@ void Message_Stream::Push_Message_Into_Stream(string new_message)
 	}
 
 	message_array[0] = new_message;
+}
+
+void UI_Component_Graphic_Button::Draw(Draw_System* draw_system, SDL_Rect base_rect)
+{
+	UI_Component_Generic::Draw(draw_system, base_rect);
+
+	draw_system->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet_num, { base_rect.x + offset_rect.x , base_rect.y + offset_rect.y, offset_rect.w, offset_rect.h }, sprite_clip);
+}
+
+void UI_Component_Graphic_Button::Init(int oType, int temp_id, SDL_Rect icon_clip)
+{
+	object_type = oType;
+	template_id = temp_id;
+	
+	if (object_type != OBJECT_TYPE_NULL)
+	{
+		Fetch_Sprite_Details_From_Object_ID();
+	}
+	else
+	{
+		sprite_clip = icon_clip;
+	}
+
+}
+
+void UI_Component_Graphic_Button::Fetch_Sprite_Details_From_Object_ID()
+{
+	Structure_Template new_structure;
+
+	switch (object_type)
+	{
+	case OBJECT_TYPE_STRUCTURE:
+		new_structure = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(template_id);
+		sprite_clip = { new_structure.icon_clip_x,new_structure.icon_clip_y, SPRITE_SIZE, SPRITE_SIZE };
+		break;
+	case OBJECT_TYPE_ENTITY:
+		break;
+	case OBJECT_TYPE_ITEM:
+		break;
+	}
 }

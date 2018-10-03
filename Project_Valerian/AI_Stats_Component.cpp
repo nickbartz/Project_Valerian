@@ -3,6 +3,7 @@
 #include<Render_Component.h>
 #include<Coordinate.h>
 #include<Message_Array.h>
+#include<AI_Movement_Component.h>
 
 
 using namespace std;
@@ -43,12 +44,6 @@ int AI_Stats_Component::Get_Structure_Type()
 	return structure_template.structure_type;
 }
 
-Coordinate AI_Stats_Component::Get_Structure_Coordinate()
-{
-	Coordinate current_coord = { structure_stats.grid_x,structure_stats.grid_y };
-	return current_coord;
-}
-
 void AI_Stats_Component::Update()
 {
 	if (structure_template.render_component_type == RENDER_COMPONENT_ANIMATED_CLIP)
@@ -61,12 +56,6 @@ void AI_Stats_Component::Update_Stat(int stat_name, int new_value)
 {
 	switch (stat_name)
 	{
-	case STAT_STRUCTURE_GRID_X:
-		structure_stats.grid_x = new_value;
-		break;
-	case STAT_STRUCTURE_GRID_Y:
-		structure_stats.grid_y = new_value;
-		break;
 	case STAT_STRUCTURE_BUILT_LEVEL:
 		structure_stats.built_level = new_value;
 		break;
@@ -112,16 +101,59 @@ void AI_Stats_Component::Update_Stat(int stat_name, int new_value)
 	}
 }
 
+void AI_Stats_Component::Adjust_Stat(int stat_name, int new_value)
+{
+	switch (stat_name)
+	{
+	case STAT_STRUCTURE_BUILT_LEVEL:
+		structure_stats.built_level += new_value;
+		break;
+	case STAT_STRUCTURE_STRUCTURE_HEALTH:
+		structure_stats.structure_health += new_value;
+		break;
+	case STAT_STRUCTURE_STRUCTURE_MAX_HEALTH:
+		structure_stats.structure_max_health += new_value;
+		break;
+	case STAT_STRUCTURE_OXYGEN_LEVEL:
+		structure_stats.oxygen_level += new_value;
+		break;
+	case STAT_STRUCTURE_POWERED:
+		structure_stats.powered += new_value;
+		break;
+	case STAT_STRUCTURE_IMPASSABLE:
+		structure_stats.impassable += new_value;
+		break;
+	case STAT_ENTITY_HEALTH:
+		entity_stats.entity_health += new_value;
+		break;
+	case STAT_ENTITY_MAX_HEALTH:
+		entity_stats.entity_max_health += new_value;
+		break;
+	case STAT_ENTITY_HUNGER:
+		entity_stats.hunger += new_value;
+		break;
+	case STAT_ENTITY_TIREDNESS:
+		entity_stats.tiredness += new_value;
+		break;
+	case STAT_ENTITY_OXYGEN:
+		entity_stats.oxygen += new_value;
+		break;
+	case STAT_ENTITY_FEAR:
+		entity_stats.fear += new_value;
+		break;
+	case STAT_ENTITY_SPEED:
+		entity_stats.speed += new_value;
+		break;
+	case STAT_ENTITY_ENNUI:
+		entity_stats.ennui += new_value;
+		break;
+	}
+}
+
 int AI_Stats_Component::Return_Stat_Value(int stat_name)
 {
 	switch (stat_name)
 	{
-	case STAT_STRUCTURE_GRID_X:
-		return structure_stats.grid_x;
-		break;
-	case STAT_STRUCTURE_GRID_Y:
-		return structure_stats.grid_y;
-		break;
 	case STAT_STRUCTURE_BUILT_LEVEL:
 		return structure_stats.built_level;
 		break;
@@ -179,22 +211,33 @@ void AI_Stats_Component::Check_For_Messages()
 		switch (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0))
 		{
 		case MESSAGE_TYPE_STAT_UPDATE_REQUEST:
-			Handle_Stat_Update_Request(&service_locator->get_MB_Pointer()->Custom_Message_Array[i]);
+			Handle_Stat_Message(&service_locator->get_MB_Pointer()->Custom_Message_Array[i]);
+			break;
+		case MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION:
+			Update_Stat(STAT_STRUCTURE_OXYGEN_LEVEL, 0);
 			break;
 		}
 	}
 }
 
-void AI_Stats_Component::Handle_Stat_Update_Request(Custom_Message* custom_message)
+void AI_Stats_Component::Handle_Stat_Message(Custom_Message* custom_message)
 {
 	switch (custom_message->Read_Message(1))
 	{
 	case OBJECT_TYPE_STRUCTURE:
 		if (custom_message->Read_Message(2) == FOCUS_SPECIFC_OBJECT)
 		{
-			if (custom_message->Read_Message(3) == structure_stats.grid_x && custom_message->Read_Message(4) == structure_stats.grid_y)
+			Coordinate grid_pos = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
+			if (custom_message->Read_Message(4) == grid_pos.x && custom_message->Read_Message(5) == grid_pos.y)
 			{
-				Update_Stat(custom_message->Read_Message(5), custom_message->Read_Message(6));
+				if (custom_message->Read_Message(3) == STAT_UPDATE)
+				{
+					Update_Stat(custom_message->Read_Message(6), custom_message->Read_Message(7));
+				}
+				else if (custom_message->Read_Message(3) == STAT_ADJUST)
+				{
+					Adjust_Stat(custom_message->Read_Message(6), custom_message->Read_Message(7));
+				}
 			}
 		}
 		break;

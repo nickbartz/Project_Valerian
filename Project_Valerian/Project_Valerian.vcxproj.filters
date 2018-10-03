@@ -75,7 +75,13 @@
     <ClCompile Include="AI_Job_Component.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Debug_Out.cpp">
+    <ClCompile Include="AI_Item_Component.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AI_Movement_Component.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="A_Star.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -143,7 +149,16 @@
     <ClInclude Include="AI_Job_Component.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Debug_Out.h">
+    <ClInclude Include="AI_Item_Component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Notes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AI_Movement_Component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="A_Star.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

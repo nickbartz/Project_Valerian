@@ -24,9 +24,15 @@ struct Structure_Template
 	SDL_Rect tile_clip = { 0,0,0,0 };
 	int multiclip_type = MULTICLIP_NONE;
 	int num_animation_frame = 0;
+	int ui_type = 0;
+	int icon_clip_x = 0;
+	int icon_clip_y = 0;
 
 	// Config for Job
 	int job_type = JOB_NONE;
+
+	// Other stats
+	int is_inaccessible = 0;
 };
 
 struct Entity_Template
@@ -36,6 +42,16 @@ struct Entity_Template
 	int num_entity_animations = 0;
 	int num_entity_components = 0;
 	Animation_State entity_animations[MAX_NUM_ANIMATIONS][MAX_NUM_COMPONENTS];
+};
+
+struct Item_Template
+{
+
+};
+
+struct Equipment_Template
+{
+
 };
 
 enum class CSVState {
@@ -52,15 +68,15 @@ public:
 	Structure_Template Fetch_Tile_Object_Config(int tile_id);
 	Entity_Template Fetch_Entity_Template(int entity_id);
 
+	int Get_Num_Structure_Template();
+
 	void Load_Tiles_From_Data_File(string path);
 	void Load_Entity_Templates(string entity_template_path, string entity_animation_path);
 	vector<vector<int>> Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename);
+		
 	bool is_wall(int tile_type);
 	bool is_null(int tile_type);
 	bool is_floor(int tile_type);
-
-
-
 
 private:
 

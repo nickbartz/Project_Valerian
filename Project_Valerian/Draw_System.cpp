@@ -20,6 +20,7 @@ void Draw_System::Init_Sprites(SDL_Renderer* game_renderer)
 	mid_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer, window_format);
 	mid_2_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer, window_format);
 	entity_spritesheet.Init("Sprites/Entity_Spritesheet.png", game_renderer, window_format);
+	icon_spritesheet.Init("Sprites/Icon_Spritesheet.png", game_renderer, window_format);
 }
 
 // Query Functions
@@ -73,6 +74,7 @@ void Draw_System::Stamp_Sprite_Onto_Multisprite(int spritesheet_num, int multisp
 	}
 	else
 	{
+		SDL_SetRenderDrawColor(service_locator->get_Game_Renderer(), 0, 0, 0, 0);
 		SDL_RenderClear(service_locator->get_Game_Renderer());
 	}
 
@@ -112,6 +114,9 @@ void Draw_System::Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rec
 		break;
 	case SPRITESHEET_ENTITY:
 		entity_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		break;
+	case SPRITESHEET_ICON:
+		icon_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
 		break;
 	}
 }
@@ -162,9 +167,14 @@ void Draw_System::Clear_Text_Instruction_Array()
 
 void Draw_System::Draw(SDL_Renderer* render_target)
 {
-	Draw_Sprites(render_target);
+	Draw_Sprites(render_target, SPRITESHEET_BACKGROUND);
+	Draw_Sprites(render_target, SPRITESHEET_BASE);
+	Draw_Sprites(render_target, SPRITESHEET_MID_1);
+	Draw_Sprites(render_target, SPRITESHEET_ENTITY);
+	Draw_Sprites(render_target, SPRITESHEET_MID_2);
 	Draw_Primitives(render_target);
 	Draw_Text_Strings(render_target);
+	Draw_Sprites(render_target, SPRITESHEET_ICON);
 }
 
 // Functions for drawing primitives
@@ -194,22 +204,43 @@ void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spr
 	}
 }
 
-void Draw_System::Draw_Sprites(SDL_Renderer* render_target)
+void Draw_System::Draw_Sprites(SDL_Renderer* render_target, int spritesheet)
 {
-	if (background_spritesheet.is_init() == true) background_spritesheet.Draw(render_target);
-	if (base_spritesheet.is_init() == true) base_spritesheet.Draw(render_target);
-	for (int i = 0; i < current_num_base_multisprites; i++) base_multisprite[i].Draw(render_target);
-	//if (base_overlay.is_init() == true) base_overlay.Draw(render_target);
-	if (mid_spritesheet.is_init() == true) mid_spritesheet.Draw(render_target);
-	for (int i = 0; i < current_num_mid_multisprites; i++) mid_multisprite[i].Draw(render_target);
-	//if (mid_overlay_spritesheet.is_init() == true) mid_overlay_spritesheet.Draw(render_target);
-	if (entity_spritesheet.is_init() == true) entity_spritesheet.Draw(render_target);
-	if (mid_2_spritesheet.is_init() == true) mid_2_spritesheet.Draw(render_target);
-
+	switch (spritesheet)
+	{
+	case SPRITESHEET_BACKGROUND:
+		if (background_spritesheet.is_init() == true) background_spritesheet.Draw(render_target);
+		break;
+	case SPRITESHEET_BASE:
+		if (base_spritesheet.is_init() == true) base_spritesheet.Draw(render_target);
+		for (int i = 0; i < current_num_base_multisprites; i++) base_multisprite[i].Draw(render_target);
+		break;
+	case SPRITESHEET_BASE_OVERLAY:
+		if (base_overlay.is_init() == true) base_overlay.Draw(render_target);
+		break;
+	case SPRITESHEET_MID_1:
+		if (mid_spritesheet.is_init() == true) mid_spritesheet.Draw(render_target);
+		for (int i = 0; i < current_num_mid_multisprites; i++) mid_multisprite[i].Draw(render_target);
+		break;
+	case SPRITESHEET_MID_1_OVERLAY:
+		if (mid_overlay_spritesheet.is_init() == true) mid_overlay_spritesheet.Draw(render_target);
+		break;
+	case SPRITESHEET_MID_2:
+		if (mid_2_spritesheet.is_init() == true) mid_2_spritesheet.Draw(render_target);
+		break;
+	case SPRITESHEET_ENTITY:
+		if (entity_spritesheet.is_init() == true) entity_spritesheet.Draw(render_target);
+		break;
+	case SPRITESHEET_ICON:
+		if (icon_spritesheet.is_init() == true) icon_spritesheet.Draw(render_target);
+		break;
+	}
 }
 
 void Draw_System::Draw_Primitives(SDL_Renderer* render_target)
 {
+	SDL_SetRenderDrawBlendMode(render_target, SDL_BLENDMODE_BLEND);
+
 	for (int i = 0; i < count_num_primitives; i++)
 	{
 		if (Primitive_Instruction_Array[i].init == 1)
@@ -217,7 +248,6 @@ void Draw_System::Draw_Primitives(SDL_Renderer* render_target)
 			SDL_Rect rect_pos = Primitive_Instruction_Array[i].pos_rect;
 			SDL_Color rect_color = Primitive_Instruction_Array[i].primitive_color;
 			SDL_SetRenderDrawColor(render_target, rect_color.r, rect_color.g, rect_color.b, rect_color.a);
-			SDL_SetRenderDrawBlendMode(render_target, SDL_BLENDMODE_BLEND);
 			if (Primitive_Instruction_Array[i].filled == true)
 			{
 				SDL_RenderFillRect(render_target, &rect_pos);
@@ -261,4 +291,5 @@ void Draw_System::free()
 	for (int i = 0; i < current_num_mid_multisprites; i++) mid_multisprite[i].free();
 	entity_spritesheet.free();
 	mid_2_spritesheet.free();
+	icon_spritesheet.free();
 }

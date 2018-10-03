@@ -79,35 +79,76 @@ void Scene_Graph::Draw_Background()
 	}
 }
 
-void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template structure_config)
+void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template structure_config, bool update_message)
 {
-	// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
-	int array_index = 0;
-	current_num_structures++;
-
-	for (int i = 0; i < WORLD_MAX_NUM_STRUCTURES; i++)
+	if (Check_Tile_Placement(grid_point, structure_config))
 	{
-		// we place the object in the first array index with an "OBJECT_UNASSIGNED" type so we can overwrite objects no longer being used
-		if (structure_array[i].Get_Assigned_Flag() == OBJECT_UNASSIGNED)
+		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
+		int array_index = 0;
+		current_num_structures++;
+
+		for (int i = 0; i < WORLD_MAX_NUM_STRUCTURES; i++)
 		{
-			structure_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, structure_config.tile_specs.w*TILE_SIZE, structure_config.tile_specs.h*TILE_SIZE }, service_locator);
+			// we place the object in the first array index with an "OBJECT_UNASSIGNED" type so we can overwrite objects no longer being used
+			if (structure_array[i].Get_Assigned_Flag() == OBJECT_UNASSIGNED)
+			{
+				structure_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, structure_config.tile_specs.w*TILE_SIZE, structure_config.tile_specs.h*TILE_SIZE }, service_locator);
 
-			structure_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
+				structure_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
 
-			array_index = i;
-			break;
+				array_index = i;
+				break;
+			}
+		}
+
+		// Now we initialize the object we just created in the structure array with an objecT_config
+		structure_array[array_index].Init_Structure_From_Template(structure_config, Return_Neighboring_Tiles(grid_point));
+
+		// We update the tile map with a pointer to the new object
+		Update_Tile_Map(grid_point, structure_config.tile_layer, &structure_array[array_index]);
+
+		if (update_message)
+		{
+			// Finally we send a SG tile update message is sent to the main bus outlining what happened
+			int update_message[8] = { MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION , OBJECT_TYPE_ANY, FOCUS_ALL,grid_point.x,grid_point.y,structure_config.tile_layer,structure_config.structure_type,structure_config.structure_id };
+			service_locator->get_MB_Pointer()->Add_Custom_Message(8, update_message);
 		}
 	}
-	
-	// Now we initialize the object we just created in the structure array with an objecT_config
-	structure_array[array_index].Init_Structure_From_Template(structure_config, Return_Neighboring_Tiles(grid_point));
+}
 
-	// We update the tile map with a pointer to the new object
-	Update_Tile_Map(grid_point, structure_config.tile_layer, &structure_array[array_index]);
+void Scene_Graph::Delete_Structure(Coordinate grid_point, int tile_layer)
+{
+	// Then we tell the tile map to de-reference the object at that layer at the grid point specified
+	//the tile map also sets the object that was previously there to unassigned so it can be overwritten
+	tile_map[grid_point].Update_Tile_Structure(NULL, tile_layer);
 
 	// Finally we send a SG tile update message is sent to the main bus outlining what happened
-	int update_message[8] = { MESSAGE_TYPE_SG_TILE_UPDATE , OBJECT_TYPE_ANY, FOCUS_ALL,grid_point.x,grid_point.y,structure_config.tile_layer,structure_config.structure_type,structure_config.structure_id };
+	int update_message[8] = { MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION , OBJECT_TYPE_ANY, FOCUS_ALL,grid_point.x,grid_point.y,tile_layer,0,0 };
 	service_locator->get_MB_Pointer()->Add_Custom_Message(8, update_message);
+}
+
+void Scene_Graph::Delete_Structure_Highest_Layer(Coordinate grid_point)
+{
+	if (tile_map[grid_point].Return_Tile_Type_By_Layer(TILE_LAYER_MID) != 0)
+	{
+		Delete_Structure(grid_point, TILE_LAYER_MID);
+	}
+	else if (tile_map[grid_point].Return_Tile_Type_By_Layer(TILE_LAYER_BASE) != 0)
+	{
+		Delete_Structure(grid_point, TILE_LAYER_BASE);
+	}
+}
+
+bool Scene_Graph::Check_Tile_Placement(Coordinate grid_point, Structure_Template structure)
+{
+	if (tile_map[grid_point].Return_Tile_Type_By_Layer(structure.tile_layer) == STRUCTURE_ID_NULL)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void Scene_Graph::Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset)
@@ -182,12 +223,12 @@ void Scene_Graph::Draw()
 
 	for (int i = 0; i < current_num_structures; i++)
 	{
-		structure_array[i].Draw();
+		if (structure_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) structure_array[i].Draw();
 	}
 
 	for (int i = 0; i < current_num_entities; i++)
 	{
-		entity_array[i].Draw();
+		if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Draw();
 	}
 }
 
@@ -282,4 +323,20 @@ bool Scene_Graph::Tile_Is_Wall_Or_Closed_Door(Coordinate tile)
 	// will need to add in functionality for doors later
 	if (service_locator->get_Game_Library()->is_wall(tile_map[tile].Return_Tile_Type_By_Layer(2))) return true;
 	else return false;
+}
+
+bool Scene_Graph::Tile_Is_Inaccessible(Coordinate tile)
+{
+	Object* base_tile = tile_map[tile].Return_Tile_Object(TILE_LAYER_BASE);
+	Object* mid_tile = tile_map[tile].Return_Tile_Object(TILE_LAYER_MID);
+	
+	if (base_tile != NULL && base_tile->Is_Structure_Inaccessible() == true)
+	{
+		return true;
+	}
+	else if (mid_tile != NULL && mid_tile->Is_Structure_Inaccessible() == true)
+	{
+		return true;
+	}
+	else return false; 
 }

@@ -36,7 +36,7 @@ void Message_Array::Add_Custom_Message(int message_length, int message_array[])
 	bool message_valid = false;
 	switch (message_array[0])
 	{
-	case MESSAGE_TYPE_SG_TILE_UPDATE:
+	case MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION:
 		switch (message_array[1])
 		{
 		case OBJECT_TYPE_ANY:
@@ -76,6 +76,18 @@ void Message_Array::Add_Custom_Message(int message_length, int message_array[])
 			break;
 		}
 		break;
+	case MESSAGE_TYPE_SET_ENTITY_RALLY_POINT:
+		switch (message_array[1])
+		{
+		case OBJECT_TYPE_ENTITY:
+			switch (message_array[2])
+			{
+			case FOCUS_RANGE:
+				Custom_Message_Array[count_custom_messages] = (Custom_Message(message_length, message_array));
+				message_valid = true;
+				break;
+			}
+		}
 	}
 
 	if (message_valid == false)
