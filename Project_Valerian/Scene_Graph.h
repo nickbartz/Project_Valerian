@@ -44,7 +44,7 @@ public:
 	void Return_Tiles_Without_Leaks(Coordinate start_tile, vector<Coordinate> &tiles_to_oxygenate, map<Coordinate, bool> &checked_tiles, bool &is_leak);
 	bool Tile_Has_Leak(Coordinate tile);
 	bool Tile_Is_Wall_Or_Closed_Door(Coordinate tile);
-	bool Tile_Is_Inaccessible(Coordinate tile);
+	bool Tile_Is_Inaccessible(Coordinate tile, int requesting_faction);
 
 	void free();
 private:

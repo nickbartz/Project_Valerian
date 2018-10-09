@@ -125,6 +125,7 @@
     <ClCompile Include="AI_Item_Component.cpp" />
     <ClCompile Include="AI_Job_Component.cpp" />
     <ClCompile Include="AI_Movement_Component.cpp" />
+    <ClCompile Include="AI_Rel_Component.cpp" />
     <ClCompile Include="AI_Stats_Component.cpp" />
     <ClCompile Include="Console_Panel.cpp" />
     <ClCompile Include="Console_Window.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="Global_Constants.h" />
     <ClInclude Include="Console_Window.h" />
     <ClInclude Include="AI_Job_Component.h" />
+    <ClInclude Include="AI_Rel_Component.h" />
     <ClInclude Include="Notes.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Message.h" />

@@ -101,7 +101,7 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template
 			}
 		}
 
-		// Now we initialize the object we just created in the structure array with an objecT_config
+		// Now we initialize the object we just created in the structure array with an object_config
 		structure_array[array_index].Init_Structure_From_Template(structure_config, Return_Neighboring_Tiles(grid_point));
 
 		// We update the tile map with a pointer to the new object
@@ -325,16 +325,16 @@ bool Scene_Graph::Tile_Is_Wall_Or_Closed_Door(Coordinate tile)
 	else return false;
 }
 
-bool Scene_Graph::Tile_Is_Inaccessible(Coordinate tile)
+bool Scene_Graph::Tile_Is_Inaccessible(Coordinate tile, int requesting_faction)
 {
 	Object* base_tile = tile_map[tile].Return_Tile_Object(TILE_LAYER_BASE);
 	Object* mid_tile = tile_map[tile].Return_Tile_Object(TILE_LAYER_MID);
 	
-	if (base_tile != NULL && base_tile->Is_Structure_Inaccessible() == true)
+	if (base_tile != NULL && base_tile->Is_Structure_Inaccessible(requesting_faction) == true)
 	{
 		return true;
 	}
-	else if (mid_tile != NULL && mid_tile->Is_Structure_Inaccessible() == true)
+	else if (mid_tile != NULL && mid_tile->Is_Structure_Inaccessible(requesting_faction) == true)
 	{
 		return true;
 	}

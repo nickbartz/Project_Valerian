@@ -1,0 +1,3 @@
+Inventory_Uniq_ID,Inventory_String,Inventory_Slot_1_Inventory_ID,Inventory_Slot_1_Quantity,Inventory_Slot_2_Inventory_ID,Inventory_Slot_2_Quantity,Inventory_Slot_3_Inventory_ID,Inventory_Slot_3_Quantity,Inventory_Slot_4_Inventory_ID,Inventory_Slot_4_Quantity,Inventory_Slot_5_Inventory_ID,Inventory_Slot_5_Quantity
+0,INVENTORY_PACK_NULL,0,0,0,0,0,0,0,0,0,0
+1,INVENTORY_PACK_ASTEROID_IRON,0,0,0,0,0,0,0,0,0,0

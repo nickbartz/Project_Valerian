@@ -39,13 +39,15 @@ struct Blueprint_Slot
 {
 	int Blueprint_ID = 0;
 	int Num_Items_In_Blueprint = 0;
-	Item_Slot bleuprint_items[MAX_ITEMS_PER_BLUEPRINT];
+	Item_Slot blueprint_items[MAX_ITEMS_PER_BLUEPRINT];
 };
 
 class AI_Item_Component
 {
 public:
-	AI_Item_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int num_inventory_slots, int equipment_template_id);
+	AI_Item_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int num_inventory_slots, int equipment_template_id, int blueprint_id, int starter_inventory_id);
+
+	void Populate_Starter_Inventory(int starter_id);
 
 private:
 	Global_Service_Locator* service_locator;

@@ -19,9 +19,9 @@ struct Tile_Queue
 class Path_Field {
 public:
 	Path_Field(Global_Service_Locator* service_locator);
-	vector<Tile_Queue> pathFind(Coordinate start, Coordinate end, int max_closed_nodes);
+	vector<Tile_Queue> pathFind(Coordinate start, Coordinate end, int max_closed_nodes, int requesting_faction);
 	void run_A_star(Coordinate start, Coordinate end);
-	bool check_if_tile_is_inaccessible(int xdx, int ydy, int finish_x, int finish_y, int offset_x, int offset_y);
+	bool check_if_tile_is_inaccessible(int xdx, int ydy, int finish_x, int finish_y, int offset_x, int offset_y, int requesting_faction);
 
 private:
 	Global_Service_Locator * service_locator;

@@ -25,6 +25,7 @@ public:
 	// Init for entities
 	Render_Component(Global_Service_Locator* service_locator, Object_Service_Locator* oLocator, Entity_Template entity_config);
 
+	void Update();
 
 	void Draw(SDL_Rect pos_rect);
 	void Draw_With_Background_Renderer(SDL_Rect pos_rect);
@@ -62,9 +63,9 @@ public:
 	void Adjust_Door_Orientation();
 
 	// Animation Commands
-	void Increment_Structure_Animation_Frame();
-	void Decrement_Structure_Animation_Frame();
+	void Structure_Increment_Animation();
 	void Increment_Entity_Animation();
+	void Change_Structure_Current_Animation(int new_animation);
 	void Change_Entity_Current_Animation(int new_animation);
 
 private:
@@ -78,11 +79,15 @@ private:
 	// STRUCTURE_SPECIFIC VARIABLES
 	int multiclip_type;
 	int dedicated_multisprite_num;
+	
+	int structure_animation_type = STRUCTURE_ANIMATION_NULL;
 	int structure_animation_frame = 0;
 	int max_structure_animation_frames = 0;
+
 	SDL_Rect sprite_clip;
 	SDL_Rect sprite_coords;
 	Adjacent_Structure_Array neighbors;
+	int orientation_y_clip_offset = 0; // 0 is horizontal, 1 is vertical
 
 	// ENTITY SPECIFIC VARIABLES
 	Animation_State entity_animations[MAX_NUM_ANIMATIONS][MAX_NUM_COMPONENTS];

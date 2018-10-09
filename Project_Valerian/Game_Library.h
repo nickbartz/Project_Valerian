@@ -33,6 +33,9 @@ struct Structure_Template
 
 	// Other stats
 	int is_inaccessible = 0;
+
+	// Inventory_Pack
+	int inventory_pack = 0;
 };
 
 struct Entity_Template
@@ -46,7 +49,18 @@ struct Entity_Template
 
 struct Item_Template
 {
+	int object_type = OBJECT_TYPE_ITEM;
 
+	int inventory_item_id = 0;
+	int inventory_item_type = 0;
+
+	SDL_Rect sprite_specs;
+};
+
+struct Inventory_Template
+{
+	int inventory_pack_num = 0;
+	int inventory_pack[5][2];
 };
 
 struct Equipment_Template
@@ -67,16 +81,22 @@ public:
 
 	Structure_Template Fetch_Tile_Object_Config(int tile_id);
 	Entity_Template Fetch_Entity_Template(int entity_id);
+	Item_Template Fetch_Item_Template(int item_id);
+	Inventory_Template Fetch_Blueprint(int inventory_id);
 
 	int Get_Num_Structure_Template();
 
-	void Load_Tiles_From_Data_File(string path);
+	void Load_Tiles_From_Data_File(string tiles_path);
 	void Load_Entity_Templates(string entity_template_path, string entity_animation_path);
+	void Load_Item_Templates(string item_template_path);
+	void Load_Blueprints(string blueprints_path);
+
 	vector<vector<int>> Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename);
 		
 	bool is_wall(int tile_type);
 	bool is_null(int tile_type);
 	bool is_floor(int tile_type);
+	bool is_door(int tile_type);
 
 private:
 
@@ -85,6 +105,12 @@ private:
 
 	Entity_Template loaded_Entities[MAX_NUM_ENTITY_TEMPLATES];
 	int num_loaded_entities = 0;
+
+	Item_Template loaded_Items[MAX_NUM_ENTITY_TEMPLATES];
+	int num_loaded_Items = 0;
+
+	Inventory_Template loaded_blueprints[MAX_NUM_BLUEPRINTS];
+	int num_loaded_blueprints = 0;
 
 	vector<string> readCSVRow(const std::string &row);
 	vector<vector<string>> readCSV(string path);

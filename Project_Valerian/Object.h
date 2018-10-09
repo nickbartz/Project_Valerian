@@ -9,6 +9,8 @@ struct Structure_Template;
 struct Adjacent_Structure_Array;
 class AI_Stats_Component;
 class AI_Movement_Component;
+class AI_Rel_Component;
+class AI_Item_Component;
 
 class Object
 {
@@ -23,7 +25,8 @@ public:
 	int Get_Array_Index();
 	int Get_Assigned_Flag();
 	int Get_Structure_Type();
-	bool Is_Structure_Inaccessible();
+	bool Is_Structure_Inaccessible(int faction);
+	int Return_Object_Array_Index();
 
 	// Draw functions
 	void Draw();
@@ -54,6 +57,8 @@ private:
 	AI_Stats_Component* AI_Stats = NULL;
 	AI_Job_Component* AI_Job = NULL;
 	AI_Movement_Component* AI_Movement = NULL;
+	AI_Rel_Component* AI_Relationship = NULL;
+	AI_Item_Component* AI_Items = NULL;
 
 };
 

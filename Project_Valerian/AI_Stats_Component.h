@@ -27,14 +27,15 @@ struct Structure_Stats
 	int oxygen_level = 0;
 	int powered = 0;
 	int impassable = 0;
+	int door_open = 0;
 };
 
 class AI_Stats_Component
 {
 public:
-	AI_Stats_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Structure_Template structure_template, Structure_Stats structure_stats); // initialize a saved structure
-	AI_Stats_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Entity_Template entity_template); // initialize a new entity from template
-	AI_Stats_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Entity_Template entity_template, Entity_Stats entity_stats); // initialize a saved entity
+	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Structure_Template structure_template, Structure_Stats structure_stats); // initialize a saved structure
+	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Entity_Template entity_template); // initialize a new entity from template
+	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Entity_Template entity_template, Entity_Stats entity_stats); // initialize a saved entity
 
 	int Get_Structure_Name();
 	int Get_Structure_Type();
@@ -50,6 +51,8 @@ public:
 
 private:
 
+	void Assign_Uniq_IDs(int object_array_index);
+
 	Global_Service_Locator* service_locator;
 	Object_Service_Locator* object_locator;
 
@@ -59,6 +62,8 @@ private:
 	Entity_Stats entity_stats;
 
 	int object_type;
+	int uniq_id;
+	int object_array_locator;
 
 	void Handle_Stat_Message(Custom_Message* array_message);
 

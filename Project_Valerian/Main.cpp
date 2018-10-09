@@ -189,7 +189,6 @@ int main(int argc, char *args[])
 	scene_graph->Create_Entity({ 1,-1 }, game_library->Fetch_Entity_Template(2));
 	scene_graph->Create_Entity({ 2,-1 }, game_library->Fetch_Entity_Template(1));
 
-	//pathfinder.get()->run_A_star({ 10,-10 }, { 10,10 });
 
 	// END TEST VARIABLES
 

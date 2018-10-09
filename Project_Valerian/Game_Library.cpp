@@ -12,39 +12,42 @@ Game_Library::Game_Library()
 {
 	Load_Tiles_From_Data_File("Data/Tile_Data.csv");
 	Load_Entity_Templates("Data/Entity_Templates.csv", "Data/Entity_Animations.csv");
+	Load_Item_Templates("Data/Inventory_Data.csv");
+	Load_Blueprints("Data/Blueprint_Data.csv");
 }
 
-void Game_Library::Load_Tiles_From_Data_File(string path)
+void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
 {
-	vector<vector<string>> loaded_csv = readCSV(path);
+	vector<vector<string>> vector_loaded_tiles = readCSV(tiles_path);
 
-	for (int i = 0; i < loaded_csv.size()-1; i++)
+	for (int i = 0; i < vector_loaded_tiles.size()-1; i++)
 	{
 		Structure_Template new_config;
 
 		new_config.object_type = OBJECT_TYPE_STRUCTURE;
-		new_config.tile_layer = stoi(loaded_csv[i+1][2]);
+		new_config.tile_layer = stoi(vector_loaded_tiles[i+1][2]);
 		
-		new_config.structure_type = stoi(loaded_csv[i + 1][5]);
+		new_config.structure_type = stoi(vector_loaded_tiles[i + 1][5]);
 
-		new_config.structure_id = stoi(loaded_csv[i + 1][0]);
-		new_config.render_component_type = stoi(loaded_csv[i + 1][7]);
-		new_config.spritesheet = stoi(loaded_csv[i + 1][11]);
-		new_config.tile_specs.x = stoi(loaded_csv[i + 1][12]);
-		new_config.tile_specs.y = stoi(loaded_csv[i + 1][13]);
-		new_config.tile_specs.w = stoi(loaded_csv[i + 1][14]);
-		new_config.tile_specs.h = stoi(loaded_csv[i + 1][15]);
-		new_config.tile_clip.x = stoi(loaded_csv[i + 1][16])*SPRITE_SIZE;
-		new_config.tile_clip.y = stoi(loaded_csv[i + 1][17])*SPRITE_SIZE;
-		new_config.tile_clip.w = stoi(loaded_csv[i + 1][18])*SPRITE_SIZE;
-		new_config.tile_clip.h = stoi(loaded_csv[i + 1][19])*SPRITE_SIZE;
-		new_config.multiclip_type = stoi(loaded_csv[i + 1][9]);
-		new_config.num_animation_frame = stoi(loaded_csv[i + 1][20]);
-		new_config.job_type = stoi(loaded_csv[i + 1][21]);
-		new_config.ui_type = stoi(loaded_csv[i + 1][23]);
-		new_config.icon_clip_x = stoi(loaded_csv[i + 1][24])*SPRITE_SIZE;
-		new_config.icon_clip_y = stoi(loaded_csv[i + 1][25])*SPRITE_SIZE;
-		new_config.is_inaccessible = stoi(loaded_csv[i + 1][26]);
+		new_config.structure_id = stoi(vector_loaded_tiles[i + 1][0]);
+		new_config.render_component_type = stoi(vector_loaded_tiles[i + 1][7]);
+		new_config.spritesheet = stoi(vector_loaded_tiles[i + 1][11]);
+		new_config.tile_specs.x = stoi(vector_loaded_tiles[i + 1][12]);
+		new_config.tile_specs.y = stoi(vector_loaded_tiles[i + 1][13]);
+		new_config.tile_specs.w = stoi(vector_loaded_tiles[i + 1][14]);
+		new_config.tile_specs.h = stoi(vector_loaded_tiles[i + 1][15]);
+		new_config.tile_clip.x = stoi(vector_loaded_tiles[i + 1][16])*SPRITE_SIZE;
+		new_config.tile_clip.y = stoi(vector_loaded_tiles[i + 1][17])*SPRITE_SIZE;
+		new_config.tile_clip.w = stoi(vector_loaded_tiles[i + 1][18])*SPRITE_SIZE;
+		new_config.tile_clip.h = stoi(vector_loaded_tiles[i + 1][19])*SPRITE_SIZE;
+		new_config.multiclip_type = stoi(vector_loaded_tiles[i + 1][9]);
+		new_config.num_animation_frame = stoi(vector_loaded_tiles[i + 1][20]);
+		new_config.job_type = stoi(vector_loaded_tiles[i + 1][21]);
+		new_config.ui_type = stoi(vector_loaded_tiles[i + 1][23]);
+		new_config.icon_clip_x = stoi(vector_loaded_tiles[i + 1][24])*SPRITE_SIZE;
+		new_config.icon_clip_y = stoi(vector_loaded_tiles[i + 1][25])*SPRITE_SIZE;
+		new_config.is_inaccessible = stoi(vector_loaded_tiles[i + 1][26]);
+		new_config.inventory_pack = stoi(vector_loaded_tiles[i + 1][27]);
 		loaded_tiles[i] = new_config;
 		num_loaded_tiles++;
 	}
@@ -80,6 +83,47 @@ void Game_Library::Load_Entity_Templates(string entity_template_path, string ent
 
 		loaded_Entities[i-1] = new_entity;
 		num_loaded_entities++;
+	}
+}
+
+void Game_Library::Load_Item_Templates(string item_template_path)
+{
+	vector<vector<string>> vector_loaded_items = readCSV(item_template_path);
+
+	for (int i = 1; i < vector_loaded_items.size(); i++)
+	{
+		Item_Template new_item;
+		new_item.inventory_item_id = stoi(vector_loaded_items[i][0]);
+		new_item.inventory_item_type = stoi(vector_loaded_items[i][2]);
+
+		new_item.sprite_specs.x = stoi(vector_loaded_items[i][4]) * SPRITE_SIZE;
+		new_item.sprite_specs.y = stoi(vector_loaded_items[i][5]) * SPRITE_SIZE;
+
+		loaded_Items[i - 1] = new_item;
+		num_loaded_Items++;
+	}
+}
+
+void Game_Library::Load_Blueprints(string blueprint_path)
+{
+	vector<vector<string>> vector_loaded_blueprints = readCSV(blueprint_path);
+
+	for (int i = 1; i < vector_loaded_blueprints.size(); i++)
+	{
+		Inventory_Template new_blueprint;
+		new_blueprint.inventory_pack[0][0] = stoi(vector_loaded_blueprints[i][2]);
+		new_blueprint.inventory_pack[0][1] = stoi(vector_loaded_blueprints[i][3]);
+		new_blueprint.inventory_pack[1][0] = stoi(vector_loaded_blueprints[i][4]);
+		new_blueprint.inventory_pack[1][1] = stoi(vector_loaded_blueprints[i][5]);
+		new_blueprint.inventory_pack[2][0] = stoi(vector_loaded_blueprints[i][6]);
+		new_blueprint.inventory_pack[2][1] = stoi(vector_loaded_blueprints[i][7]);
+		new_blueprint.inventory_pack[3][0] = stoi(vector_loaded_blueprints[i][8]);
+		new_blueprint.inventory_pack[3][1] = stoi(vector_loaded_blueprints[i][9]);
+		new_blueprint.inventory_pack[4][0] = stoi(vector_loaded_blueprints[i][10]);
+		new_blueprint.inventory_pack[4][1] = stoi(vector_loaded_blueprints[i][11]);
+
+		loaded_blueprints[i - 1] = new_blueprint;
+		num_loaded_blueprints++;
 	}
 }
 
@@ -217,6 +261,32 @@ Entity_Template Game_Library::Fetch_Entity_Template(int entity_id)
 	}
 }
 
+Item_Template Game_Library::Fetch_Item_Template(int item_id)
+{
+	if (item_id < num_loaded_Items)
+	{
+		return loaded_Items[item_id];
+	}
+	else
+	{
+		cout << "item id out of range, returning null item" << endl;
+		return loaded_Items[0];
+	}
+}
+
+Inventory_Template Game_Library::Fetch_Blueprint(int blueprint_id)
+{
+	if (blueprint_id < num_loaded_blueprints)
+	{
+		return loaded_blueprints[blueprint_id];
+	}
+	else
+	{
+		cout << "blueprint id out of range, returning null blueprint" << endl;
+		return loaded_blueprints[0];
+	}
+}
+
 int Game_Library::Get_Num_Structure_Template()
 {
 	return num_loaded_tiles;
@@ -235,5 +305,10 @@ bool Game_Library::is_null(int tile_type)
 bool Game_Library::is_floor(int tile_type)
 {
 	if (tile_type == 10) return true;
+	else return false;
+}
+bool Game_Library::is_door(int tile_type)
+{
+	if (tile_type == 8) return true;
 	else return false;
 }

@@ -13,8 +13,9 @@ public:
 	void Check_For_Messages();
 	void Update();
 
-
 private:
+	int wait_timer = 0;
+
 	int current_goals[MAX_LENGTH_GOAL_INSTRUCTION][MAX_NUM_GOAL_INSTRUCTION];
 	int next_goal_num = 0;
 
@@ -34,6 +35,7 @@ private:
 
 	void Job_Triage(int job);
 	void Job_Oxygenate_Surroundings();
+	void Job_Open_Door();
 	
 	Global_Service_Locator * service_locator;
 	Object_Service_Locator * object_locator;

@@ -10,7 +10,7 @@ Path_Field::Path_Field(Global_Service_Locator* sLocator)
 	service_locator = sLocator;
 }
 
-vector<Tile_Queue> Path_Field::pathFind(Coordinate start, Coordinate end, int max_closed_nodes)
+vector<Tile_Queue> Path_Field::pathFind(Coordinate start, Coordinate end, int max_closed_nodes, int requesting_faction)
 {
 	int min_x = min(start.x, end.x);
 	int min_y = min(start.y, end.y);
@@ -109,7 +109,7 @@ vector<Tile_Queue> Path_Field::pathFind(Coordinate start, Coordinate end, int ma
 			xdx = x + dx[i]; ydy = y + dy[i];
 
 
-			if (!(xdx<0 || xdx>SEARCH_WIDTH - 1 || ydy<0 || ydy>SEARCH_HEIGHT - 1 || check_if_tile_is_inaccessible(xdx, ydy, finish_x, finish_y, world_offset_x, world_offset_y) || closed_nodes_map[xdx][ydy] == 1))
+			if (!(xdx<0 || xdx>SEARCH_WIDTH - 1 || ydy<0 || ydy>SEARCH_HEIGHT - 1 || check_if_tile_is_inaccessible(xdx, ydy, finish_x, finish_y, world_offset_x, world_offset_y, requesting_faction) || closed_nodes_map[xdx][ydy] == 1))
 			{
 				// generate a child node
 				m0 = new node(xdx, ydy, n0->getLevel(),
@@ -162,12 +162,12 @@ vector<Tile_Queue> Path_Field::pathFind(Coordinate start, Coordinate end, int ma
 	return vector_path; // no route found
 }
 
-bool Path_Field::check_if_tile_is_inaccessible(int xdx, int ydy, int finish_x, int finish_y, int offset_x, int offset_y)
+bool Path_Field::check_if_tile_is_inaccessible(int xdx, int ydy, int finish_x, int finish_y, int offset_x, int offset_y, int requesting_faction)
 {
 	bool inaccessible = false;
 	if (!(xdx == finish_x && ydy == finish_y))
 	{
-		inaccessible = service_locator->get_Scene_Graph()->Tile_Is_Inaccessible({ xdx + offset_x,ydy + offset_y });
+		inaccessible = service_locator->get_Scene_Graph()->Tile_Is_Inaccessible({ xdx + offset_x,ydy + offset_y }, requesting_faction);
 	}
 	return inaccessible;
 }
@@ -178,7 +178,7 @@ void Path_Field::run_A_star(Coordinate start, Coordinate end)
 	cout << "Start: " << start.x << "," << start.y << endl;
 	cout << "Finish: " << end.x << "," << end.y << endl;
 
-	vector<Tile_Queue> route = pathFind(start, end, 1000);
+	vector<Tile_Queue> route = pathFind(start, end, 1000, 0);
 
 	for (int i = 0; i < route.size(); i++)
 	{

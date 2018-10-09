@@ -59,6 +59,14 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	}
 }
 
+void Render_Component::Update()
+{
+	if (render_component == RENDER_COMPONENT_ANIMATED_CLIP)
+	{
+		Structure_Increment_Animation();
+	}
+}
+
 // Main draw function
 void Render_Component::Draw(SDL_Rect pos_rect)
 {	
@@ -98,16 +106,18 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 {
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
 
+	SDL_Rect new_clip = { sprite_clip.x, sprite_clip.y + orientation_y_clip_offset * SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
+
 	// Adjust the draw rectangle by the camera position and camera zoom
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
 
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, sprite_clip, 0.0, NULL, SDL_FLIP_NONE);
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE);
 
 	// If the sprite is several stories high, the 2nd story needs to be printed seperately and later so that i will appear to float above any people walking around so they appear to go behind it
 	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
 	{
 		// As a first step, change the clip to the 2nd story of the sprite on the sprite sheet 
-		SDL_Rect new_clip = { sprite_clip.x, sprite_clip.y - SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
+		SDL_Rect new_clip = { sprite_clip.x, sprite_clip.y - SPRITE_SIZE + orientation_y_clip_offset, sprite_clip.w, sprite_clip.h };
 
 		// Now re-do the draw rect and send a new instruction to the draw system to draw that 2nd story 
 		draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((pos_rect.y - TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
@@ -128,7 +138,7 @@ void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 {	
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
 
-	SDL_Rect anim_clip = { sprite_clip.x + structure_animation_frame * SPRITE_SIZE, sprite_clip.y, sprite_clip.w, sprite_clip.h };
+	SDL_Rect anim_clip = { sprite_clip.x + structure_animation_frame * SPRITE_SIZE, sprite_clip.y + orientation_y_clip_offset*SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
 
 	// Adjust the draw rectangle by the camera position and camera zoom
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
@@ -225,6 +235,20 @@ void Render_Component::Adjust_Multisprite_To_Surroundings()
 	case MULTI_CLIP_WALL:
 		Build_Wall_Multisprite();
 		break;
+	}
+}
+
+void Render_Component::Adjust_Door_Orientation()
+{
+	Game_Library* gl = service_locator->get_Game_Library();
+
+	if (gl->is_wall(neighbors.asa[1][0][1]) && gl->is_wall(neighbors.asa[1][2][1]))
+	{
+		orientation_y_clip_offset = 0;
+	}
+	else if (gl->is_wall(neighbors.asa[1][1][0]) && gl->is_wall(neighbors.asa[1][1][2]))
+	{
+		orientation_y_clip_offset = 1;
 	}
 }
 
@@ -330,6 +354,13 @@ void Render_Component::Handle_Upper_Left_Wall_Quad(int sprite_offset_x, int spri
 	else if (left_floor && top_floor) Stamp({ 11 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
 	else if (left_floor && top_space) Stamp({ 0 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
 	else if (left_space && top_floor) Stamp({ 0 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+
+	// Check if there's an exterior door
+	if (gl->is_door(neighbors.asa[1][0][1]) && gl->is_null(neighbors.asa[0][0][2]) && gl->is_null(neighbors.asa[1][0][2]))
+	{
+		Stamp({ 14 * TQ,2 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
+	}
+	else if (gl->is_door(neighbors.asa[1][1][0]) && gl->is_null(neighbors.asa[0][2][1]) && gl->is_null(neighbors.asa[1][2][1])) Stamp({ 14 * TQ,0 * TQ,TQ,TQ }, { 0,0,TQ,TQ }, cto_x, cto_y);
 }
 void Render_Component::Handle_Upper_Right_Wall_Quad(int sprite_offset_x, int sprite_offset_y)
 {
@@ -372,6 +403,13 @@ void Render_Component::Handle_Upper_Right_Wall_Quad(int sprite_offset_x, int spr
 	else if (right_floor && top_floor) Stamp({ 10 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
 	else if (right_floor && top_space) Stamp({ 1 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
 	else if (right_space && top_floor) Stamp({ 1 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+
+	// Check if there's an exterior door
+	if (gl->is_door(neighbors.asa[1][2][1]) && gl->is_null(neighbors.asa[0][2][2]) && gl->is_null(neighbors.asa[1][2][2]))
+	{
+		Stamp({ 15 * TQ,2 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
+	}
+	else if (gl->is_door(neighbors.asa[1][1][0]) && gl->is_null(neighbors.asa[0][0][0]) && gl->is_null(neighbors.asa[1][0][0])) Stamp({ 15 * TQ,0 * TQ,TQ,TQ }, { TQ,0,TQ,TQ }, cto_x, cto_y);
 }
 void Render_Component::Handle_Bottom_Left_Wall_Quad(int sprite_offset_x, int sprite_offset_y)
 {
@@ -415,6 +453,13 @@ void Render_Component::Handle_Bottom_Left_Wall_Quad(int sprite_offset_x, int spr
 	else if (left_floor && bottom_space) Stamp({ 0 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
 	else if (left_space && bottom_floor) Stamp({ 0 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
 
+	// Check if there's an exterior door
+	if (gl->is_door(neighbors.asa[1][0][1]) && gl->is_null(neighbors.asa[0][0][0]) && gl->is_null(neighbors.asa[1][0][0]))
+	{
+		Stamp({ 14 * TQ,3 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+	}
+	else if (gl->is_door(neighbors.asa[1][1][2]) && gl->is_null(neighbors.asa[0][2][2]) && gl->is_null(neighbors.asa[1][2][2])) Stamp({ 14 * TQ,1 * TQ,TQ,TQ }, { 0,TQ,TQ,TQ }, cto_x, cto_y);
+
 }
 void Render_Component::Handle_Bottom_Right_Wall_Quad(int sprite_offset_x, int sprite_offset_y)
 {
@@ -457,6 +502,13 @@ void Render_Component::Handle_Bottom_Right_Wall_Quad(int sprite_offset_x, int sp
 	else if (right_floor && bottom_floor) Stamp({ 10* TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 	else if (right_floor && bottom_space) Stamp({ 1 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 	else if (right_space && bottom_floor) Stamp({ 1 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+
+	// Check if there's an exterior door
+	if (gl->is_door(neighbors.asa[1][2][1]) && gl->is_null(neighbors.asa[0][2][0]) && gl->is_null(neighbors.asa[1][2][0]))
+	{
+		Stamp({ 15 * TQ,3 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	}
+	else if (gl->is_door(neighbors.asa[1][1][2]) && gl->is_null(neighbors.asa[0][0][2]) && gl->is_null(neighbors.asa[1][0][2])) Stamp({ 15 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 }
 
 void Render_Component::Build_Floor_Multisprite()
@@ -465,20 +517,35 @@ void Render_Component::Build_Floor_Multisprite()
 }
 
 // Animation Commands
-void Render_Component::Increment_Structure_Animation_Frame()
+void Render_Component::Structure_Increment_Animation()
 {
-	structure_animation_frame++;
-	if (structure_animation_frame >= max_structure_animation_frames)
+	switch (structure_animation_type)
 	{
-		structure_animation_frame = 0;
-	}
-}
-void Render_Component::Decrement_Structure_Animation_Frame()
-{
-	structure_animation_frame--;
-	if (structure_animation_frame < 0)
-	{
-		structure_animation_frame = max_structure_animation_frames - 1;
+	case STRUCTURE_ANIMATION_NULL:
+		break;
+	case STRUCTURE_ANIMATION_INCREMENT_UNTIL_COMPLETE:
+		structure_animation_frame++;
+		if (structure_animation_frame >= max_structure_animation_frames)
+		{
+			structure_animation_frame = max_structure_animation_frames;
+		}
+		break;
+	case STRUCTURE_ANIMATION_DECREMENT_UNTIL_COMPLETE:
+		structure_animation_frame--;
+		if (structure_animation_frame <= 0)
+		{
+			structure_animation_frame = 0;
+		}
+		break;
+	case STRUCTURE_ANIMATION_PAUSE:
+		break;
+	case STRUCTURE_ANIMATION_INCREMENT_REPEAT:
+		structure_animation_frame++;
+		if (structure_animation_frame >= max_structure_animation_frames)
+		{
+			structure_animation_frame = 0;
+		}
+		break;
 	}
 }
 
@@ -493,7 +560,10 @@ void Render_Component::Increment_Entity_Animation()
 		}
 	}
 }
-
+void Render_Component::Change_Structure_Current_Animation(int new_animation)
+{
+	structure_animation_type = new_animation;
+}
 void Render_Component::Change_Entity_Current_Animation(int new_animation)
 {
 	current_entity_anim = new_animation;

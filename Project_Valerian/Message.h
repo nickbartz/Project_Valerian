@@ -107,3 +107,7 @@ private:
 // Message to set a rally point for entities 
 //
 // MESSAGE_TYPE_SET_RALLY_POINT --> OBJECT_TYPE_ENTITY --> FOCUS_TYPE_RANGE --> ENTITY_FACTION --> GRID_X --> GRID_Y
+//
+// Message to update the SG on an entities movement 
+//
+// MESSAGE_TYPE_SG_ENTITY_MOVEMENT -- > OBJECT_TYPE_ALL --> FOCUS_TYPE_ALL --> ENTITY_FACTION --> prevGRID_X --> prevGRID_Y --> newGRID_X --> newGRID_Y --> OBJECT_ARRAY_INDEX

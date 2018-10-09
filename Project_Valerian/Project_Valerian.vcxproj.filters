@@ -84,6 +84,9 @@
     <ClCompile Include="A_Star.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AI_Rel_Component.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Message.h">
@@ -159,6 +162,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="A_Star.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AI_Rel_Component.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

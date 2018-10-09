@@ -124,6 +124,16 @@ void Object_Service_Locator::Register_Pointer(AI_Movement_Component* mPointer)
 	AI_Movement_Pointer = mPointer;
 }
 
+void Object_Service_Locator::Register_Pointer(AI_Rel_Component* rPointer)
+{
+	AI_Rel_Pointer = rPointer;
+}
+
+void Object_Service_Locator::Register_Pointer(AI_Item_Component* iPointer)
+{
+	AI_Item_Pointer = iPointer;
+}
+
 Render_Component* Object_Service_Locator::Return_Render_Pointer()
 {
 	return Render_Pointer;
@@ -137,4 +147,14 @@ AI_Stats_Component* Object_Service_Locator::Return_AI_Stats_Pointer()
 AI_Movement_Component* Object_Service_Locator::Return_AI_Movement_Pointer()
 {
 	return AI_Movement_Pointer;
+}
+
+AI_Rel_Component* Object_Service_Locator::Return_AI_Rel_Pointer()
+{
+	return AI_Rel_Pointer;
+}
+
+AI_Item_Component* Object_Service_Locator::Return_AI_Item_Pointer()
+{
+	return AI_Item_Pointer;
 }
