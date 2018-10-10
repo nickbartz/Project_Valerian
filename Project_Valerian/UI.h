@@ -53,12 +53,16 @@ private:
 	void Update_UI_With_Mouse_Action(Cursor* cursor);
 	void Parse_Loaded_Actions();
 
+	// Window Open and Close Functions
+	int num_entity_diagnostics_open = 0;
+	void Open_Entity_Diagnostic(int x_pos, int y_pos);
 	
 	Global_Service_Locator* service_pointer;
 
 	UI_Window_Player_Diagnostic player_console;
 	UI_Window_Structure_Create create_window;
 	UI_Window_Screen_Buttons static_buttons;
+	UI_Window_Entity_Diagnostic entity_diagnostic_array[2];
 };
 
 

@@ -39,6 +39,7 @@ public:
 	// Accessors
 	Adjacent_Structure_Array Return_Neighboring_Tiles(Coordinate grid_point);
 	int Return_Current_Structure_Count();
+	Object* Return_Object_At_Coord(int coord_x, int coord_y);
 
 	// Queries
 	void Return_Tiles_Without_Leaks(Coordinate start_tile, vector<Coordinate> &tiles_to_oxygenate, map<Coordinate, bool> &checked_tiles, bool &is_leak);

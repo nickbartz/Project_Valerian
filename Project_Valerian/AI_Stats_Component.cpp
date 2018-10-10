@@ -53,6 +53,11 @@ int AI_Stats_Component::Get_Structure_Type()
 	return structure_template.structure_type;
 }
 
+string AI_Stats_Component::Get_Entity_Name()
+{
+	return entity_stats.entity_last_name + ", " + entity_stats.entity_first_name;
+}
+
 void AI_Stats_Component::Update()
 {
 

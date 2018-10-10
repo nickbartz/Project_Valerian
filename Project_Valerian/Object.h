@@ -11,6 +11,7 @@ class AI_Stats_Component;
 class AI_Movement_Component;
 class AI_Rel_Component;
 class AI_Item_Component;
+class Coordinate;
 
 class Object
 {
@@ -27,6 +28,8 @@ public:
 	int Get_Structure_Type();
 	bool Is_Structure_Inaccessible(int faction);
 	int Return_Object_Array_Index();
+	Coordinate get_coordinate();
+	AI_Stats_Component* Return_Object_Stats_Pointer();
 
 	// Draw functions
 	void Draw();

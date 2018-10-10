@@ -15,8 +15,8 @@ struct Entity_Stats
 	int fear = 0;
 	int speed = 3;
 	int ennui = 0;
-	string entity_last_name;
-	string entity_first_name;
+	string entity_last_name = "Tony";
+	string entity_first_name = "Stark";
 };
 
 struct Structure_Stats
@@ -39,6 +39,8 @@ public:
 
 	int Get_Structure_Name();
 	int Get_Structure_Type();
+
+	string Get_Entity_Name();
 
 	void Update_Stat(int stat_name, int new_value );
 	void Adjust_Stat(int stat_name, int new_value);

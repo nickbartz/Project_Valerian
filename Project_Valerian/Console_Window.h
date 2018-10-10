@@ -14,6 +14,7 @@ public:
 	void Draw(Draw_System* draw_system);
 	void Change_Rect(SDL_Rect new_rect);
 	SDL_Rect Return_Rect();
+	void Change_Window_Name(string new_name);
 
 	bool is_open();
 
@@ -93,6 +94,29 @@ private:
 	UI_Panel_Structure_Create_Type structure_create_wall;
 	UI_Panel_Structure_Create_Type structure_create_floor;
 	UI_Panel_Structure_Create_Type structure_create_misc;
+};
+
+class UI_Window_Entity_Diagnostic :public UI_Window_Generic
+{
+public:
+	UI_Window_Entity_Diagnostic(Global_Service_Locator* service_locator = NULL, SDL_Rect base_rect = {0,0,SPRITE_SIZE*5,SPRITE_SIZE*5}) :UI_Window_Generic(service_locator, WINDOW_ENTITY_DIAGNOSTIC, "Entity Diagnostic", base_rect)
+	{
+		// Create Wall Structure Menu Panels
+		Create_Panel_Header({ 0,window_title_height,30,panel_bar_height }, PANEL_ENTITY_INVENTORY, "Inventory", { 5,3,0,0 }, { 255,255,255,255 });
+
+		Size_Panel_Headers();
+
+		currently_active_panel = PANEL_ENTITY_INVENTORY;
+
+		currently_open = false;
+	}
+
+	void Init(int base_x, int base_y, string new_name);
+	void Respond_To_Mouse(Cursor* cursor);
+	void Draw(Draw_System* draw_system);
+
+private:
+
 };
 
 class UI_Window_Screen_Buttons : public UI_Window_Generic

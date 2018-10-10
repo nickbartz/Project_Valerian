@@ -14,6 +14,11 @@ UI_Window_Generic::UI_Window_Generic(Global_Service_Locator* sLocator, int windo
 	window_title_bar.Set_Font_Type(FONT_LARGE_BOLD);
 }
 
+void UI_Window_Generic::Change_Window_Name(string new_name)
+{
+	window_title_bar.Change_Component_Title(new_name);
+}
+
 SDL_Rect UI_Window_Generic::Return_Rect()
 {
 	return base_window_rect;
@@ -156,6 +161,34 @@ void UI_Window_Structure_Create::Init()
 	structure_create_wall.Init(1);
 	structure_create_floor.Init(2);
 	structure_create_misc.Init(3);
+}
+
+void UI_Window_Entity_Diagnostic::Respond_To_Mouse(Cursor* cursor)
+{
+	// Check to see if there's any need to move the window or change panels
+	UI_Window_Generic::Respond_To_Mouse(cursor);
+
+	// Check to see if the mouse click was on a component within the window
+
+}
+
+void UI_Window_Entity_Diagnostic::Draw(Draw_System* draw_system)
+{
+	UI_Window_Generic::Draw(draw_system);
+
+	//if (currently_active_panel == structure_create_wall.Get_Panel_Name())
+	//{
+	//	structure_create_wall.Draw(draw_system, base_window_rect);
+	//}
+
+
+}
+
+void UI_Window_Entity_Diagnostic::Init(int base_x, int base_y, string new_name)
+{
+	Change_Rect({ base_x,base_y, SPRITE_SIZE*5, SPRITE_SIZE*5 });
+	currently_open = true;
+	Change_Window_Name(new_name);
 }
 
 void UI_Window_Screen_Buttons::Init()

@@ -104,6 +104,15 @@ int Object::Return_Object_Array_Index()
 	return SG_object_array_index;
 }
 
+Coordinate Object::get_coordinate()
+{
+	return AI_Movement->Return_Grid_Coord();
+}
+
+AI_Stats_Component* Object::Return_Object_Stats_Pointer()
+{
+	return AI_Stats;
+}
 
 // Core Object Functions
 

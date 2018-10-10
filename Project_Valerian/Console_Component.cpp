@@ -133,6 +133,11 @@ void UI_Component_Generic::Check_For_Click()
 	}
 }
 
+void UI_Component_Generic::Change_Component_Title(string new_title)
+{
+	title = new_title;
+}
+
 // Draw Functions
 
 void UI_Component_Generic::Draw(Draw_System* draw_system, SDL_Rect base_rect)

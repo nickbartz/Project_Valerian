@@ -20,6 +20,7 @@ public:
 	void Assign_Window(int window_name);
 	void Assign_Panel(int panel_name);
 	void Set_Font_Type(int font_type);
+	void Change_Component_Title(string new_title);
 
 	// Accessors
 	SDL_Rect Return_Rect();

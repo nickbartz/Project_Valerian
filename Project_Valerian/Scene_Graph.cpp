@@ -3,6 +3,7 @@
 #include<Cursor.h>
 #include<iostream>
 #include<Game_Library.h>
+#include<Coordinate.h>
 
 Scene_Graph::Scene_Graph(Global_Service_Locator* sLocator)
 {
@@ -259,6 +260,18 @@ Adjacent_Structure_Array Scene_Graph::Return_Neighboring_Tiles(Coordinate grid_p
 int Scene_Graph::Return_Current_Structure_Count()
 {
 	return current_num_structures;
+}
+
+Object* Scene_Graph::Return_Object_At_Coord(int coord_x, int coord_y)
+{
+	for (int i = 0; i < current_num_entities; i++)
+	{
+		if (entity_array[i].get_coordinate().x == coord_x && entity_array[i].get_coordinate().y == coord_y)
+		{
+			return &entity_array[i];
+		}
+	}
+	return NULL;
 }
 
 void Scene_Graph::free()
