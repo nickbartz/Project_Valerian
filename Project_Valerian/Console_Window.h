@@ -5,6 +5,7 @@
 #include<Console_Panel.h>
 
 class Cursor;
+class Object;
 
 class UI_Window_Generic
 {
@@ -17,6 +18,7 @@ public:
 	void Change_Window_Name(string new_name);
 
 	bool is_open();
+	bool is_currently_clicked();
 
 	void Init();
 
@@ -96,27 +98,29 @@ private:
 	UI_Panel_Structure_Create_Type structure_create_misc;
 };
 
-class UI_Window_Entity_Diagnostic :public UI_Window_Generic
+class UI_Window_Object_Diagnostic :public UI_Window_Generic
 {
 public:
-	UI_Window_Entity_Diagnostic(Global_Service_Locator* service_locator = NULL, SDL_Rect base_rect = {0,0,SPRITE_SIZE*5,SPRITE_SIZE*5}) :UI_Window_Generic(service_locator, WINDOW_ENTITY_DIAGNOSTIC, "Entity Diagnostic", base_rect)
+	UI_Window_Object_Diagnostic(Global_Service_Locator* service_locator = NULL, SDL_Rect base_rect = {0,0,SPRITE_SIZE*8,SPRITE_SIZE*10}) :UI_Window_Generic(service_locator, WINDOW_OBJECT_DIAGNOSTIC, "Entity Diagnostic", base_rect)
 	{
 		// Create Wall Structure Menu Panels
-		Create_Panel_Header({ 0,window_title_height,30,panel_bar_height }, PANEL_ENTITY_INVENTORY, "Inventory", { 5,3,0,0 }, { 255,255,255,255 });
+		Create_Panel_Header({ 0,window_title_height,30,panel_bar_height }, PANEL_OBJECT_INVENTORY, "Inventory", { 5,3,0,0 }, { 255,255,255,255 });
+
+		object_inventory = UI_Panel_Object_Inventory(service_locator, 6, 8, WINDOW_OBJECT_DIAGNOSTIC, { 0,window_title_height + panel_bar_height,base_rect.w,base_rect.h - window_title_height + panel_bar_height });
 
 		Size_Panel_Headers();
 
-		currently_active_panel = PANEL_ENTITY_INVENTORY;
+		currently_active_panel = PANEL_OBJECT_INVENTORY;
 
 		currently_open = false;
 	}
 
-	void Init(int base_x, int base_y, string new_name);
+	void Init(int base_x, int base_y, Object* diagnostic_object);
 	void Respond_To_Mouse(Cursor* cursor);
 	void Draw(Draw_System* draw_system);
 
 private:
-
+	UI_Panel_Object_Inventory object_inventory;
 };
 
 class UI_Window_Screen_Buttons : public UI_Window_Generic

@@ -122,7 +122,7 @@ void Cursor::Update()
 {
 	Age_Mouse();
 
-	if ((left_button_previous == 1 || left_button_previous == 0) && left_button == 0 && currently_clicked_component != NULL)
+	if (left_button == false && currently_clicked_component != NULL)
 	{
 		currently_clicked_component->Currently_Clicked(false);
 		currently_clicked_component = NULL;

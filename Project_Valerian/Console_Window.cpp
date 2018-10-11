@@ -1,6 +1,8 @@
 #include<Console_Window.h>
 #include<Cursor.h>
 #include<Service_Locator.h>
+#include<Object.h>
+#include<AI_Stats_Component.h>
 
 
 UI_Window_Generic::UI_Window_Generic(Global_Service_Locator* sLocator, int window_name, string window_title, SDL_Rect base_rect)
@@ -106,6 +108,12 @@ bool UI_Window_Generic::is_open()
 	return currently_open;
 }
 
+bool UI_Window_Generic::is_currently_clicked()
+{
+	if (window_title_bar.Currently_Clicked() == true) return true;
+	else return false;
+}
+
 void UI_Window_Player_Diagnostic::Respond_To_Mouse(Cursor* cursor)
 {	
 	// Check to see if there's any need to move the window or change panels
@@ -163,7 +171,7 @@ void UI_Window_Structure_Create::Init()
 	structure_create_misc.Init(3);
 }
 
-void UI_Window_Entity_Diagnostic::Respond_To_Mouse(Cursor* cursor)
+void UI_Window_Object_Diagnostic::Respond_To_Mouse(Cursor* cursor)
 {
 	// Check to see if there's any need to move the window or change panels
 	UI_Window_Generic::Respond_To_Mouse(cursor);
@@ -172,23 +180,32 @@ void UI_Window_Entity_Diagnostic::Respond_To_Mouse(Cursor* cursor)
 
 }
 
-void UI_Window_Entity_Diagnostic::Draw(Draw_System* draw_system)
+void UI_Window_Object_Diagnostic::Draw(Draw_System* draw_system)
 {
 	UI_Window_Generic::Draw(draw_system);
 
-	//if (currently_active_panel == structure_create_wall.Get_Panel_Name())
-	//{
-	//	structure_create_wall.Draw(draw_system, base_window_rect);
-	//}
-
-
+	if (currently_active_panel == object_inventory.Get_Panel_Name())
+	{
+		object_inventory.Draw(draw_system, base_window_rect);
+	}
 }
 
-void UI_Window_Entity_Diagnostic::Init(int base_x, int base_y, string new_name)
+void UI_Window_Object_Diagnostic::Init(int base_x, int base_y, Object* diagnostic_object)
 {
-	Change_Rect({ base_x,base_y, SPRITE_SIZE*5, SPRITE_SIZE*5 });
+	Change_Rect({ base_x,base_y, base_window_rect.w, base_window_rect.h });
 	currently_open = true;
-	Change_Window_Name(new_name);
+	AI_Stats_Component* object_stats_pointer = (AI_Stats_Component*)diagnostic_object->Return_Object_Component_Pointer(OBJECT_COMPONENT_STATS);
+
+	if (object_stats_pointer->Return_Object_Type() == OBJECT_TYPE_ENTITY)
+	{
+		Change_Window_Name(object_stats_pointer->Get_Entity_Name());
+	}
+	else if (object_stats_pointer->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)
+	{
+		Change_Window_Name(object_stats_pointer->Get_Structure_Common_Name());
+	}
+
+	object_inventory.Init(diagnostic_object);
 }
 
 void UI_Window_Screen_Buttons::Init()

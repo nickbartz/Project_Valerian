@@ -39,7 +39,7 @@ public:
 
 	int Get_Structure_Name();
 	int Get_Structure_Type();
-
+	string Get_Structure_Common_Name();
 	string Get_Entity_Name();
 
 	void Update_Stat(int stat_name, int new_value );

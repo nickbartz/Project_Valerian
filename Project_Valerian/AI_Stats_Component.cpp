@@ -43,6 +43,11 @@ void AI_Stats_Component::Assign_Uniq_IDs(int object_array_index)
 	uniq_id = rand() % 100000;
 }
 
+string AI_Stats_Component::Get_Structure_Common_Name()
+{
+	return structure_template.structure_name;
+}
+
 int AI_Stats_Component::Get_Structure_Name()
 {
 	return structure_template.structure_id;

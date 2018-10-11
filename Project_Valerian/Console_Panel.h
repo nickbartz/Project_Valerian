@@ -5,6 +5,7 @@
 #include<vector>
 
 class Global_Service_Locator;
+class Object;
 
 class UI_Panel_Generic
 {
@@ -60,6 +61,28 @@ private:
 	int panel_buttons = 0;
 	int panel_rows;
 	int panel_columns; 
+	vector <UI_Component_Graphic_Button> graphic_button_array;
+	UI_Component_Generic background_component;
+};
+
+class UI_Panel_Object_Inventory : public UI_Panel_Generic
+{
+public:
+	UI_Panel_Object_Inventory(Global_Service_Locator* service_locator = NULL, int rows = 6, int columns = 8, int window_name = WINDOW_OBJECT_DIAGNOSTIC, SDL_Rect offset_rect = { 0,0,100,100 }) : UI_Panel_Generic(service_locator, window_name, offset_rect)
+	{
+		panel_rows = rows;
+		panel_columns = columns;
+		panel_name = PANEL_OBJECT_INVENTORY;
+	}
+
+	void Init(Object* object);
+	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
+	void Check_For_Clicks();
+
+private:
+	int panel_buttons = 0;
+	int panel_rows;
+	int panel_columns;
 	vector <UI_Component_Graphic_Button> graphic_button_array;
 	UI_Component_Generic background_component;
 };

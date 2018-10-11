@@ -29,7 +29,7 @@ public:
 	bool Is_Structure_Inaccessible(int faction);
 	int Return_Object_Array_Index();
 	Coordinate get_coordinate();
-	AI_Stats_Component* Return_Object_Stats_Pointer();
+	void* Return_Object_Component_Pointer(int component_type);
 
 	// Draw functions
 	void Draw();

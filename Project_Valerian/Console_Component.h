@@ -108,7 +108,7 @@ public:
 
 private:
 	void Fetch_Sprite_Details_From_Object_ID();
-
+	bool sprite_clip_override = false;
 	int object_type = 0;
 	int template_id = 0;
 	int spritesheet_num;

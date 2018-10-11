@@ -14,8 +14,8 @@ UI::UI(Global_Service_Locator* srvc_pointer)
 	player_console = UI_Window_Player_Diagnostic(srvc_pointer);
 	create_window = UI_Window_Structure_Create(srvc_pointer);
 	static_buttons = UI_Window_Screen_Buttons(srvc_pointer);
-	entity_diagnostic_array[0] = UI_Window_Entity_Diagnostic(srvc_pointer);
-	entity_diagnostic_array[1] = UI_Window_Entity_Diagnostic(srvc_pointer);
+	entity_diagnostic_array[0] = UI_Window_Object_Diagnostic(srvc_pointer);
+	entity_diagnostic_array[1] = UI_Window_Object_Diagnostic(srvc_pointer);
 }
 
 // External API functions having to do with communicating with the UI
@@ -200,11 +200,11 @@ void UI::Update_UI_With_Mouse_Action(Cursor* cursor_pointer)
 	SDL_Point new_point = cursor_pointer->Get_Mouse_Position();
 
 	// Check to see if the mouse action affected any of the open windows
-	if (player_console.is_open() && SDL_PointInRect(&new_point, &player_console.Return_Rect())) player_console.Respond_To_Mouse(cursor_pointer);
-	else if (create_window.is_open() && SDL_PointInRect(&new_point, &create_window.Return_Rect())) create_window.Respond_To_Mouse(cursor_pointer);
+	if (player_console.is_open() && (player_console.is_currently_clicked() || SDL_PointInRect(&new_point, &player_console.Return_Rect()))) player_console.Respond_To_Mouse(cursor_pointer);
+	else if (create_window.is_open() && (create_window.is_currently_clicked() || SDL_PointInRect(&new_point, &create_window.Return_Rect()))) create_window.Respond_To_Mouse(cursor_pointer);
 	else if (SDL_PointInRect(&new_point, &static_buttons.Return_Rect())) static_buttons.Respond_To_Mouse();
-	else if (entity_diagnostic_array[0].is_open()  & SDL_PointInRect(&new_point, &entity_diagnostic_array[0].Return_Rect())) entity_diagnostic_array[0].Respond_To_Mouse(cursor_pointer);
-	else if (entity_diagnostic_array[1].is_open() & SDL_PointInRect(&new_point, &entity_diagnostic_array[1].Return_Rect())) entity_diagnostic_array[1].Respond_To_Mouse(cursor_pointer);
+	else if (entity_diagnostic_array[0].is_open() && (entity_diagnostic_array[0].is_currently_clicked() || SDL_PointInRect(&new_point, &entity_diagnostic_array[0].Return_Rect()))) entity_diagnostic_array[0].Respond_To_Mouse(cursor_pointer);
+	else if (entity_diagnostic_array[1].is_open() && (entity_diagnostic_array[1].is_currently_clicked() || SDL_PointInRect(&new_point, &entity_diagnostic_array[1].Return_Rect()))) entity_diagnostic_array[1].Respond_To_Mouse(cursor_pointer);
 
 	// If the mouse click didn't, then check to see if the mouse interacted with the world 
 	else Handle_Click_In_World(); 
@@ -243,21 +243,19 @@ void UI::Open_Entity_Diagnostic(int x_pos, int y_pos)
 
 	if (diagnostic_object != NULL)
 	{
-		string menu_name = diagnostic_object->Return_Object_Stats_Pointer()->Get_Entity_Name();
-
 		switch (num_entity_diagnostics_open)
 		{
 		case 0:
-			entity_diagnostic_array[0].Init(x_pos, y_pos, menu_name);
+			entity_diagnostic_array[0].Init(x_pos, y_pos, diagnostic_object);
 			num_entity_diagnostics_open++;
 			break;
 		case 1:
-			entity_diagnostic_array[1].Init(x_pos, y_pos, menu_name);
+			entity_diagnostic_array[1].Init(x_pos, y_pos, diagnostic_object);
 			num_entity_diagnostics_open++;
 			break;
 		case 2:
 			entity_diagnostic_array[0] = entity_diagnostic_array[1];
-			entity_diagnostic_array[1].Init(x_pos, y_pos, menu_name);
+			entity_diagnostic_array[1].Init(x_pos, y_pos, diagnostic_object);
 			break;
 		}
 	}

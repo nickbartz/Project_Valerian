@@ -62,7 +62,7 @@ private:
 	UI_Window_Player_Diagnostic player_console;
 	UI_Window_Structure_Create create_window;
 	UI_Window_Screen_Buttons static_buttons;
-	UI_Window_Entity_Diagnostic entity_diagnostic_array[2];
+	UI_Window_Object_Diagnostic entity_diagnostic_array[2];
 };
 
 

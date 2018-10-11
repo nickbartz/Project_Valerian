@@ -47,7 +47,12 @@ class AI_Item_Component
 public:
 	AI_Item_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int num_inventory_slots, int equipment_template_id, int blueprint_id, int starter_inventory_id);
 
+	int Add_Item_To_Inventory(int item_id, int quantity, bool has_stats, Item_Stats item_stats = {});
 	void Populate_Starter_Inventory(int starter_id);
+
+	// Accessors
+	int Return_Num_Inventory_Slots();
+	Item_Slot Return_Item_In_Slot(int slot_num);
 
 private:
 	Global_Service_Locator* service_locator;

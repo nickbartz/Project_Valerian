@@ -271,6 +271,13 @@ Object* Scene_Graph::Return_Object_At_Coord(int coord_x, int coord_y)
 			return &entity_array[i];
 		}
 	}
+
+	Object* mid_tile = tile_map[{coord_x, coord_y}].Return_Tile_Object(TILE_LAYER_MID);
+	if (mid_tile != NULL) return mid_tile;
+
+	Object* base_tile = tile_map[{coord_x, coord_y}].Return_Tile_Object(TILE_LAYER_BASE);
+	if (base_tile != NULL) return base_tile;
+
 	return NULL;
 }
 

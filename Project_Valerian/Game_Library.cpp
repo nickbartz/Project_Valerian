@@ -14,6 +14,7 @@ Game_Library::Game_Library()
 	Load_Entity_Templates("Data/Entity_Templates.csv", "Data/Entity_Animations.csv");
 	Load_Item_Templates("Data/Inventory_Data.csv");
 	Load_Blueprints("Data/Blueprint_Data.csv");
+
 }
 
 void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
@@ -30,6 +31,7 @@ void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
 		new_config.structure_type = stoi(vector_loaded_tiles[i + 1][5]);
 
 		new_config.structure_id = stoi(vector_loaded_tiles[i + 1][0]);
+		new_config.structure_name = vector_loaded_tiles[i + 1][3];
 		new_config.render_component_type = stoi(vector_loaded_tiles[i + 1][7]);
 		new_config.spritesheet = stoi(vector_loaded_tiles[i + 1][11]);
 		new_config.tile_specs.x = stoi(vector_loaded_tiles[i + 1][12]);
@@ -66,6 +68,7 @@ void Game_Library::Load_Entity_Templates(string entity_template_path, string ent
 		new_entity.num_entity_components = stoi(loaded_templates[i][7]);
 		new_entity.num_entity_animations = stoi(loaded_templates[i][6]);
 		new_entity.entity_id = stoi(loaded_templates[i][1]);
+		new_entity.entity_inventory_pack = stoi(loaded_templates[i][12]);
 
 		for (int q = 0; q < new_entity.num_entity_components; q++)
 		{
@@ -125,6 +128,7 @@ void Game_Library::Load_Blueprints(string blueprint_path)
 		loaded_blueprints[i - 1] = new_blueprint;
 		num_loaded_blueprints++;
 	}
+
 }
 
 vector<vector<int>> Game_Library::Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename)
@@ -263,6 +267,7 @@ Entity_Template Game_Library::Fetch_Entity_Template(int entity_id)
 
 Item_Template Game_Library::Fetch_Item_Template(int item_id)
 {
+	
 	if (item_id < num_loaded_Items)
 	{
 		return loaded_Items[item_id];

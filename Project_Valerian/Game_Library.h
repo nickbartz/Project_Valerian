@@ -16,6 +16,7 @@ struct Structure_Template
 	int tile_layer = TILE_LAYER_BASE;
 	int structure_type = STRUCTURE_TYPE_NULL;
 	int structure_id = STRUCTURE_ID_NULL;
+	string structure_name = "Null";
 
 	// Config for Renderer Component
 	int render_component_type = RENDER_COMPONENT_NONE;
@@ -44,6 +45,7 @@ struct Entity_Template
 	int render_component = RENDER_COMPONENT_ENTITY_COMPLEX;
 	int num_entity_animations = 0;
 	int num_entity_components = 0;
+	int entity_inventory_pack = 0;
 	Animation_State entity_animations[MAX_NUM_ANIMATIONS][MAX_NUM_COMPONENTS];
 };
 

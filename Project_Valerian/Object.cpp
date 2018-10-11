@@ -43,7 +43,7 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
 	object_service_locator.Register_Pointer(AI_Relationship);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 5, 0, 0, object_config.inventory_pack);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, object_config.inventory_pack);
 	object_service_locator.Register_Pointer(AI_Items);
 }
 
@@ -60,6 +60,9 @@ void Object::Init_Entity_From_Template(Entity_Template object_config)
 
 	AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
 	object_service_locator.Register_Pointer(AI_Relationship);
+
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, object_config.entity_inventory_pack);
+	object_service_locator.Register_Pointer(AI_Items);
 }
 
 int Object::Get_Assigned_Flag()
@@ -109,9 +112,26 @@ Coordinate Object::get_coordinate()
 	return AI_Movement->Return_Grid_Coord();
 }
 
-AI_Stats_Component* Object::Return_Object_Stats_Pointer()
+void* Object::Return_Object_Component_Pointer(int component_type)
 {
-	return AI_Stats;
+	switch (component_type)
+	{
+	case OBJECT_COMPONENT_STATS:
+		return AI_Stats;
+		break;
+	case OBJECT_COMPONENT_MOVEMENT:
+		return AI_Movement;
+		break;
+	case OBJECT_COMPONENT_ITEM:
+		return AI_Items;
+		break;
+	case OBJECT_COMPONENT_JOB:
+		return AI_Job;
+		break;
+	case OBJECT_COMPONENT_RELATIONSHIP:
+		return AI_Relationship;
+		break;
+	}
 }
 
 // Core Object Functions
@@ -157,4 +177,5 @@ void Object::free()
 	if (AI_Job != NULL) delete AI_Job, AI_Job = NULL;
 	if (AI_Movement != NULL) delete AI_Movement, AI_Movement = NULL;
 	if (AI_Relationship != NULL) delete AI_Relationship, AI_Relationship = NULL;
+	if (AI_Items != NULL) delete AI_Items, AI_Items = NULL;
 }

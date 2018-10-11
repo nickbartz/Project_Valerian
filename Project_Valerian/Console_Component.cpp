@@ -124,7 +124,7 @@ void UI_Component_Generic::Check_For_Click()
 
 	if (SDL_PointInRect(&new_point, &current_screen_rect))
 	{
-		if (Currently_Clicked() == false && cursor->left_button == 1 && cursor->left_button_previous == 0)
+		if (Currently_Clicked() == false && cursor->left_button == true && cursor->left_button_previous == false)
 		{
 			Currently_Clicked(true);
 			cursor->Set_Currently_Clicked_Component(this);
@@ -203,7 +203,7 @@ void UI_Component_Graphic_Button::Draw(Draw_System* draw_system, SDL_Rect base_r
 {
 	UI_Component_Generic::Draw(draw_system, base_rect);
 
-	draw_system->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet_num, { base_rect.x + offset_rect.x , base_rect.y + offset_rect.y, offset_rect.w, offset_rect.h }, sprite_clip);
+	if (template_id !=0 || sprite_clip_override) draw_system->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet_num, { base_rect.x + offset_rect.x , base_rect.y + offset_rect.y, offset_rect.w, offset_rect.h }, sprite_clip);
 }
 
 void UI_Component_Graphic_Button::Init(int oType, int temp_id, SDL_Rect icon_clip)
@@ -218,23 +218,29 @@ void UI_Component_Graphic_Button::Init(int oType, int temp_id, SDL_Rect icon_cli
 	else
 	{
 		sprite_clip = icon_clip;
+		sprite_clip_override = true;
 	}
 
 }
 
 void UI_Component_Graphic_Button::Fetch_Sprite_Details_From_Object_ID()
 {
-	Structure_Template new_structure;
-
 	switch (object_type)
 	{
 	case OBJECT_TYPE_STRUCTURE:
-		new_structure = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(template_id);
-		sprite_clip = { new_structure.icon_clip_x,new_structure.icon_clip_y, SPRITE_SIZE, SPRITE_SIZE };
+		{
+			Structure_Template new_structure;
+			new_structure = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(template_id);
+			sprite_clip = { new_structure.icon_clip_x,new_structure.icon_clip_y, SPRITE_SIZE, SPRITE_SIZE };
+		}
 		break;
 	case OBJECT_TYPE_ENTITY:
 		break;
 	case OBJECT_TYPE_ITEM:
+		{
+			Item_Template new_item = service_locator->get_Game_Library()->Fetch_Item_Template(template_id);
+			sprite_clip = { new_item.sprite_specs.x, new_item.sprite_specs.y, SPRITE_SIZE, SPRITE_SIZE };
+		}
 		break;
 	}
 }
