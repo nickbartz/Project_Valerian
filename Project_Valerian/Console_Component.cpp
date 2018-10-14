@@ -3,6 +3,8 @@
 #include<Service_Locator.h>
 #include<Game_Library.h>
 #include<UI.h>
+#include<AI_Item_Component.h>
+#include<Game_Library.h>
 
 UI_Component_Generic::UI_Component_Generic(Global_Service_Locator* sLocator, SDL_Rect placement_rect, bool component_is_filled, SDL_Color bColor, bool is_highlight, SDL_Color hColor)
 {
@@ -243,4 +245,31 @@ void UI_Component_Graphic_Button::Fetch_Sprite_Details_From_Object_ID()
 		}
 		break;
 	}
+}
+
+void UI_Component_Item_Slot_Button::Draw(SDL_Rect base_rect)
+{
+	UI_Component_Generic::Draw(service_locator->get_Draw_System_Pointer(), base_rect);
+
+	if (slot_pointer != NULL && slot_pointer->item_quantity > 0)
+	{
+		sprite_clip = service_locator->get_Game_Library()->Fetch_Item_Template(slot_pointer->slot_item.item_template_id).sprite_specs;
+		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet_num, { base_rect.x + offset_rect.x , base_rect.y + offset_rect.y, offset_rect.w, offset_rect.h }, sprite_clip);
+
+		Set_Font_Type(FONT_SMALL_BOLD);
+		string quantity = to_string(slot_pointer->item_quantity);
+
+		int text_width = service_locator->get_Draw_System_Pointer()->Return_Text_Width(font_type, quantity);
+		int text_height = service_locator->get_Draw_System_Pointer()->Return_Text_Height(font_type, quantity);
+		SDL_Rect text_rect = { base_rect.x + offset_rect.x + SPRITE_SIZE - text_width - 2, base_rect.y + offset_rect.y + SPRITE_SIZE - text_height, text_width, text_height };
+		SDL_Rect background_rect = { base_rect.x + offset_rect.x + SPRITE_SIZE - text_width - 5, base_rect.y + offset_rect.y + SPRITE_SIZE - text_height + 1, text_width + 5, text_height -1};
+		service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(2, background_rect, true, { 50,50,25,255 });
+		service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(2, background_rect, false, { 255,255,255,255 });
+		service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 2,text_rect,font_type,quantity, text_color });
+	}
+}
+
+void UI_Component_Item_Slot_Button::Init(Item_Slot* sPointer)
+{
+	slot_pointer = sPointer;
 }

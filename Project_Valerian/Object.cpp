@@ -28,14 +28,17 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 {
 	Structure_Stats structure_stats;
 	structure_stats.impassable = object_config.is_inaccessible;
+
+	object_service_locator.Register_Pointer(this);
 	
-	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, object_config, structure_stats);
+	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, object_config.structure_id, structure_stats);
 	object_service_locator.Register_Pointer(AI_Stats);
 
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config, neighbors);
 	object_service_locator.Register_Pointer(render_component);
 
 	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, object_config);
+	object_service_locator.Register_Pointer(AI_Job);
 
 	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location);
 	object_service_locator.Register_Pointer(AI_Movement);
@@ -49,7 +52,9 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 
 void Object::Init_Entity_From_Template(Entity_Template object_config)
 {	
-	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, object_config);
+	object_service_locator.Register_Pointer(this);
+
+	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, OBJECT_TYPE_ENTITY, object_config.entity_id);
 	object_service_locator.Register_Pointer(AI_Stats);
 
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config);
@@ -63,6 +68,25 @@ void Object::Init_Entity_From_Template(Entity_Template object_config)
 
 	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, object_config.entity_inventory_pack);
 	object_service_locator.Register_Pointer(AI_Items);
+
+	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, object_config);
+	object_service_locator.Register_Pointer(AI_Job);
+
+}
+
+void Object::Init_Projectile_From_Template(Projectile_Template projectile_config, SDL_Point target)
+{
+	object_service_locator.Register_Pointer(this);
+
+	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, OBJECT_TYPE_PROJECTILE, projectile_config.projectile_template_id);
+	object_service_locator.Register_Pointer(AI_Stats);
+
+	render_component = new Render_Component(service_locator, &object_service_locator, OBJECT_TYPE_PROJECTILE, projectile_config.projectile_template_id);
+	object_service_locator.Register_Pointer(render_component);
+
+	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location);
+	AI_Movement->Set_Projectile_Velocity(target);
+	object_service_locator.Register_Pointer(AI_Movement);
 }
 
 int Object::Get_Assigned_Flag()
@@ -138,11 +162,11 @@ void* Object::Return_Object_Component_Pointer(int component_type)
 
 void Object::Update()
 {
-	if (render_component != NULL) render_component->Update();
 	if (AI_Stats != NULL) AI_Stats->Update();
 	if (AI_Job != NULL) AI_Job->Update();
 	if (AI_Movement != NULL) AI_Movement->Update();
 	if (AI_Relationship != NULL) AI_Relationship->Update();
+	if (render_component != NULL) render_component->Update();
 }
 
 void Object::Collect_Bus_Messages()

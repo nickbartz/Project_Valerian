@@ -56,26 +56,34 @@ class AI_Stats_Component;
 class AI_Movement_Component;
 class AI_Rel_Component;
 class AI_Item_Component;
+class AI_Job_Component;
+class Object;
 
 class Object_Service_Locator
 {
 public:
+	void Register_Pointer(Object* Object);
 	void Register_Pointer(Render_Component* Simple_Render_Pointer);
 	void Register_Pointer(AI_Stats_Component* Basic_Structure_AI_Pointer);
 	void Register_Pointer(AI_Movement_Component* AI_Movement_Pointer);
 	void Register_Pointer(AI_Rel_Component* AI_Rel_Pointer);
 	void Register_Pointer(AI_Item_Component* AI_Item_Pointer);
+	void Register_Pointer(AI_Job_Component* AI_Job_Pointer);
 
+	Object* Return_Object_Pointer();
 	Render_Component* Return_Render_Pointer();
 	AI_Stats_Component* Return_AI_Stats_Pointer();
 	AI_Movement_Component* Return_AI_Movement_Pointer();
 	AI_Rel_Component* Return_AI_Rel_Pointer();
 	AI_Item_Component* Return_AI_Item_Pointer();
+	AI_Job_Component* Return_AI_Job_Pointer();
 
 private:
+	Object * object_pointer;
 	Render_Component * Render_Pointer;
 	AI_Stats_Component* AI_Stats_Pointer;
 	AI_Movement_Component* AI_Movement_Pointer;
 	AI_Rel_Component* AI_Rel_Pointer;
 	AI_Item_Component* AI_Item_Pointer;
+	AI_Job_Component* AI_Job_Pointer;
 };

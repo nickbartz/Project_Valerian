@@ -83,6 +83,6 @@ private:
 	int panel_buttons = 0;
 	int panel_rows;
 	int panel_columns;
-	vector <UI_Component_Graphic_Button> graphic_button_array;
+	vector <UI_Component_Item_Slot_Button> graphic_button_array;
 	UI_Component_Generic background_component;
 };

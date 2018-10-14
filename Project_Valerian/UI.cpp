@@ -125,8 +125,8 @@ void UI::Update()
 		Update_UI_With_Mouse_Action(service_pointer->get_Cursor_Pointer());
 	}
 
-	player_console.Draw(service_pointer->get_Draw_System_Pointer());
-	create_window.Draw(service_pointer->get_Draw_System_Pointer());
+	if (player_console.is_open()) player_console.Draw(service_pointer->get_Draw_System_Pointer());
+	if (create_window.is_open()) create_window.Draw(service_pointer->get_Draw_System_Pointer());
 	static_buttons.Draw();
 	if (entity_diagnostic_array[0].is_open()) entity_diagnostic_array[0].Draw(service_pointer->get_Draw_System_Pointer());
 	if (entity_diagnostic_array[1].is_open()) entity_diagnostic_array[1].Draw(service_pointer->get_Draw_System_Pointer());
@@ -255,6 +255,7 @@ void UI::Open_Entity_Diagnostic(int x_pos, int y_pos)
 			break;
 		case 2:
 			entity_diagnostic_array[0] = entity_diagnostic_array[1];
+			entity_diagnostic_array[1] = UI_Window_Object_Diagnostic(service_pointer);
 			entity_diagnostic_array[1].Init(x_pos, y_pos, diagnostic_object);
 			break;
 		}

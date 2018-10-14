@@ -37,6 +37,7 @@ public:
 
 	// Query Functions
 	int Return_Text_Width(int font_type, string text);
+	int Return_Text_Height(int font_type, string text);
 
 	// Multisprite functions
 	int Add_New_Spritesheet_To_Multisprite(int spritesheet_num, SDL_Renderer* game_renderer);
@@ -57,9 +58,10 @@ public:
 	void Draw(SDL_Renderer* render_target);
 
 	void Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
+	void Draw_Primitive_Directly(SDL_Renderer* render_target, SDL_Rect primitive_rect, SDL_Color primitive_color, bool filled);
 	void Draw_Sprites(SDL_Renderer* render_target, int spritehsheet);
-	void Draw_Primitives(SDL_Renderer* render_target);
-	void Draw_Text_Strings(SDL_Renderer* render_target);
+	void Draw_Primitives(SDL_Renderer* render_target, int layer = 1);
+	void Draw_Text_Strings(SDL_Renderer* render_target, int layer = 1);
 
 	// Free
 	void free();
@@ -92,8 +94,9 @@ private:
 	Spritesheet mid_2_spritesheet;
 	Spritesheet entity_spritesheet;
 	Spritesheet icon_spritesheet;
+	Spritesheet projectile_spritesheet;
 
-	// Primitive array 
+	// Primitive arrays 
 	int count_num_primitives = -1;
 	Primitive_Instruction Primitive_Instruction_Array[MAX_NUM_PRIMITIVES];
 

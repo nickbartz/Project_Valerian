@@ -4,6 +4,7 @@
 #include<iostream>
 #include<Game_Library.h>
 #include<Coordinate.h>
+#include<AI_Rel_Component.h>
 
 Scene_Graph::Scene_Graph(Global_Service_Locator* sLocator)
 {
@@ -12,27 +13,20 @@ Scene_Graph::Scene_Graph(Global_Service_Locator* sLocator)
 
 void Scene_Graph::Update()
 {
-	for (int i = 0; i < current_num_structures; i++)
-	{
-		if (structure_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) structure_array[i].Update();
-	}
+	for (int i = 0; i < current_num_structures; i++) if (structure_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) structure_array[i].Update();
 
-	for (int i = 0; i < current_num_entities; i++)
-	{
-		if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Update();
-	}
+	for (int i = 0; i < current_num_entities; i++) if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Update();
+
+	for (int i = 0; i < current_num_projectiles; i++) if (projectile_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) projectile_array[i].Update();
 }
 
 void Scene_Graph::Collect_Bus_Messages()
 {
-	for (int i = 0; i < current_num_structures; i++)
-	{
-		if (structure_array[i].Get_Assigned_Flag()== OBJECT_ASSIGNED) structure_array[i].Collect_Bus_Messages();
-	}
-	for (int i = 0; i < current_num_entities; i++)
-	{
-		if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Collect_Bus_Messages();
-	}
+	for (int i = 0; i < current_num_structures; i++) if (structure_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) structure_array[i].Collect_Bus_Messages();
+
+	for (int i = 0; i < current_num_entities; i++) if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Collect_Bus_Messages();
+
+	for (int i = 0; i < current_num_projectiles; i++) if (projectile_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) projectile_array[i].Collect_Bus_Messages();
 }
 
 void Scene_Graph::Create_Background()
@@ -86,7 +80,6 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template
 	{
 		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
 		int array_index = 0;
-		current_num_structures++;
 
 		for (int i = 0; i < WORLD_MAX_NUM_STRUCTURES; i++)
 		{
@@ -102,9 +95,10 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template
 			}
 		}
 
+		if (array_index >= current_num_structures) current_num_structures++;
+
 		// Now we initialize the object we just created in the structure array with an object_config
 		structure_array[array_index].Init_Structure_From_Template(structure_config, Return_Neighboring_Tiles(grid_point));
-
 		// We update the tile map with a pointer to the new object
 		Update_Tile_Map(grid_point, structure_config.tile_layer, &structure_array[array_index]);
 
@@ -139,6 +133,11 @@ void Scene_Graph::Delete_Structure_Highest_Layer(Coordinate grid_point)
 		Delete_Structure(grid_point, TILE_LAYER_BASE);
 	}
 }
+
+void Scene_Graph::Delete_Projectile(int projectile_array_num)
+{
+	projectile_array[projectile_array_num].Set_Assigned_Flag(OBJECT_UNASSIGNED);
+} 
 
 bool Scene_Graph::Check_Tile_Placement(Coordinate grid_point, Structure_Template structure)
 {
@@ -189,7 +188,6 @@ void Scene_Graph::Create_Entity(Coordinate grid_point, Entity_Template entity)
 	{
 		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
 		int array_index = 0;
-		current_num_entities++;
 
 		for (int i = 0; i < WORLD_MAX_NUM_ENTITIES; i++)
 		{
@@ -204,6 +202,8 @@ void Scene_Graph::Create_Entity(Coordinate grid_point, Entity_Template entity)
 				break;
 			}
 		}
+
+		if (array_index >= current_num_entities) current_num_entities++;
 
 		entity_array[array_index].Init_Entity_From_Template(entity);
 
@@ -222,15 +222,51 @@ void Scene_Graph::Draw()
 {
 	Draw_Background();
 
-	for (int i = 0; i < current_num_structures; i++)
+	for (int i = 0; i < current_num_structures; i++) if (structure_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) structure_array[i].Draw();
+
+	for (int i = 0; i < current_num_entities; i++) if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Draw();
+
+	for (int i = 0; i < current_num_projectiles; i++) if (projectile_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) projectile_array[i].Draw();
+
+}
+
+// Projectile Creation Commands
+
+void Scene_Graph::Create_Projectile(Object* firing_object, Projectile_Template projectile_config, SDL_Point start, SDL_Point target)
+{
+	if (projectile_config.projectile_template_id != 0)
 	{
-		if (structure_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) structure_array[i].Draw();
+		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
+		int array_index = 0;
+
+		for (int i = 0; i < WORLD_MAX_NUM_PROJECTILES; i++)
+		{
+			// we place the object in the first array index with an "OBJECT_UNASSIGNED" type so we can overwrite objects no longer being used
+			if (projectile_array[i].Get_Assigned_Flag() == OBJECT_UNASSIGNED)
+			{
+				projectile_array[i] = Object(i, { start.x, start.y, TILE_SIZE, TILE_SIZE }, service_locator);
+
+				projectile_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
+
+				array_index = i;
+				break;
+			}
+		}
+
+		if (array_index >= current_num_projectiles) current_num_projectiles++;
+
+		projectile_array[array_index].Init_Projectile_From_Template(projectile_config, target);
+
+		// Finally we send a SG entity update message to the main bus outlining what happened
+		AI_Rel_Component* object_rel = (AI_Rel_Component*)firing_object->Return_Object_Component_Pointer(OBJECT_COMPONENT_RELATIONSHIP);
+		int update_message[9] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT , OBJECT_TYPE_ANY, FOCUS_ALL, start.x, start.y,object_rel->Return_Object_Faction(), projectile_config.projectile_power, projectile_config.projectile_range, array_index };
+		service_locator->get_MB_Pointer()->Add_Custom_Message(9, update_message);
+	}
+	else
+	{
+		cout << "Cannot create null projectile" << endl;
 	}
 
-	for (int i = 0; i < current_num_entities; i++)
-	{
-		if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Draw();
-	}
 }
 
 // Accessors 
@@ -281,25 +317,54 @@ Object* Scene_Graph::Return_Object_At_Coord(int coord_x, int coord_y)
 	return NULL;
 }
 
+Object* Scene_Graph::Return_Structure_By_Array_Num(int array_num)
+{
+	return &structure_array[array_num];
+}
+
+Object* Scene_Graph::Return_Entity_By_Array_Num(int array_num)
+{
+	return &entity_array[array_num];
+}
+
 void Scene_Graph::free()
 {
-	for (int i = 0; i < current_num_structures; i++)
-	{
-		structure_array[i].free();
-	}
+	for (int i = 0; i < current_num_structures; i++) structure_array[i].free();
 
 	background_star_1.free();
 	background_star_2.free();
 	background_planetoid.free();
 
-	for (int i = 0; i < current_num_entities; i++)
-	{
-		entity_array[i].free();
-	}
+	for (int i = 0; i < current_num_entities; i++) entity_array[i].free();
 
+	for (int i = 0; i < current_num_projectiles; i++) projectile_array[i].free();
 }
 
 // Queries
+
+Coordinate Scene_Graph::Return_Nearest_Accessible_Coordinate(Coordinate origin, Coordinate destination, int requesting_faction)
+{
+
+	if (origin.x == destination.x && origin.y == destination.y) return origin;
+	else
+	{
+		int direction_x = (destination.x - origin.x);
+		int direction_y = (destination.y - origin.y);
+
+		if (direction_x != 0) direction_x /= -direction_x;
+		if (direction_y != 0) direction_y /= -direction_y;
+
+		Coordinate d = destination;
+
+		while (Tile_Is_Inaccessible(d, requesting_faction))
+		{
+			d.x -= direction_x;
+			d.y -= direction_y;
+		}
+
+		return d;
+	}
+}
 
 void Scene_Graph::Return_Tiles_Without_Leaks(Coordinate start_tile, vector<Coordinate> &tiles_to_oxygenate,map<Coordinate, bool> &checked_tiles, bool &is_leak)
 {

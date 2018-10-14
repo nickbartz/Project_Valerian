@@ -109,6 +109,11 @@ void Global_Service_Locator::free()
 	pathfinder_pointer = NULL;
 }
 
+void Object_Service_Locator::Register_Pointer(Object* oPointer)
+{
+	object_pointer = oPointer;
+}
+
 void Object_Service_Locator::Register_Pointer(Render_Component* sPointer)
 {
 	Render_Pointer = sPointer;
@@ -134,6 +139,16 @@ void Object_Service_Locator::Register_Pointer(AI_Item_Component* iPointer)
 	AI_Item_Pointer = iPointer;
 }
 
+void Object_Service_Locator::Register_Pointer(AI_Job_Component* jPointer)
+{
+	AI_Job_Pointer = jPointer;
+}
+
+Object* Object_Service_Locator::Return_Object_Pointer()
+{
+	return object_pointer;
+}
+
 Render_Component* Object_Service_Locator::Return_Render_Pointer()
 {
 	return Render_Pointer;
@@ -157,4 +172,9 @@ AI_Rel_Component* Object_Service_Locator::Return_AI_Rel_Pointer()
 AI_Item_Component* Object_Service_Locator::Return_AI_Item_Pointer()
 {
 	return AI_Item_Pointer;
+}
+
+AI_Job_Component* Object_Service_Locator::Return_AI_Job_Pointer()
+{
+	return AI_Job_Pointer;
 }

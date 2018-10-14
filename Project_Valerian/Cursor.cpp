@@ -139,8 +139,8 @@ void Cursor::Draw()
 		int h = abs(current_mouse_y - held_mouse_y);
 		drag_rect = { x,y,w,h };
 
-		service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, drag_rect, true, { 100,100,255,100 });
-		service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, drag_rect, false, { 255,255,255,255 });
+		service_pointer->get_Draw_System_Pointer()->Draw_Primitive_Directly(service_pointer->get_Game_Renderer(), drag_rect, { 100,100,255,100 }, true);
+		service_pointer->get_Draw_System_Pointer()->Draw_Primitive_Directly(service_pointer->get_Game_Renderer(), drag_rect, { 255,255,255,255 }, false);
 	}
 	else if (currently_clicked_component == NULL)
 	{
@@ -148,12 +148,12 @@ void Cursor::Draw()
 		//service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, grid_pos, true, { 100,100,255,100 });
 		///
 
-		service_pointer->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
+		service_pointer->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(service_pointer->get_Game_Renderer(), SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
 
 	}
 	else
 	{
-		service_pointer->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
+		service_pointer->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(service_pointer->get_Game_Renderer(), SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
 	}
 }
 

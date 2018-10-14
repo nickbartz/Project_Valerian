@@ -10,10 +10,15 @@ UI_Window_Generic::UI_Window_Generic(Global_Service_Locator* sLocator, int windo
 	service_locator = sLocator;
 	base_window_rect = base_rect;
 
-	window_title_bar = UI_Component_Generic(service_locator,{ 0,0,base_rect.w,window_title_height }, true, { 200,50,50,255 });
+	window_title_bar = UI_Component_Generic(service_locator,{ 0,0,base_rect.w - window_title_height,window_title_height }, true, { 50,50,155,255 });
 	window_title_bar.Assign_Window(window_name);
 	window_title_bar.Make_Button(window_title, { 5,3,0,0 }, BUTTON_ACTION_DRAG_WINDOW, { 255,255,255,255 });
 	window_title_bar.Set_Font_Type(FONT_LARGE_BOLD);
+
+	window_close_button = UI_Component_Generic(service_locator, { base_rect.w - window_title_height,0,window_title_height, window_title_height }, true, { 200,50,50,255 });
+	window_close_button.Assign_Window(window_name);
+	window_close_button.Make_Button("X", {7,3,0,0}, BUTTON_ACTION_CLOSE_WINDOW, {255,255,255,255});
+	window_close_button.Set_Font_Type(FONT_LARGE_BOLD);
 }
 
 void UI_Window_Generic::Change_Window_Name(string new_name)
@@ -31,6 +36,9 @@ void UI_Window_Generic::Respond_To_Mouse(Cursor* cursor)
 	// Check to see if the mouse click was intended to move windows or change panel
 	window_title_bar.Check_For_Click();
 	if (window_title_bar.Currently_Clicked() == true) Move_Window(cursor);
+
+	window_close_button.Check_For_Click();
+	if (window_close_button.Currently_Clicked() == true) currently_open = false;
 	
 	SDL_Point new_point = { cursor->current_mouse_x, cursor->current_mouse_y };
 	
@@ -55,6 +63,7 @@ void UI_Window_Generic::Change_Rect(SDL_Rect new_rect)
 void UI_Window_Generic::Draw(Draw_System* draw_system)
 {
 	window_title_bar.Draw(draw_system, base_window_rect);
+	window_close_button.Draw(draw_system, base_window_rect);
 	
 	for (int i = 0; i < active_panel_headers; i++)
 	{

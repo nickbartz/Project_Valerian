@@ -38,6 +38,7 @@ public:
 	// Init Functions
 	void Init_Structure_From_Template(Structure_Template object_config, Adjacent_Structure_Array neighbors);
 	void Init_Entity_From_Template(Entity_Template object_config);
+	void Init_Projectile_From_Template(Projectile_Template projectile_config, SDL_Point target);
 
 	void Set_Assigned_Flag(int assigned_flag); 	// Unassigning an object means we're setting its type to unassigned so that it can be overwritten in whatever array it is in
 

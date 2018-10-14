@@ -30,12 +30,17 @@ struct Structure_Stats
 	int door_open = 0;
 };
 
+struct Projectile_Stats
+{
+	int remaining_lifespan;
+};
+
 class AI_Stats_Component
 {
 public:
-	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Structure_Template structure_template, Structure_Stats structure_stats); // initialize a saved structure
-	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Entity_Template entity_template); // initialize a new entity from template
-	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Entity_Template entity_template, Entity_Stats entity_stats); // initialize a saved entity
+	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int object_type, int object_template_num); // initialize a new object
+	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int structure_template_num, Structure_Stats structure_stats); // initialize a saved structure
+	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int entity_template_num, Entity_Stats entity_stats); // initialize a saved entity
 
 	int Get_Structure_Name();
 	int Get_Structure_Type();
@@ -52,21 +57,33 @@ public:
 	void Check_For_Messages();
 
 private:
-
 	void Assign_Uniq_IDs(int object_array_index);
 
 	Global_Service_Locator* service_locator;
 	Object_Service_Locator* object_locator;
 
-	Structure_Template structure_template;
+	// Theoretically not a great idea to copy the entire template to each object, maybe just use template_id and then reference as in projectile example below
+	int structure_template_num = 0;
+	int entity_template_num = 0;
+	int projectile_template_num = 0;
+
 	Structure_Stats structure_stats;
-	Entity_Template entity_template;
 	Entity_Stats entity_stats;
+	Projectile_Stats projectile_stats;
 
 	int object_type;
 	int uniq_id;
 	int object_array_locator;
 
 	void Handle_Stat_Message(Custom_Message* array_message);
+
+	// OBJECT AI START HERE
+	int next_job[MAX_LENGTH_CUSTOM_MESSAGE];
+	int next_job_length = 0;
+
+	void Entity_Manage_Job();
+	void Load_Job_From_Message(Custom_Message* job_message);
+	void Clear_Loaded_Job();
+	void Assess_Job_Priority(Custom_Message* job_message);
 
 };

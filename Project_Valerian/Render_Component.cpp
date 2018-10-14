@@ -11,6 +11,24 @@
 
 using namespace std;
 
+// Generic Init
+Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int object_type, int object_template_id)
+{
+	service_locator = sLocator;
+	object_locator = oLocator;
+
+	switch (object_type)
+	{
+	case OBJECT_TYPE_PROJECTILE:
+		render_component = RENDER_COMPONENT_ANIMATED_CLIP;
+		spritesheet = SPRITESHEET_PROJECTILE;
+		sprite_clip = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id).sprite_clip;
+		max_animation_frames = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id).num_animation_frames;
+		simple_animation_type = SIMPLE_ANIMATION_BACK_AND_FORTH;
+		break;
+	}
+}
+
 // Init for Structures
 Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator,  Structure_Template object_config, Adjacent_Structure_Array neighbor_array)
 {
@@ -24,7 +42,7 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	sprite_clip = object_config.tile_clip;
 	sprite_coords = object_config.tile_specs;
 
-	max_structure_animation_frames = object_config.num_animation_frame;
+	max_animation_frames = object_config.num_animation_frame;
 	neighbors = neighbor_array;
 
 	// If the object is a multiclip, handle multiclip
@@ -63,7 +81,7 @@ void Render_Component::Update()
 {
 	if (render_component == RENDER_COMPONENT_ANIMATED_CLIP)
 	{
-		Structure_Increment_Animation();
+		Increment_Simple_Animation();
 	}
 }
 
@@ -138,7 +156,7 @@ void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 {	
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
 
-	SDL_Rect anim_clip = { sprite_clip.x + structure_animation_frame * SPRITE_SIZE, sprite_clip.y + orientation_y_clip_offset*SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
+	SDL_Rect anim_clip = { sprite_clip.x + current_animation_frame * SPRITE_SIZE, sprite_clip.y + orientation_y_clip_offset*SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
 
 	// Adjust the draw rectangle by the camera position and camera zoom
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
@@ -149,7 +167,7 @@ void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
 	{
 		// As a first step, change the clip to the 2nd story of the sprite on the sprite sheet 
-		SDL_Rect new_clip = { sprite_clip.x + structure_animation_frame, sprite_clip.y - SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
+		SDL_Rect new_clip = { sprite_clip.x + current_animation_frame, sprite_clip.y - SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
 
 		// Now re-do the draw rect and send a new instruction to the draw system to draw that 2nd story 
 		draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((pos_rect.y - TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
@@ -517,38 +535,55 @@ void Render_Component::Build_Floor_Multisprite()
 }
 
 // Animation Commands
-void Render_Component::Structure_Increment_Animation()
+void Render_Component::Increment_Simple_Animation()
 {
-	switch (structure_animation_type)
+	switch (simple_animation_type)
 	{
-	case STRUCTURE_ANIMATION_NULL:
+	case SIMPLE_ANIMATION_NULL:
 		break;
-	case STRUCTURE_ANIMATION_INCREMENT_UNTIL_COMPLETE:
-		structure_animation_frame++;
-		if (structure_animation_frame >= max_structure_animation_frames)
+	case SIMPLE_ANIMATION_INCREMENT_UNTIL_COMPLETE:
+		current_animation_frame++;
+		if (current_animation_frame >= max_animation_frames)
 		{
-			structure_animation_frame = max_structure_animation_frames;
+			current_animation_frame = max_animation_frames;
 		}
 		break;
-	case STRUCTURE_ANIMATION_DECREMENT_UNTIL_COMPLETE:
-		structure_animation_frame--;
-		if (structure_animation_frame <= 0)
+	case SIMPLE_ANIMATION_DECREMENT_UNTIL_COMPLETE:
+		current_animation_frame--;
+		if (current_animation_frame <= 0)
 		{
-			structure_animation_frame = 0;
+			current_animation_frame = 0;
 		}
 		break;
-	case STRUCTURE_ANIMATION_PAUSE:
+	case SIMPLE_ANIMATION_PAUSE:
 		break;
-	case STRUCTURE_ANIMATION_INCREMENT_REPEAT:
-		structure_animation_frame++;
-		if (structure_animation_frame >= max_structure_animation_frames)
+	case SIMPLE_ANIMATION_INCREMENT_AND_REPEAT:
+		current_animation_frame++;
+		if (current_animation_frame >= max_animation_frames)
 		{
-			structure_animation_frame = 0;
+			current_animation_frame = 0;
+		}
+		break;
+	case SIMPLE_ANIMATION_BACK_AND_FORTH:
+		if (animation_direction == 1)
+		{
+			current_animation_frame++;
+			if (current_animation_frame >= max_animation_frames)
+			{
+				animation_direction = -1;
+			}
+		}
+		else if (animation_direction = -1)
+		{
+			current_animation_frame--;
+			if (current_animation_frame <= 0)
+			{
+				animation_direction = 1;
+			}
 		}
 		break;
 	}
 }
-
 void Render_Component::Increment_Entity_Animation()
 {
 	for (int i = 0; i < num_entity_components; i++)
@@ -560,9 +595,9 @@ void Render_Component::Increment_Entity_Animation()
 		}
 	}
 }
-void Render_Component::Change_Structure_Current_Animation(int new_animation)
+void Render_Component::Change_Simple_Animation(int new_animation)
 {
-	structure_animation_type = new_animation;
+	simple_animation_type = new_animation;
 }
 void Render_Component::Change_Entity_Current_Animation(int new_animation)
 {

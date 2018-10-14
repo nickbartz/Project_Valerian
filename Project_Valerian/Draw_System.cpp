@@ -21,6 +21,7 @@ void Draw_System::Init_Sprites(SDL_Renderer* game_renderer)
 	mid_2_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer, window_format);
 	entity_spritesheet.Init("Sprites/Entity_Spritesheet.png", game_renderer, window_format);
 	icon_spritesheet.Init("Sprites/Icon_Spritesheet.png", game_renderer, window_format);
+	projectile_spritesheet.Init("Sprites/Projectile_Spritesheet.png", game_renderer, window_format);
 }
 
 // Query Functions
@@ -28,6 +29,11 @@ void Draw_System::Init_Sprites(SDL_Renderer* game_renderer)
 int Draw_System::Return_Text_Width(int font_type, string text)
 {
 	return FC_GetWidth(font_array[font_type], text.c_str());
+}
+
+int Draw_System::Return_Text_Height(int font_type, string text)
+{
+	return FC_GetHeight(font_array[font_type], text.c_str());
 }
 
 // Multisprite Functions
@@ -118,6 +124,9 @@ void Draw_System::Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rec
 	case SPRITESHEET_ICON:
 		icon_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
 		break;
+	case SPRITESHEET_PROJECTILE:
+		projectile_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		break;
 	}
 }
 
@@ -137,7 +146,7 @@ void Draw_System::Add_Primitive_To_Render_Cycle(int init, SDL_Rect pos_rect, boo
 
 void Draw_System::Clear_Primitive_Instruction_Array()
 {
-	for (int i = 0; i < MAX_NUM_PRIMITIVES; i++)
+	for (int i = 0; i < count_num_primitives; i++)
 	{
 		Primitive_Instruction_Array[i].init = 0;
 	}
@@ -154,7 +163,7 @@ void Draw_System::Add_Text_Job_To_Render_Cycle(Text_Instruction string)
 
 void Draw_System::Clear_Text_Instruction_Array()
 {
-	for (int i = 0; i < MAX_NUM_TEXT_PRINT; i++)
+	for (int i = 0; i < count_num_print_text; i++)
 	{
 		Text_Instruction_Array[i].init = 0;
 	}
@@ -172,9 +181,13 @@ void Draw_System::Draw(SDL_Renderer* render_target)
 	Draw_Sprites(render_target, SPRITESHEET_MID_1);
 	Draw_Sprites(render_target, SPRITESHEET_ENTITY);
 	Draw_Sprites(render_target, SPRITESHEET_MID_2);
+	Draw_Sprites(render_target, SPRITESHEET_PROJECTILE);
 	Draw_Primitives(render_target);
 	Draw_Text_Strings(render_target);
 	Draw_Sprites(render_target, SPRITESHEET_ICON);
+	Draw_Primitives(render_target, 2);
+	Draw_Text_Strings(render_target,2);
+
 }
 
 // Functions for drawing primitives
@@ -201,6 +214,10 @@ void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spr
 		break;
 	case SPRITESHEET_ROOF:
 		break;
+	case SPRITESHEET_ICON:
+		icon_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
+		break;
+
 	}
 }
 
@@ -234,16 +251,19 @@ void Draw_System::Draw_Sprites(SDL_Renderer* render_target, int spritesheet)
 	case SPRITESHEET_ICON:
 		if (icon_spritesheet.is_init() == true) icon_spritesheet.Draw(render_target);
 		break;
+	case SPRITESHEET_PROJECTILE:
+		if (projectile_spritesheet.is_init() == true) projectile_spritesheet.Draw(render_target);
+		break;
 	}
 }
 
-void Draw_System::Draw_Primitives(SDL_Renderer* render_target)
+void Draw_System::Draw_Primitives(SDL_Renderer* render_target, int layer)
 {
 	SDL_SetRenderDrawBlendMode(render_target, SDL_BLENDMODE_BLEND);
 
 	for (int i = 0; i < count_num_primitives; i++)
 	{
-		if (Primitive_Instruction_Array[i].init == 1)
+		if (Primitive_Instruction_Array[i].init == layer)
 		{
 			SDL_Rect rect_pos = Primitive_Instruction_Array[i].pos_rect;
 			SDL_Color rect_color = Primitive_Instruction_Array[i].primitive_color;
@@ -257,11 +277,23 @@ void Draw_System::Draw_Primitives(SDL_Renderer* render_target)
 	}
 }
 
-void Draw_System::Draw_Text_Strings(SDL_Renderer* render_target)
+void Draw_System::Draw_Primitive_Directly(SDL_Renderer* render_target, SDL_Rect primitive_rect, SDL_Color primitive_color, bool filled)
+{
+	SDL_SetRenderDrawBlendMode(render_target, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(render_target, primitive_color.r, primitive_color.g, primitive_color.b, primitive_color.a);
+
+	if (filled == true)
+	{
+		SDL_RenderFillRect(render_target, &primitive_rect);
+	}
+	else SDL_RenderDrawRect(render_target, &primitive_rect);
+}
+
+void Draw_System::Draw_Text_Strings(SDL_Renderer* render_target, int layer)
 {
 	for (int i = 0; i < count_num_print_text + 1; i++)
 	{
-		if (Text_Instruction_Array[i].init == 1)
+		if (Text_Instruction_Array[i].init == layer)
 		{			
 			SDL_Rect rect_pos = Text_Instruction_Array[i].pos_rect;
 			int font_num = Text_Instruction_Array[i].font;
@@ -292,4 +324,5 @@ void Draw_System::free()
 	entity_spritesheet.free();
 	mid_2_spritesheet.free();
 	icon_spritesheet.free();
+	projectile_spritesheet.free();
 }

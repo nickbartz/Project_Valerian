@@ -43,7 +43,7 @@ void Message_Array::Add_Custom_Message(int message_length, int message_array[])
 			switch (message_array[2])
 			{
 			case FOCUS_ALL:
-				Custom_Message_Array[count_custom_messages] = (Custom_Message(message_length, message_array));
+				Custom_Message_Array[count_custom_messages] = Custom_Message(message_length, message_array);
 				message_valid = true;
 				break;
 			}
@@ -106,6 +106,27 @@ void Message_Array::Add_Custom_Message(int message_length, int message_array[])
 			break;
 		}
 		break;
+	case MESSAGE_TYPE_ENTITY_JOB_REQUEST:
+		if (message_array[message_length - 1] == JOB_INST_END)
+		{
+			Custom_Message_Array[count_custom_messages] = (Custom_Message(message_length, message_array));
+			message_valid = true;
+		}
+		break;
+	case MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT:
+		switch (message_array[1])
+		{
+		case OBJECT_TYPE_ANY:
+			switch (message_array[2])
+			{
+			case FOCUS_ALL:
+				Custom_Message_Array[count_custom_messages] = (Custom_Message(message_length, message_array));
+				message_valid = true;
+				break;
+			}
+			break;
+		}
+		break;
 	}
 
 	if (message_valid == false)
@@ -115,6 +136,7 @@ void Message_Array::Add_Custom_Message(int message_length, int message_array[])
 	else
 	{
 		count_custom_messages++;
+
 		if (count_custom_messages >= MAX_NUM_CUSTOM_MESSAGES)
 		{
 			cout << "Custom message overflow" << endl;

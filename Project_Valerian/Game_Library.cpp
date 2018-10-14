@@ -14,7 +14,8 @@ Game_Library::Game_Library()
 	Load_Entity_Templates("Data/Entity_Templates.csv", "Data/Entity_Animations.csv");
 	Load_Item_Templates("Data/Inventory_Data.csv");
 	Load_Blueprints("Data/Blueprint_Data.csv");
-
+	Load_Projectiles("Data/Projectile_Data.csv");
+	Load_Jobs("Data/Job_Data.csv");
 }
 
 void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
@@ -129,6 +130,46 @@ void Game_Library::Load_Blueprints(string blueprint_path)
 		num_loaded_blueprints++;
 	}
 
+}
+
+void Game_Library::Load_Jobs(string job_template_path)
+{
+	vector<vector<string>> vector_loaded_job_templates = readCSV(job_template_path);
+
+	for (int i = 1; i < vector_loaded_job_templates.size(); i++)
+	{
+		Job_Template new_job_template;
+		new_job_template.job_id = stoi(vector_loaded_job_templates[i][0]);
+		new_job_template.job_string_name = vector_loaded_job_templates[i][2];
+		new_job_template.job_standard_priority = stoi(vector_loaded_job_templates[i][3]);
+
+		loaded_jobs[i - 1] = new_job_template;
+		num_loaded_jobs++;
+	}
+}
+
+void Game_Library::Load_Projectiles(string projectile_template_path)
+{
+	vector<vector<string>> vector_loaded_templates = readCSV(projectile_template_path);
+
+	for (int i = 1; i < vector_loaded_templates.size(); i++)
+	{
+		Projectile_Template new_projectile_template;
+		new_projectile_template.projectile_template_id = stoi(vector_loaded_templates[i][0]);
+		new_projectile_template.projectile_string = vector_loaded_templates[i][2];
+		new_projectile_template.sprite_clip.x = stoi(vector_loaded_templates[i][3])*SPRITE_SIZE;
+		new_projectile_template.sprite_clip.y = stoi(vector_loaded_templates[i][4])*SPRITE_SIZE;
+		new_projectile_template.sprite_clip.w = stoi(vector_loaded_templates[i][5])*SPRITE_SIZE;
+		new_projectile_template.sprite_clip.h = stoi(vector_loaded_templates[i][6])*SPRITE_SIZE;
+		new_projectile_template.projectile_power = stoi(vector_loaded_templates[i][7]);
+		new_projectile_template.projectile_speed = stoi(vector_loaded_templates[i][8]);
+		new_projectile_template.num_animation_frames = stoi(vector_loaded_templates[i][9]);
+		new_projectile_template.projectile_range = stoi(vector_loaded_templates[i][10]);
+		new_projectile_template.projectile_splash = stoi(vector_loaded_templates[i][11]);
+
+		loaded_projectiles[i - 1] = new_projectile_template;
+		num_loaded_projectiles++;
+	}
 }
 
 vector<vector<int>> Game_Library::Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename)
@@ -290,6 +331,16 @@ Inventory_Template Game_Library::Fetch_Blueprint(int blueprint_id)
 		cout << "blueprint id out of range, returning null blueprint" << endl;
 		return loaded_blueprints[0];
 	}
+}
+
+Job_Template Game_Library::Fetch_Job_Template(int job_id)
+{
+	return loaded_jobs[job_id];
+}
+
+Projectile_Template Game_Library::Fetch_Projectile_Template(int projectile_id)
+{
+	return loaded_projectiles[projectile_id];
 }
 
 int Game_Library::Get_Num_Structure_Template()

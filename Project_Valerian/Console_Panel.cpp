@@ -93,7 +93,7 @@ void UI_Panel_Object_Inventory::Draw(Draw_System* draw_system, SDL_Rect base_rec
 
 	for (int i = 0; i < panel_buttons; i++)
 	{
-		graphic_button_array[i].Draw(draw_system, base_rect);
+		graphic_button_array[i].Draw(base_rect);
 	}
 }
 
@@ -113,8 +113,8 @@ void UI_Panel_Object_Inventory::Init(Object* object)
 
 		for (int i = 0; i < object_item_component->Return_Num_Inventory_Slots(); i++)
 		{
-			graphic_button_array.push_back(UI_Component_Graphic_Button(service_locator, { offset_rect.x + current_column * SPRITE_SIZE, offset_rect.y + current_row * SPRITE_SIZE, SPRITE_SIZE ,SPRITE_SIZE }));
-			graphic_button_array.back().Init(OBJECT_TYPE_ITEM, object_item_component->Return_Item_In_Slot(i).slot_item.item_template_id);
+			graphic_button_array.push_back(UI_Component_Item_Slot_Button(service_locator, { offset_rect.x + current_column * SPRITE_SIZE, offset_rect.y + current_row * SPRITE_SIZE, SPRITE_SIZE ,SPRITE_SIZE }));
+			graphic_button_array.back().Init(object_item_component->Return_Inventory_Slot_As_Pointer(i));
 			
 			//int message_length = 3;
 			//int message_array[3] = { UI_ACTION_CATEGORY_SUPPORTING,UI_ACTION_SUPPORTING_TYPE_SET_STRUCTURE_BUILD,i };
@@ -123,6 +123,10 @@ void UI_Panel_Object_Inventory::Init(Object* object)
 			current_column++;
 			if (current_column >= panel_columns) current_row++, current_column = 0;
 		}
+	}
+	else
+	{
+		cout << "null item component" << endl;
 	}
 }
 

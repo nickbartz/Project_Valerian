@@ -97,6 +97,9 @@ void load_assets(SDL_Renderer* game_renderer)
 
 	font_array[FONT_SMALL] = FC_CreateFont();
 	FC_LoadFont(font_array[FONT_SMALL], game_renderer, "Fonts/OpenSans-Regular.ttf", 10, SDL_Color{ 255, 255, 255, 255 }, TTF_STYLE_NORMAL);
+
+	font_array[FONT_SMALL_BOLD] = FC_CreateFont();
+	FC_LoadFont(font_array[FONT_SMALL_BOLD], game_renderer, "Fonts/OpenSans-Bold.ttf", 10, SDL_Color{ 255, 255, 255, 255 }, TTF_STYLE_NORMAL);
 }
 
 void free_assets()
@@ -155,8 +158,11 @@ int main(int argc, char *args[])
 	// Create Message Bus
 	unique_ptr<Message_Array> main_bus(new Message_Array(service_locator.get()));
 
+
 	// Create World Map
 	unique_ptr<Scene_Graph> scene_graph(new Scene_Graph(service_locator.get()));
+
+
 
 	// Create the Pathfinder 
 	unique_ptr<Path_Field> pathfinder(new Path_Field(service_locator.get()));
@@ -176,19 +182,23 @@ int main(int argc, char *args[])
 	user_interface.get()->Init();
 	scene_graph->Create_Background();
 
-	//Start counting frames per second
-	int countedFrames = 0;
-	fpsTimer.start();
-
 	// TEST VARIABLES
 	vector<vector<int>> new_room = game_library->Create_Room_From_Data_File(0, 0, "Data/test_room.csv");
 	scene_graph->Stamp_Room_From_Array(new_room, -2, -2);
 
 	scene_graph->Create_New_Structure({ 0,-1 }, game_library->Fetch_Tile_Object_Config(4));
+	scene_graph->Create_New_Structure({ 0, -10 }, game_library->Fetch_Tile_Object_Config(21));
+	scene_graph->Create_New_Structure({ -1, -10 }, game_library->Fetch_Tile_Object_Config(22));
+	scene_graph->Create_New_Structure({ 0, -9 }, game_library->Fetch_Tile_Object_Config(23));
 	
 	scene_graph->Create_Entity({ 1,-1 }, game_library->Fetch_Entity_Template(2));
 	scene_graph->Create_Entity({ 2,-1 }, game_library->Fetch_Entity_Template(1));
 
+	//scene_graph->Create_Projectile(scene_graph->Return_Entity_By_Array_Num(0), game_library->Fetch_Projectile_Template(2), { 0,0 }, { 100,100 });
+
+	//Start counting frames per second
+	int countedFrames = 0;
+	fpsTimer.start();
 
 	// END TEST VARIABLES
 
@@ -210,20 +220,19 @@ int main(int argc, char *args[])
 		}
 
 		user_interface->Update();
-		scene_graph->Update();
+		scene_graph->Update();   // MAKES SURE ALL MESSAGES ARE SENT DURING THE UPDATE PROCESS
 		cursor->Update();
 
 		//Clear screen
 		SDL_SetRenderDrawColor(Game_Renderer, 0x0, 0x0, 0x0, 0x0);
 		SDL_RenderClear(Game_Renderer);
-
+		
 		// Send draw jobs from scene graph
-
 		scene_graph->Draw();
-		cursor->Draw();
 
 		// Draw objects on screen
 		draw_system->Draw(Game_Renderer);
+		cursor->Draw();
 
 		// Draw FPS
 		int avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);

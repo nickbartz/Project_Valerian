@@ -32,16 +32,23 @@ public:
 	// Delete Objects
 	void Delete_Structure(Coordinate grid_point, int tile_layer);
 	void Delete_Structure_Highest_Layer(Coordinate grid_point);
+	void Delete_Projectile(int projectile_array_num);
 
 	// Create Entities
 	void Create_Entity(Coordinate grid_point, Entity_Template entity);
+	
+	// Create Projectiles
+	void Create_Projectile(Object* firing_object, Projectile_Template projectile_config, SDL_Point start, SDL_Point target);
 
 	// Accessors
 	Adjacent_Structure_Array Return_Neighboring_Tiles(Coordinate grid_point);
 	int Return_Current_Structure_Count();
 	Object* Return_Object_At_Coord(int coord_x, int coord_y);
+	Object* Return_Structure_By_Array_Num(int array_num);
+	Object* Return_Entity_By_Array_Num(int array_num);
 
 	// Queries
+	Coordinate Return_Nearest_Accessible_Coordinate(Coordinate origin, Coordinate destination, int requesting_faction);
 	void Return_Tiles_Without_Leaks(Coordinate start_tile, vector<Coordinate> &tiles_to_oxygenate, map<Coordinate, bool> &checked_tiles, bool &is_leak);
 	bool Tile_Has_Leak(Coordinate tile);
 	bool Tile_Is_Wall_Or_Closed_Door(Coordinate tile);
@@ -74,5 +81,8 @@ private:
 
 	int current_num_entities = 0;
 	Object entity_array[WORLD_MAX_NUM_ENTITIES];
+
+	int current_num_projectiles = 0;
+	Object projectile_array[WORLD_MAX_NUM_PROJECTILES];
 };
 

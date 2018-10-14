@@ -21,9 +21,9 @@ int AI_Item_Component::Return_Num_Inventory_Slots()
 	return num_inventory_slots;
 }
 
-Item_Slot AI_Item_Component::Return_Item_In_Slot(int item_id)
+Item_Slot* AI_Item_Component::Return_Inventory_Slot_As_Pointer(int item_id)
 {
-	return inventory_array[item_id];
+	return &inventory_array[item_id];
 }
 
 int AI_Item_Component::Add_Item_To_Inventory(int item_id, int item_quantity, bool has_stats, Item_Stats item_stats)
@@ -55,7 +55,7 @@ void AI_Item_Component::Populate_Starter_Inventory(int starter_id)
 {
 	Inventory_Template starter_blueprint = service_locator->get_Game_Library()->Fetch_Blueprint(starter_id);
 
-	for (int i = 0; i < MAX_NUM_ITEMS_IN_BLUEPRINT; i++)
+	for (int i = 0; i < MAX_ITEMS_PER_BLUEPRINT; i++)
 	{
 		if (starter_blueprint.inventory_pack[i][0] != 0)
 		{

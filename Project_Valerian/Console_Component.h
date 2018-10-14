@@ -6,6 +6,7 @@
 
 class Cursor;
 class Global_Service_Locator;
+class Item_Slot;
 
 class UI_Component_Generic
 {
@@ -111,6 +112,23 @@ private:
 	bool sprite_clip_override = false;
 	int object_type = 0;
 	int template_id = 0;
+	int spritesheet_num;
+	SDL_Rect sprite_clip;
+};
+
+class UI_Component_Item_Slot_Button : public UI_Component_Generic
+{
+public:
+	UI_Component_Item_Slot_Button(Global_Service_Locator* service_locator = NULL, SDL_Rect placement_rect = { 0,0,0,0 }) :UI_Component_Generic(service_locator, placement_rect, false)
+	{
+		spritesheet_num = SPRITESHEET_ICON;
+	}
+
+	void Draw(SDL_Rect base_rect);
+	void Init(Item_Slot* slot_pointer);
+
+private:
+	Item_Slot * slot_pointer;
 	int spritesheet_num;
 	SDL_Rect sprite_clip;
 };

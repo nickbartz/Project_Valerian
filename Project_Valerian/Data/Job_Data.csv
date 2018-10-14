@@ -1,0 +1,5 @@
+Job_ID,Job_Name,Job_String_Name,Job_Standard_Priority
+0,JOB_NULL_JOB,Null Job,0
+1,JOB_OXYGENATE_SURROUNDINGS,Oxygenate Surroundings,1
+2,JOB_DOOR_STANDARD,Open and Close Door,1
+3,JOB_ASTEROID_BE_MINED,Request to be mined,1

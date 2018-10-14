@@ -38,12 +38,15 @@ void AI_Movement_Component::Check_For_Messages()
 
 void AI_Movement_Component::Update()
 {
-	// MOVE ONLY IF THE OBJECT IS AN ENTITY
-	if (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type() == OBJECT_TYPE_ENTITY)
-	{	
+	int delta_x = 0;
+	int delta_y = 0;
+	
+	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
+	{
+	case OBJECT_TYPE_ENTITY:
 		// CALCULATE DELTAS
-		int delta_x = target_pos.x - world_pos.x;
-		int delta_y = target_pos.y - world_pos.y;
+		delta_x = target_pos.x - world_pos.x;
+		delta_y = target_pos.y - world_pos.y;
 
 		if (delta_x != 0 || delta_y != 0)
 		{
@@ -82,9 +85,32 @@ void AI_Movement_Component::Update()
 			// We need to send a message to the message bus that the entity has shifted target tiles
 			int faction = object_locator->Return_AI_Rel_Pointer()->Return_Object_Faction();
 			int uniq_id = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_UNIQ_ID);
-			int custom_message[9] = {MESSAGE_TYPE_SG_ENTITY_MOVEMENT,OBJECT_TYPE_ANY, FOCUS_ALL,faction, previous_world_coord.x, previous_world_coord.y, world_coord.x, world_coord.y,uniq_id};
+			int custom_message[9] = { MESSAGE_TYPE_SG_ENTITY_MOVEMENT,OBJECT_TYPE_ANY, FOCUS_ALL,faction, previous_world_coord.x, previous_world_coord.y, world_coord.x, world_coord.y,uniq_id };
 			service_locator->get_MB_Pointer()->Add_Custom_Message(9, custom_message);
 		}
+		break;
+	case OBJECT_TYPE_PROJECTILE:
+		world_pos.x += obj_x_vel;
+		cumulative_remainder_x += vel_remainder_x;
+
+		//Add in any remainder from conversion to int when it reaches >= 1
+		if (abs(cumulative_remainder_x) >= 1)
+		{
+			world_pos.x += cumulative_remainder_x;
+			cumulative_remainder_x = remainder(cumulative_remainder_x, 1.0);
+			
+		}
+
+		world_pos.y += obj_y_vel;
+		cumulative_remainder_y += vel_remainder_y;
+
+		//Add in any remainder from conversion to int when it reaches >= 1
+		if (abs(cumulative_remainder_y) >= 1)
+		{
+			world_pos.y += cumulative_remainder_y;
+			cumulative_remainder_y = remainder(cumulative_remainder_y, 1.0);
+		}
+		break;
 	}
 }
 
@@ -102,6 +128,26 @@ void AI_Movement_Component::Set_Target_Pos(int pos_x, int pos_y)
 {
 	target_pos.x = pos_x;
 	target_pos.y = pos_y;
+}
+
+void AI_Movement_Component::Set_Projectile_Velocity(SDL_Point target)
+{
+	int delta_x = target.x - world_pos.x;
+	int delta_y = target.y - world_pos.y;
+
+	int direction_x = delta_x / abs(delta_x);
+	int direction_y = delta_y / abs(delta_y);
+
+	double lambda = sqrt(1 + (delta_y*delta_y) / (delta_x*delta_x));
+
+	double x_vel_double = object_speed / lambda;
+	double y_vel_double = abs(delta_y) * x_vel_double / abs(delta_x);
+
+	obj_x_vel = direction_x*x_vel_double;
+	obj_y_vel = direction_y*y_vel_double;
+
+	vel_remainder_x = direction_x*(x_vel_double - abs(obj_x_vel));
+	vel_remainder_y = direction_y*(y_vel_double - abs(obj_y_vel));
 }
 
 void AI_Movement_Component::Set_Target_Coord(Coordinate grid_coord)

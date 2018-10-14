@@ -19,6 +19,9 @@ struct Animation_State
 class Render_Component
 {
 public:
+	// Generic Init
+	Render_Component(Global_Service_Locator* service_locator, Object_Service_Locator* oLocator, int object_type, int object_template_id);
+
 	// Init for structures
 	Render_Component(Global_Service_Locator* service_locator, Object_Service_Locator* oLocator, Structure_Template object_config, Adjacent_Structure_Array neighbors);
 
@@ -63,9 +66,10 @@ public:
 	void Adjust_Door_Orientation();
 
 	// Animation Commands
-	void Structure_Increment_Animation();
+	void Increment_Simple_Animation();
+	void Change_Simple_Animation(int new_animation);
+
 	void Increment_Entity_Animation();
-	void Change_Structure_Current_Animation(int new_animation);
 	void Change_Entity_Current_Animation(int new_animation);
 
 private:
@@ -73,17 +77,17 @@ private:
 	Global_Service_Locator * service_locator;
 	Object_Service_Locator* object_locator;
 
+	// GENERIC VARIABLES
 	int render_component;
 	int spritesheet;
+	int max_animation_frames;
+	int current_animation_frame = 0;
+	int animation_direction = 1;
+	int simple_animation_type = SIMPLE_ANIMATION_NULL;
 
 	// STRUCTURE_SPECIFIC VARIABLES
 	int multiclip_type;
 	int dedicated_multisprite_num;
-	
-	int structure_animation_type = STRUCTURE_ANIMATION_NULL;
-	int structure_animation_frame = 0;
-	int max_structure_animation_frames = 0;
-
 	SDL_Rect sprite_clip;
 	SDL_Rect sprite_coords;
 	Adjacent_Structure_Array neighbors;

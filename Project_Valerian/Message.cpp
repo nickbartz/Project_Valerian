@@ -74,3 +74,8 @@ int Custom_Message::Read_Message(int message_column)
 {
 	return message[message_column];
 }
+
+int Custom_Message::Get_Message_Length()
+{
+	return message_length;
+}

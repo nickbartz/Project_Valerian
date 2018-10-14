@@ -34,6 +34,7 @@ protected:
 
 	
 	UI_Component_Generic window_title_bar;
+	UI_Component_Generic window_close_button;
 	int window_title_height = 25;
 	int panel_bar_height = 25;
 	int currently_active_panel = PANEL_NULL;
@@ -48,7 +49,7 @@ protected:
 class UI_Window_Player_Diagnostic :public UI_Window_Generic
 {
 public:
-	UI_Window_Player_Diagnostic(Global_Service_Locator* service_locator = NULL, SDL_Rect base_rect = { 100,100,300,500 }) :UI_Window_Generic(service_locator, WINDOW_PLAYER_DIAGNOSTIC, "Config", base_rect)
+	UI_Window_Player_Diagnostic(Global_Service_Locator* service_locator = NULL, SDL_Rect base_rect = { 100,100,300,500 }) :UI_Window_Generic(service_locator, WINDOW_PLAYER_DIAGNOSTIC, "Diagnostics", base_rect)
 	{
 		Create_Panel_Header({ 0,window_title_height,30,panel_bar_height }, PANEL_MESSAGE_STREAM, "Console", { 5,3,0,0 }, { 255,255,255,255 });
 

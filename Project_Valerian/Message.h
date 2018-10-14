@@ -72,19 +72,23 @@ private:
 class Custom_Message : public Message_Core
 {
 public:
-	Custom_Message(int message_length = 0, int message_array[MAX_LENGTH_CUSTOM_MESSAGE] = NULL) :Message_Core()
+	Custom_Message(int mLength = 0, int message_array[MAX_LENGTH_CUSTOM_MESSAGE] = NULL) :Message_Core()
 	{
-		for (int i = 0; i < message_length; i++)
+		for (int i = 0; i < mLength; i++)
 		{
 			message[i] = message_array[i];
 			string_message.push_back(message_array[i]);
 		}
+
+		message_length = mLength;
 	}
 
 	int Read_Message(int message_column);
+	int Get_Message_Length();
 
 private:
 	int message[MAX_LENGTH_CUSTOM_MESSAGE];
+	int message_length = 0;
 };
 
 // Custom Message Documentation
@@ -111,3 +115,7 @@ private:
 // Message to update the SG on an entities movement 
 //
 // MESSAGE_TYPE_SG_ENTITY_MOVEMENT -- > OBJECT_TYPE_ALL --> FOCUS_TYPE_ALL --> ENTITY_FACTION --> prevGRID_X --> prevGRID_Y --> newGRID_X --> newGRID_Y --> OBJECT_ARRAY_INDEX
+//
+// Message to Update the SG on a projectiles movement
+//
+// MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT --> OBJECT_TYPE_ALL --> FOCUS_TYPE_ALL --> POS_X --> POS_Y  -- > PROJECTILE_FACTION --> PROJECTILE_POWER -->  PROJECTILE_RANGE --> ARRAY_INDEX

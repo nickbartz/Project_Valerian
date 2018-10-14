@@ -52,7 +52,7 @@ public:
 
 	// Accessors
 	int Return_Num_Inventory_Slots();
-	Item_Slot Return_Item_In_Slot(int slot_num);
+	Item_Slot* Return_Inventory_Slot_As_Pointer(int slot_num);
 
 private:
 	Global_Service_Locator* service_locator;
