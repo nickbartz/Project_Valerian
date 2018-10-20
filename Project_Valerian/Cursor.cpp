@@ -44,6 +44,24 @@ SDL_Point Cursor::Get_Mouse_World_Pos()
 	return SDL_Point{ mouse_grid_x,mouse_grid_y };
 }
 
+SDL_Point Cursor::Convert_Coord_To_Screen_Pos(Coordinate point, bool center_of_tile)
+{
+	//SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+
+
+	int x_pos = (point.x*camera.w) + SCREEN_WIDTH / 2 + camera.x;
+	int y_pos = (point.y*camera.w) + SCREEN_HEIGHT / 2 + camera.y;
+
+	if (center_of_tile)
+	{
+		return { x_pos + camera.w/2, y_pos+camera.w/2 };
+	}
+	else
+	{
+		return { x_pos, y_pos};
+	}
+}
+
 void Cursor::Change_Cursor_Icon(int icon_clip_x, int icon_clip_y)
 {
 	mouse_icon_clip_x = icon_clip_x;

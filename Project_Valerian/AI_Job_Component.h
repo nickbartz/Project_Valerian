@@ -36,6 +36,8 @@ private:
 	void Print_Goal_Array();
 
 	void Process_Next_Goal();
+	void Increment_Goal(int goal_increment);
+	void Decrement_Goal(int goal_decrement);
 
 	void Action_Triage(int goal[]);
 
@@ -46,6 +48,7 @@ private:
 	void Action_Assess_Internal(int goal[]);
 	void Action_Assess_External(int goal[]);
 	void Action_Transfer(int goal[]);
+	void Action_Goal_Traversal(int goal[]);
 
 	void Structure_Job_Triage(int job);
 
@@ -56,7 +59,4 @@ private:
 	Global_Service_Locator * service_locator;
 	Object_Service_Locator * object_locator;
 	Structure_Template structure_template;
-
-	// COMMON ACTIONS
-	void Fire_Mining_Laser_At_Object(Object* target);
 };

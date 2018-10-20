@@ -37,6 +37,8 @@ public:
 	Coordinate Get_Mouse_Grid_Coord();
 	SDL_Point Get_Mouse_World_Pos();
 
+	SDL_Point Convert_Coord_To_Screen_Pos(Coordinate coordinate, bool center_of_tile = true);
+
 	void Collect_Bus_Messages();
 	void Update();
 

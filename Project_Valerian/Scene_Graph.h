@@ -26,8 +26,8 @@ public:
 	// Create Objects
 	bool Check_Tile_Placement(Coordinate grid_point, Structure_Template structure);
 	void Create_Background();
-	void Create_New_Structure(Coordinate grid_point, Structure_Template structure, bool update_message = true);
-	void Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset);
+	void Create_New_Structure(Coordinate grid_point, Structure_Template* structure, int faction, bool update_message = true);
+	void Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset, int faction);
 
 	// Delete Objects
 	void Delete_Structure(Coordinate grid_point, int tile_layer);
@@ -35,19 +35,23 @@ public:
 	void Delete_Projectile(int projectile_array_num);
 
 	// Create Entities
-	void Create_Entity(Coordinate grid_point, Entity_Template entity);
+	void Create_Entity(Coordinate grid_point, Entity_Template entity, int faction);
 	
 	// Create Projectiles
-	void Create_Projectile(Object* firing_object, Projectile_Template projectile_config, SDL_Point start, SDL_Point target);
+	void Create_Projectile(Object* firing_object, Object* target_object, int projectile_id, int faction);
+	void Create_Laser_Between_Two_Points(Object* firing_object, Object* target_object, int projectile_id);
 
 	// Accessors
 	Adjacent_Structure_Array Return_Neighboring_Tiles(Coordinate grid_point);
 	int Return_Current_Structure_Count();
 	Object* Return_Object_At_Coord(int coord_x, int coord_y);
+	
+	Object* Return_Object_By_Type_And_Array_Num(int object_type, int array_num);
 	Object* Return_Structure_By_Array_Num(int array_num);
 	Object* Return_Entity_By_Array_Num(int array_num);
 
 	// Queries
+	int Check_Simple_Distance_To_Object(Object* object_a, Object* object_b);
 	Coordinate Return_Nearest_Accessible_Coordinate(Coordinate origin, Coordinate destination, int requesting_faction);
 	void Return_Tiles_Without_Leaks(Coordinate start_tile, vector<Coordinate> &tiles_to_oxygenate, map<Coordinate, bool> &checked_tiles, bool &is_leak);
 	bool Tile_Has_Leak(Coordinate tile);

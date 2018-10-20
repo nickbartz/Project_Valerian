@@ -184,25 +184,25 @@ int main(int argc, char *args[])
 
 	// TEST VARIABLES
 	vector<vector<int>> new_room = game_library->Create_Room_From_Data_File(0, 0, "Data/test_room.csv");
-	scene_graph->Stamp_Room_From_Array(new_room, -2, -2);
+	scene_graph->Stamp_Room_From_Array(new_room, -2, -2, 2);
 
-	scene_graph->Create_New_Structure({ 0,-1 }, game_library->Fetch_Tile_Object_Config(4));
-	scene_graph->Create_New_Structure({ 0, -10 }, game_library->Fetch_Tile_Object_Config(21));
-	scene_graph->Create_New_Structure({ -1, -10 }, game_library->Fetch_Tile_Object_Config(22));
-	scene_graph->Create_New_Structure({ 0, -9 }, game_library->Fetch_Tile_Object_Config(23));
+	scene_graph->Create_New_Structure({ 0,-1 }, game_library->Fetch_Tile_Object_Config(4), 2);
+
+	scene_graph->Create_New_Structure({ -5, -10 }, game_library->Fetch_Tile_Object_Config(21), 1);
+	scene_graph->Create_New_Structure({ -5, -9 }, game_library->Fetch_Tile_Object_Config(22),1);
+	scene_graph->Create_New_Structure({ -5, -8 }, game_library->Fetch_Tile_Object_Config(23), 1);
 	
-	scene_graph->Create_Entity({ 1,-1 }, game_library->Fetch_Entity_Template(2));
-	scene_graph->Create_Entity({ 2,-1 }, game_library->Fetch_Entity_Template(1));
-
-	//scene_graph->Create_Projectile(scene_graph->Return_Entity_By_Array_Num(0), game_library->Fetch_Projectile_Template(2), { 0,0 }, { 100,100 });
+	scene_graph->Create_Entity({ 1,-1 }, *game_library->Fetch_Entity_Template(2), 2);
+	//scene_graph->Create_Entity({ 2,-1 }, *game_library->Fetch_Entity_Template(1), 2);
 
 	//Start counting frames per second
 	int countedFrames = 0;
 	fpsTimer.start();
 
 	// END TEST VARIABLES
+	int end_now = 0;
 
-	while (!quit)
+	while (!quit  && end_now <= 100)
 	{	
 		// Update subsystems 
 		while (SDL_PollEvent(&e) != 0)
@@ -257,6 +257,8 @@ int main(int argc, char *args[])
 		main_bus->Clear_All();
 
 		++countedFrames;
+
+		//end_now += 1;
 	}
 
 	// Free and Remove objects created on the heap

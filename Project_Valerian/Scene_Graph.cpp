@@ -5,6 +5,10 @@
 #include<Game_Library.h>
 #include<Coordinate.h>
 #include<AI_Rel_Component.h>
+#include<algorithm>
+#include<Draw_System.h>
+#include<Object.h>
+#include<AI_Stats_Component.h>
 
 Scene_Graph::Scene_Graph(Global_Service_Locator* sLocator)
 {
@@ -34,13 +38,13 @@ void Scene_Graph::Create_Background()
 	Adjacent_Structure_Array neighbors = {};
 	
 	background_star_1 = Object(0,{ 0,0,0,0 },service_locator);
-	background_star_1.Init_Structure_From_Template(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(1), neighbors);
+	background_star_1.Init_Structure_From_Template(*service_locator->get_Game_Library()->Fetch_Tile_Object_Config(1), neighbors,0);
 
 	background_star_2 = Object(0,{ 0,0,0,0 }, service_locator);
-	background_star_2.Init_Structure_From_Template(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(2), neighbors);
+	background_star_2.Init_Structure_From_Template(*service_locator->get_Game_Library()->Fetch_Tile_Object_Config(2), neighbors,0);
 
 	background_planetoid = Object(0,{ 0,0,0,0 }, service_locator);
-	background_planetoid.Init_Structure_From_Template(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(3), neighbors);
+	background_planetoid.Init_Structure_From_Template(*service_locator->get_Game_Library()->Fetch_Tile_Object_Config(3), neighbors,0);
 
 	for (int i = 0; i < WORLD_MAX_NUM_BACKGROUND_OBJECTS; i++)
 	{
@@ -74,9 +78,9 @@ void Scene_Graph::Draw_Background()
 	}
 }
 
-void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template structure_config, bool update_message)
+void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template* structure_config, int faction, bool update_message)
 {
-	if (Check_Tile_Placement(grid_point, structure_config))
+	if (Check_Tile_Placement(grid_point, *structure_config))
 	{
 		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
 		int array_index = 0;
@@ -86,7 +90,7 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template
 			// we place the object in the first array index with an "OBJECT_UNASSIGNED" type so we can overwrite objects no longer being used
 			if (structure_array[i].Get_Assigned_Flag() == OBJECT_UNASSIGNED)
 			{
-				structure_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, structure_config.tile_specs.w*TILE_SIZE, structure_config.tile_specs.h*TILE_SIZE }, service_locator);
+				structure_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, structure_config->tile_specs.w*TILE_SIZE, structure_config->tile_specs.h*TILE_SIZE }, service_locator);
 
 				structure_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
 
@@ -98,14 +102,14 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template
 		if (array_index >= current_num_structures) current_num_structures++;
 
 		// Now we initialize the object we just created in the structure array with an object_config
-		structure_array[array_index].Init_Structure_From_Template(structure_config, Return_Neighboring_Tiles(grid_point));
+		structure_array[array_index].Init_Structure_From_Template(*structure_config, Return_Neighboring_Tiles(grid_point),faction);
 		// We update the tile map with a pointer to the new object
-		Update_Tile_Map(grid_point, structure_config.tile_layer, &structure_array[array_index]);
+		Update_Tile_Map(grid_point, structure_config->tile_layer, &structure_array[array_index]);
 
 		if (update_message)
 		{
 			// Finally we send a SG tile update message is sent to the main bus outlining what happened
-			int update_message[8] = { MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION , OBJECT_TYPE_ANY, FOCUS_ALL,grid_point.x,grid_point.y,structure_config.tile_layer,structure_config.structure_type,structure_config.structure_id };
+			int update_message[8] = { MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION , OBJECT_TYPE_ANY, FOCUS_ALL,grid_point.x,grid_point.y,structure_config->tile_layer,structure_config->structure_type,structure_config->structure_id };
 			service_locator->get_MB_Pointer()->Add_Custom_Message(8, update_message);
 		}
 	}
@@ -151,15 +155,15 @@ bool Scene_Graph::Check_Tile_Placement(Coordinate grid_point, Structure_Template
 	}
 }
 
-void Scene_Graph::Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset)
+void Scene_Graph::Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset, int faction)
 {
 	for (int p = 0; p < room_array.size(); p++)
 	{
 		for (int i = 0; i < room_array[p].size(); i++)
 		{
 			Coordinate new_coord = { i + x_tile_offset,p + y_tile_offset };
-			Structure_Template object_config = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(room_array[p][i]);
-			Create_New_Structure(new_coord, object_config);
+			Structure_Template* object_config = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(room_array[p][i]);
+			Create_New_Structure(new_coord, object_config, faction);
 		}
 	}
 }
@@ -182,7 +186,7 @@ void Scene_Graph::Update_Tile_Map(Coordinate grid_point, int tile_layer, Object*
 
 // Entity Creation Commands
 
-void Scene_Graph::Create_Entity(Coordinate grid_point, Entity_Template entity)
+void Scene_Graph::Create_Entity(Coordinate grid_point, Entity_Template entity, int faction)
 {
 	if (entity.entity_id != 0)
 	{
@@ -205,7 +209,7 @@ void Scene_Graph::Create_Entity(Coordinate grid_point, Entity_Template entity)
 
 		if (array_index >= current_num_entities) current_num_entities++;
 
-		entity_array[array_index].Init_Entity_From_Template(entity);
+		entity_array[array_index].Init_Entity_From_Template(entity, faction);
 
 		// Finally we send a SG entity update message to the main bus outlining what happened
 		int update_message[5] = { MESSAGE_TYPE_SG_ENTITY_CREATE , OBJECT_TYPE_ANY, FOCUS_ALL, grid_point.x,grid_point.y };
@@ -227,17 +231,23 @@ void Scene_Graph::Draw()
 	for (int i = 0; i < current_num_entities; i++) if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Draw();
 
 	for (int i = 0; i < current_num_projectiles; i++) if (projectile_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) projectile_array[i].Draw();
-
 }
 
 // Projectile Creation Commands
 
-void Scene_Graph::Create_Projectile(Object* firing_object, Projectile_Template projectile_config, SDL_Point start, SDL_Point target)
+void Scene_Graph::Create_Projectile(Object* firing_object, Object* target_object, int projectile_id, int faction)
 {
-	if (projectile_config.projectile_template_id != 0)
+
+	Projectile_Template* projectile_config = service_locator->get_Game_Library()->Fetch_Projectile_Template(projectile_id);
+	SDL_Point start = { firing_object->get_coordinate().x*TILE_SIZE + TILE_SIZE/2, firing_object->get_coordinate().y*TILE_SIZE + TILE_SIZE/2};
+	SDL_Point target = { target_object->get_coordinate().x*TILE_SIZE + TILE_SIZE/2, target_object->get_coordinate().y*TILE_SIZE + TILE_SIZE/2};
+
+	if (projectile_config->projectile_template_id != 0)
 	{
 		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
 		int array_index = 0;
+
+
 
 		for (int i = 0; i < WORLD_MAX_NUM_PROJECTILES; i++)
 		{
@@ -254,19 +264,38 @@ void Scene_Graph::Create_Projectile(Object* firing_object, Projectile_Template p
 		}
 
 		if (array_index >= current_num_projectiles) current_num_projectiles++;
-
-		projectile_array[array_index].Init_Projectile_From_Template(projectile_config, target);
-
+		
+		projectile_array[array_index].Init_Projectile_From_Template(projectile_config, target, faction);
+		
 		// Finally we send a SG entity update message to the main bus outlining what happened
-		AI_Rel_Component* object_rel = (AI_Rel_Component*)firing_object->Return_Object_Component_Pointer(OBJECT_COMPONENT_RELATIONSHIP);
-		int update_message[9] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT , OBJECT_TYPE_ANY, FOCUS_ALL, start.x, start.y,object_rel->Return_Object_Faction(), projectile_config.projectile_power, projectile_config.projectile_range, array_index };
+		AI_Stats_Component* object_stats = (AI_Stats_Component*)firing_object->Return_Object_Component_Pointer(OBJECT_COMPONENT_STATS);
+		int update_message[9] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT , OBJECT_TYPE_ANY, FOCUS_ALL, projectile_array[array_index].get_coordinate().x, projectile_array[array_index].get_coordinate().y,object_stats->Return_Stat_Value(STAT_OBJECT_FACTION), projectile_config->projectile_power, projectile_config->projectile_splash, array_index };
 		service_locator->get_MB_Pointer()->Add_Custom_Message(9, update_message);
+
 	}
 	else
 	{
 		cout << "Cannot create null projectile" << endl;
 	}
 
+
+
+}
+
+void Scene_Graph::Create_Laser_Between_Two_Points(Object* firing_object, Object* target_object, int projectile_id)
+{
+	Projectile_Template* mining_laser = service_locator->get_Game_Library()->Fetch_Projectile_Template(projectile_id);
+	
+	SDL_Point start = service_locator->get_Cursor_Pointer()->Convert_Coord_To_Screen_Pos(firing_object->get_coordinate());
+	SDL_Point end = service_locator->get_Cursor_Pointer()->Convert_Coord_To_Screen_Pos(target_object-> get_coordinate());
+	SDL_Color laser_color = mining_laser->projectile_color;
+	laser_color.r += rand() % (254 - laser_color.r);
+	laser_color.g += rand() % (254 - laser_color.g);
+	laser_color.b += rand() % (254 - laser_color.b);
+
+	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(-1, { start.x, start.y, end.x, end.y }, true, { laser_color.r,laser_color.g,laser_color.b,laser_color.a }, PRIMITIVE_TYPE_LINE);
+	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(-1, { start.x-1, start.y, end.x-1, end.y }, true, { 255,255,255,255 }, PRIMITIVE_TYPE_LINE);
+	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(-1, { start.x-2, start.y, end.x-2, end.y }, true, { laser_color.r,laser_color.g,laser_color.b,laser_color.a },PRIMITIVE_TYPE_LINE);
 }
 
 // Accessors 
@@ -317,6 +346,22 @@ Object* Scene_Graph::Return_Object_At_Coord(int coord_x, int coord_y)
 	return NULL;
 }
 
+Object* Scene_Graph::Return_Object_By_Type_And_Array_Num(int object_type, int array_num)
+{
+	switch (object_type)
+	{
+	case OBJECT_TYPE_STRUCTURE:
+		return &structure_array[array_num];
+		break;
+	case OBJECT_TYPE_ENTITY:
+		return &entity_array[array_num];
+		break;
+	case OBJECT_TYPE_PROJECTILE:
+		return &projectile_array[array_num];
+		break;
+	}
+}
+
 Object* Scene_Graph::Return_Structure_By_Array_Num(int array_num)
 {
 	return &structure_array[array_num];
@@ -342,17 +387,30 @@ void Scene_Graph::free()
 
 // Queries
 
+int Scene_Graph::Check_Simple_Distance_To_Object(Object* object_a, Object* object_b)
+{
+	Coordinate object_a_coord = object_a->get_coordinate();
+	Coordinate object_b_coord = object_b->get_coordinate();
+
+	int x_dist = abs(object_b_coord.x - object_a_coord.x);
+	int y_dist = abs(object_b_coord.y - object_a_coord.y);
+
+	return max(x_dist, y_dist);
+}
+
 Coordinate Scene_Graph::Return_Nearest_Accessible_Coordinate(Coordinate origin, Coordinate destination, int requesting_faction)
 {
-
 	if (origin.x == destination.x && origin.y == destination.y) return origin;
 	else
 	{
 		int direction_x = (destination.x - origin.x);
 		int direction_y = (destination.y - origin.y);
 
-		if (direction_x != 0) direction_x /= -direction_x;
-		if (direction_y != 0) direction_y /= -direction_y;
+		if (direction_x > 0) direction_x = 1;
+		else if (direction_x < 0) direction_x = -1;
+
+		if (direction_y > 0) direction_y = 1;
+		else if (direction_y < 0) direction_y = -1;
 
 		Coordinate d = destination;
 

@@ -18,13 +18,11 @@ Object::Object(int index, SDL_Rect location, Global_Service_Locator* sLocator)
 
 	// set the array index of the object so we know where to find it in the scene graph object array later
 	SG_object_array_index = index;
-
-	uniq_id = rand() % 1000;
-
+	
 	temp_location = location;
 }
 
-void Object::Init_Structure_From_Template(Structure_Template object_config, Adjacent_Structure_Array neighbors)
+void Object::Init_Structure_From_Template(Structure_Template object_config, Adjacent_Structure_Array neighbors, int faction)
 {
 	Structure_Stats structure_stats;
 	structure_stats.impassable = object_config.is_inaccessible;
@@ -33,6 +31,7 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	
 	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, object_config.structure_id, structure_stats);
 	object_service_locator.Register_Pointer(AI_Stats);
+	AI_Stats->Update_Stat(STAT_OBJECT_FACTION, faction);
 
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config, neighbors);
 	object_service_locator.Register_Pointer(render_component);
@@ -50,12 +49,13 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	object_service_locator.Register_Pointer(AI_Items);
 }
 
-void Object::Init_Entity_From_Template(Entity_Template object_config)
+void Object::Init_Entity_From_Template(Entity_Template object_config, int faction)
 {	
 	object_service_locator.Register_Pointer(this);
 
 	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, OBJECT_TYPE_ENTITY, object_config.entity_id);
 	object_service_locator.Register_Pointer(AI_Stats);
+	AI_Stats->Update_Stat(STAT_OBJECT_FACTION, faction);
 
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config);
 	object_service_locator.Register_Pointer(render_component);
@@ -63,8 +63,8 @@ void Object::Init_Entity_From_Template(Entity_Template object_config)
 	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location);
 	object_service_locator.Register_Pointer(AI_Movement);
 
-	AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
-	object_service_locator.Register_Pointer(AI_Relationship);
+	//AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
+	//object_service_locator.Register_Pointer(AI_Relationship);
 
 	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, object_config.entity_inventory_pack);
 	object_service_locator.Register_Pointer(AI_Items);
@@ -74,17 +74,18 @@ void Object::Init_Entity_From_Template(Entity_Template object_config)
 
 }
 
-void Object::Init_Projectile_From_Template(Projectile_Template projectile_config, SDL_Point target)
+void Object::Init_Projectile_From_Template(Projectile_Template* projectile_config, SDL_Point target, int faction)
 {
 	object_service_locator.Register_Pointer(this);
 
-	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, OBJECT_TYPE_PROJECTILE, projectile_config.projectile_template_id);
+	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, OBJECT_TYPE_PROJECTILE, projectile_config->projectile_template_id);
 	object_service_locator.Register_Pointer(AI_Stats);
+	AI_Stats->Update_Stat(STAT_OBJECT_FACTION, faction);
 
-	render_component = new Render_Component(service_locator, &object_service_locator, OBJECT_TYPE_PROJECTILE, projectile_config.projectile_template_id);
+	render_component = new Render_Component(service_locator, &object_service_locator, OBJECT_TYPE_PROJECTILE, projectile_config->projectile_template_id);
 	object_service_locator.Register_Pointer(render_component);
 
-	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location);
+	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, projectile_config->projectile_speed);
 	AI_Movement->Set_Projectile_Velocity(target);
 	object_service_locator.Register_Pointer(AI_Movement);
 }
@@ -115,7 +116,7 @@ bool Object::Is_Structure_Inaccessible(int requesting_faction)
 {
 	if (service_locator->get_Game_Library()->is_door(AI_Stats->Get_Structure_Type()))
 	{
-		if (AI_Relationship->Return_Object_Faction() == requesting_faction) return false;
+		if (AI_Stats->Return_Stat_Value(STAT_OBJECT_FACTION) == requesting_faction) return false;
 		else return true;
 	}
 	else
@@ -129,6 +130,11 @@ bool Object::Is_Structure_Inaccessible(int requesting_faction)
 int Object::Return_Object_Array_Index()
 {
 	return SG_object_array_index;
+}
+
+int Object::Get_Uniq_ID()
+{
+	return AI_Stats->Return_Stat_Value(STAT_UNIQ_ID);
 }
 
 Coordinate Object::get_coordinate()

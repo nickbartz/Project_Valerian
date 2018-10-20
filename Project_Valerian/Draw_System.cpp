@@ -136,9 +136,9 @@ void Draw_System::Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num
 	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multi_tile_num].Add_Sprite_Instructions(pos_rect, { 0,0,TILE_SIZE,TILE_SIZE });
 }
 
-void Draw_System::Add_Primitive_To_Render_Cycle(int init, SDL_Rect pos_rect, bool filled, SDL_Color primitive_color)
+void Draw_System::Add_Primitive_To_Render_Cycle(int init, SDL_Rect pos_rect, bool filled, SDL_Color primitive_color, int primitive_type)
 {
-	Primitive_Instruction_Array[count_num_primitives] = Primitive_Instruction{ init, pos_rect, filled, primitive_color };
+	Primitive_Instruction_Array[count_num_primitives] = Primitive_Instruction{ init, pos_rect, filled, primitive_color, primitive_type };
 
 	count_num_primitives++;
 	if (count_num_primitives > MAX_NUM_PRIMITIVES) count_num_primitives = 0;
@@ -179,9 +179,11 @@ void Draw_System::Draw(SDL_Renderer* render_target)
 	Draw_Sprites(render_target, SPRITESHEET_BACKGROUND);
 	Draw_Sprites(render_target, SPRITESHEET_BASE);
 	Draw_Sprites(render_target, SPRITESHEET_MID_1);
+	Draw_Primitives(render_target, -1); // For lasers 
 	Draw_Sprites(render_target, SPRITESHEET_ENTITY);
-	Draw_Sprites(render_target, SPRITESHEET_MID_2);
 	Draw_Sprites(render_target, SPRITESHEET_PROJECTILE);
+	Draw_Sprites(render_target, SPRITESHEET_MID_2);
+
 	Draw_Primitives(render_target);
 	Draw_Text_Strings(render_target);
 	Draw_Sprites(render_target, SPRITESHEET_ICON);
@@ -267,12 +269,26 @@ void Draw_System::Draw_Primitives(SDL_Renderer* render_target, int layer)
 		{
 			SDL_Rect rect_pos = Primitive_Instruction_Array[i].pos_rect;
 			SDL_Color rect_color = Primitive_Instruction_Array[i].primitive_color;
-			SDL_SetRenderDrawColor(render_target, rect_color.r, rect_color.g, rect_color.b, rect_color.a);
-			if (Primitive_Instruction_Array[i].filled == true)
+
+			switch (Primitive_Instruction_Array[i].primitive_type)
 			{
-				SDL_RenderFillRect(render_target, &rect_pos);
+			case PRIMITIVE_TYPE_RECT:
+				SDL_SetRenderDrawColor(render_target, rect_color.r, rect_color.g, rect_color.b, rect_color.a);
+				if (Primitive_Instruction_Array[i].filled == true)
+				{
+					SDL_RenderFillRect(render_target, &rect_pos);
+				}
+				else SDL_RenderDrawRect(render_target, &rect_pos);
+				break;
+			case PRIMITIVE_TYPE_LINE:
+				SDL_SetRenderDrawColor(render_target, rect_color.r, rect_color.g, rect_color.b, rect_color.a);
+				SDL_RenderDrawLine(render_target, rect_pos.x, rect_pos.y, rect_pos.w, rect_pos.h);
+				break;
+			case PRIMITIVE_TYPE_POINT:
+				SDL_SetRenderDrawColor(render_target, rect_color.r, rect_color.g, rect_color.b, rect_color.a);
+				SDL_RenderDrawPoint(render_target, rect_pos.x, rect_pos.y);
+				break;
 			}
-			else SDL_RenderDrawRect(render_target, &rect_pos);
 		}
 	}
 }

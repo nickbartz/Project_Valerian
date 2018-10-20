@@ -35,6 +35,7 @@ public:
 	void Draw_With_Simple_Clip(SDL_Rect pos_rect);
 	void Draw_With_Multi_Clip(SDL_Rect pos_rect);
 	void Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect);
+	void Draw_Point(SDL_Rect pos_rect);
 
 	void Draw_With_Complex_Entity_Animation(SDL_Rect pos_rect);
 	void Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Rect sprite_clip, int animation_frame, int spritesheet);
@@ -43,6 +44,7 @@ public:
 
 	// Overlay Specific Functions
 	void Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level);
+	void Handle_Current_Health_Overlay(SDL_Rect pos_rect, int current_health, int max_health);
 
 	void Initialize_Dedicated_Multisprite();
 	void Deinitialize_Dedicated_Multisprite();
@@ -81,9 +83,12 @@ private:
 	int render_component;
 	int spritesheet;
 	int max_animation_frames;
+	int animation_delay = 0;
+	int max_animation_delay = 0;
 	int current_animation_frame = 0;
 	int animation_direction = 1;
 	int simple_animation_type = SIMPLE_ANIMATION_NULL;
+	SDL_Color override_color = { 0,0,0,0 };
 
 	// STRUCTURE_SPECIFIC VARIABLES
 	int multiclip_type;

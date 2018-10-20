@@ -166,6 +166,12 @@ void Game_Library::Load_Projectiles(string projectile_template_path)
 		new_projectile_template.num_animation_frames = stoi(vector_loaded_templates[i][9]);
 		new_projectile_template.projectile_range = stoi(vector_loaded_templates[i][10]);
 		new_projectile_template.projectile_splash = stoi(vector_loaded_templates[i][11]);
+		new_projectile_template.animation_delay = stoi(vector_loaded_templates[i][12]);
+		new_projectile_template.projectile_color.r  = stoi(vector_loaded_templates[i][13]);
+		new_projectile_template.projectile_color.g = stoi(vector_loaded_templates[i][14]);
+		new_projectile_template.projectile_color.b = stoi(vector_loaded_templates[i][15]);
+		new_projectile_template.projectile_color.a = stoi(vector_loaded_templates[i][16]);
+		new_projectile_template.is_point_not_sprite = stoi(vector_loaded_templates[i][17]);
 
 		loaded_projectiles[i - 1] = new_projectile_template;
 		num_loaded_projectiles++;
@@ -279,68 +285,68 @@ int Game_Library::Query_Vector_Table( vector<vector<string>> table, int num_colu
 	}
 }
 
-Structure_Template Game_Library::Fetch_Tile_Object_Config(int tile_id)
+Structure_Template* Game_Library::Fetch_Tile_Object_Config(int tile_id)
 {
 	if (tile_id < num_loaded_tiles)
 	{
-		return loaded_tiles[tile_id];
+		return &loaded_tiles[tile_id];
 	}
 
 	else
 	{
 		cout << "tile id out of range, returning null tile" << endl;
-		return loaded_tiles[0];
+		return &loaded_tiles[0];
 	}
 }
 
-Entity_Template Game_Library::Fetch_Entity_Template(int entity_id)
+Entity_Template* Game_Library::Fetch_Entity_Template(int entity_id)
 {
 	if (entity_id < num_loaded_entities)
 	{
-		return loaded_Entities[entity_id];
+		return &loaded_Entities[entity_id];
 	}
 	else
 	{
 		cout << "entity id out of range, returning null entity" << endl;
-		return loaded_Entities[0];
+		return &loaded_Entities[0];
 	}
 }
 
-Item_Template Game_Library::Fetch_Item_Template(int item_id)
+Item_Template* Game_Library::Fetch_Item_Template(int item_id)
 {
 	
 	if (item_id < num_loaded_Items)
 	{
-		return loaded_Items[item_id];
+		return &loaded_Items[item_id];
 	}
 	else
 	{
 		cout << "item id out of range, returning null item" << endl;
-		return loaded_Items[0];
+		return &loaded_Items[0];
 	}
 }
 
-Inventory_Template Game_Library::Fetch_Blueprint(int blueprint_id)
+Inventory_Template* Game_Library::Fetch_Blueprint(int blueprint_id)
 {
 	if (blueprint_id < num_loaded_blueprints)
 	{
-		return loaded_blueprints[blueprint_id];
+		return &loaded_blueprints[blueprint_id];
 	}
 	else
 	{
 		cout << "blueprint id out of range, returning null blueprint" << endl;
-		return loaded_blueprints[0];
+		return &loaded_blueprints[0];
 	}
 }
 
-Job_Template Game_Library::Fetch_Job_Template(int job_id)
+Job_Template* Game_Library::Fetch_Job_Template(int job_id)
 {
-	return loaded_jobs[job_id];
+	return &loaded_jobs[job_id];
 }
 
-Projectile_Template Game_Library::Fetch_Projectile_Template(int projectile_id)
+Projectile_Template* Game_Library::Fetch_Projectile_Template(int projectile_id)
 {
-	return loaded_projectiles[projectile_id];
+	return &loaded_projectiles[projectile_id];
 }
 
 int Game_Library::Get_Num_Structure_Template()

@@ -27,7 +27,7 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 		break;
 	case OBJECT_TYPE_PROJECTILE:
 		projectile_template_num = oType;
-		projectile_stats.remaining_lifespan = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_num).projectile_range;
+		projectile_stats.remaining_lifespan = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_num)->projectile_range;
 		break;
 	}
 
@@ -64,17 +64,17 @@ void AI_Stats_Component::Assign_Uniq_IDs(int object_array_index)
 
 string AI_Stats_Component::Get_Structure_Common_Name()
 {
-	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num).structure_name;
+	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num)->structure_name;
 }
 
 int AI_Stats_Component::Get_Structure_Name()
 {
-	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num).structure_id;
+	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num)->structure_id;
 }
 
 int AI_Stats_Component::Get_Structure_Type()
 {
-	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num).structure_type;
+	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num)->structure_type;
 }
 
 string AI_Stats_Component::Get_Entity_Name()
@@ -85,7 +85,6 @@ string AI_Stats_Component::Get_Entity_Name()
 void AI_Stats_Component::Update()
 {
 	// RUN OBJECT AI
-
 	switch (object_type)
 	{
 	case OBJECT_TYPE_ENTITY:
@@ -104,6 +103,9 @@ void AI_Stats_Component::Update_Stat(int stat_name, int new_value)
 {
 	switch (stat_name)
 	{
+	case STAT_OBJECT_FACTION:
+		object_faction = new_value;
+		break;
 	case STAT_STRUCTURE_BUILT_LEVEL:
 		structure_stats.built_level = new_value;
 		break;
@@ -208,6 +210,9 @@ int AI_Stats_Component::Return_Stat_Value(int stat_name)
 	case STAT_UNIQ_ID:
 		return uniq_id;
 		break;
+	case STAT_OBJECT_FACTION:
+		return object_faction;
+		break;
 	case STAT_STRUCTURE_BUILT_LEVEL:
 		return structure_stats.built_level;
 		break;
@@ -252,6 +257,22 @@ int AI_Stats_Component::Return_Stat_Value(int stat_name)
 		break;
 	case STAT_PROJECTILE_RANGE:
 		return projectile_stats.remaining_lifespan;
+		break;
+	}
+}
+
+int AI_Stats_Component::Return_Template_ID(int object_type)
+{
+	switch (object_type)
+	{
+	case OBJECT_TYPE_STRUCTURE:
+		return structure_template_num;
+		break;
+	case OBJECT_TYPE_ENTITY:
+		return entity_template_num;
+		break;
+	case OBJECT_TYPE_PROJECTILE:
+		return projectile_template_num;
 		break;
 	}
 }

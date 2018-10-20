@@ -64,7 +64,7 @@ void UI_Panel_Structure_Create_Type::Init(int ui_structure_type)
 
 	for (int i = 0; i < num_structure_templates; i++)
 	{
-		if (service_locator->get_Game_Library()->Fetch_Tile_Object_Config(i).ui_type == ui_structure_type)
+		if (service_locator->get_Game_Library()->Fetch_Tile_Object_Config(i)->ui_type == ui_structure_type)
 		{
 			graphic_button_array.push_back(UI_Component_Graphic_Button(service_locator, { offset_rect.x + current_column * SPRITE_SIZE, offset_rect.y + current_row * SPRITE_SIZE, SPRITE_SIZE ,SPRITE_SIZE }));
 			graphic_button_array.back().Init(OBJECT_TYPE_STRUCTURE, i);

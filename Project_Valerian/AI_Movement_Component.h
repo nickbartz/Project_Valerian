@@ -10,7 +10,7 @@ class Object_Service_Locator;
 class AI_Movement_Component
 {
 public:
-	AI_Movement_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, SDL_Rect location);
+	AI_Movement_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, SDL_Rect location, int object_speed = 3);
 
 	void Check_For_Messages();
 	void Update();
@@ -26,10 +26,12 @@ public:
 private:
 	SDL_Rect world_pos;
 	Coordinate world_coord;
-	int object_speed = 3;
 
-	int obj_x_vel = 0.0;
-	int obj_y_vel = 0.0;
+	bool Update_World_Coord(SDL_Point new_world_pos);
+
+	int object_base_speed = 3;
+	int obj_x_vel = 0.0; // For projectiles
+	int obj_y_vel = 0.0; // For projectiles
 
 	// This is extra speed above an integer number that gets lost in the conversion to pixel movemnet, we save it for reference
 	double vel_remainder_x = 0.0; // Needed to account for the fact that screen position is an int-based system, and our velocity is a double;

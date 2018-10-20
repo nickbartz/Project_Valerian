@@ -49,6 +49,7 @@ public:
 
 	void Update_Stat(int stat_name, int new_value );
 	void Adjust_Stat(int stat_name, int new_value);
+	int Return_Template_ID(int object_type);
 	int Return_Stat_Value(int stat_name);
 	int Return_Object_Type();
 
@@ -66,6 +67,9 @@ private:
 	int structure_template_num = 0;
 	int entity_template_num = 0;
 	int projectile_template_num = 0;
+
+	// GENERIC STATS GO HERE
+	int object_faction = 0;
 
 	Structure_Stats structure_stats;
 	Entity_Stats entity_stats;

@@ -149,7 +149,7 @@ void UI::Parse_Loaded_Actions()
 				switch (action_support[1])
 				{
 				case UI_ACTION_SUPPORTING_TYPE_SET_STRUCTURE_BUILD:
-					service_pointer->get_Scene_Graph()->Create_New_Structure(service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord(), service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2]));
+					service_pointer->get_Scene_Graph()->Create_New_Structure(service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord(), service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2]),1);
 					break;
 				case UI_ACTION_SUPPORTING_TYPE_DELETE_STRUCTURE:
 					service_pointer->get_Scene_Graph()->Delete_Structure_Highest_Layer(service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord());
@@ -175,8 +175,8 @@ void UI::Parse_Loaded_Actions()
 		switch (action_support[1])
 		{
 		case UI_ACTION_SUPPORTING_TYPE_SET_STRUCTURE_BUILD:
-			icon_clip_x = service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2]).icon_clip_x;
-			icon_clip_y = service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2]).icon_clip_y;
+			icon_clip_x = service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2])->icon_clip_x;
+			icon_clip_y = service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2])->icon_clip_y;
 			service_pointer->get_Cursor_Pointer()->Change_Cursor_Icon(icon_clip_x, icon_clip_y);
 			break;
 		case UI_ACTION_SUPPORTING_TYPE_DELETE_STRUCTURE:

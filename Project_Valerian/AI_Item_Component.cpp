@@ -38,9 +38,9 @@ int AI_Item_Component::Add_Item_To_Inventory(int item_id, int item_quantity, boo
 	{
 		if (inventory_array[i].item_quantity <= 0 || inventory_array[i].slot_item.item_template_id == 0)
 		{	
-			if (service_locator->get_Game_Library()->Fetch_Item_Template(item_id).inventory_item_id != 0)
+			if (service_locator->get_Game_Library()->Fetch_Item_Template(item_id)->inventory_item_id != 0)
 			{
-				inventory_array[i].slot_item.item_template_id = service_locator->get_Game_Library()->Fetch_Item_Template(item_id).inventory_item_id;
+				inventory_array[i].slot_item.item_template_id = service_locator->get_Game_Library()->Fetch_Item_Template(item_id)->inventory_item_id;
 				inventory_array[i].item_quantity = item_quantity;
 				if (has_stats) inventory_array[i].slot_item.current_stats = item_stats;
 				return 0;
@@ -53,14 +53,14 @@ int AI_Item_Component::Add_Item_To_Inventory(int item_id, int item_quantity, boo
 
 void AI_Item_Component::Populate_Starter_Inventory(int starter_id)
 {
-	Inventory_Template starter_blueprint = service_locator->get_Game_Library()->Fetch_Blueprint(starter_id);
+	Inventory_Template* starter_blueprint = service_locator->get_Game_Library()->Fetch_Blueprint(starter_id);
 
 	for (int i = 0; i < MAX_ITEMS_PER_BLUEPRINT; i++)
 	{
-		if (starter_blueprint.inventory_pack[i][0] != 0)
+		if (starter_blueprint->inventory_pack[i][0] != 0)
 		{
-			int item_id = starter_blueprint.inventory_pack[i][0];
-			int quantity = starter_blueprint.inventory_pack[i][1];
+			int item_id = starter_blueprint->inventory_pack[i][0];
+			int quantity = starter_blueprint->inventory_pack[i][1];
 
 			if (Add_Item_To_Inventory(item_id, quantity, false) != 0)
 			{

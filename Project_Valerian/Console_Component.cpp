@@ -231,17 +231,16 @@ void UI_Component_Graphic_Button::Fetch_Sprite_Details_From_Object_ID()
 	{
 	case OBJECT_TYPE_STRUCTURE:
 		{
-			Structure_Template new_structure;
-			new_structure = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(template_id);
-			sprite_clip = { new_structure.icon_clip_x,new_structure.icon_clip_y, SPRITE_SIZE, SPRITE_SIZE };
+			Structure_Template* new_structure = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(template_id);
+			sprite_clip = { new_structure->icon_clip_x,new_structure->icon_clip_y, SPRITE_SIZE, SPRITE_SIZE };
 		}
 		break;
 	case OBJECT_TYPE_ENTITY:
 		break;
 	case OBJECT_TYPE_ITEM:
 		{
-			Item_Template new_item = service_locator->get_Game_Library()->Fetch_Item_Template(template_id);
-			sprite_clip = { new_item.sprite_specs.x, new_item.sprite_specs.y, SPRITE_SIZE, SPRITE_SIZE };
+			Item_Template* new_item = service_locator->get_Game_Library()->Fetch_Item_Template(template_id);
+			sprite_clip = { new_item->sprite_specs.x, new_item->sprite_specs.y, SPRITE_SIZE, SPRITE_SIZE };
 		}
 		break;
 	}
@@ -253,7 +252,7 @@ void UI_Component_Item_Slot_Button::Draw(SDL_Rect base_rect)
 
 	if (slot_pointer != NULL && slot_pointer->item_quantity > 0)
 	{
-		sprite_clip = service_locator->get_Game_Library()->Fetch_Item_Template(slot_pointer->slot_item.item_template_id).sprite_specs;
+		sprite_clip = service_locator->get_Game_Library()->Fetch_Item_Template(slot_pointer->slot_item.item_template_id)->sprite_specs;
 		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet_num, { base_rect.x + offset_rect.x , base_rect.y + offset_rect.y, offset_rect.w, offset_rect.h }, sprite_clip);
 
 		Set_Font_Type(FONT_SMALL_BOLD);

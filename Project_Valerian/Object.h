@@ -30,25 +30,26 @@ public:
 	int Return_Object_Array_Index();
 	Coordinate get_coordinate();
 	void* Return_Object_Component_Pointer(int component_type);
+	int Get_Uniq_ID();
 
 	// Draw functions
 	void Draw();
 	void Draw(SDL_Rect overwrite_pos);
 
 	// Init Functions
-	void Init_Structure_From_Template(Structure_Template object_config, Adjacent_Structure_Array neighbors);
-	void Init_Entity_From_Template(Entity_Template object_config);
-	void Init_Projectile_From_Template(Projectile_Template projectile_config, SDL_Point target);
+	void Init_Structure_From_Template(Structure_Template object_config, Adjacent_Structure_Array neighbors, int faction);
+	void Init_Entity_From_Template(Entity_Template object_config, int faction);
+	void Init_Projectile_From_Template(Projectile_Template* projectile_config, SDL_Point target, int faction);
 
 	void Set_Assigned_Flag(int assigned_flag); 	// Unassigning an object means we're setting its type to unassigned so that it can be overwritten in whatever array it is in
 
 	void free();
-	int uniq_id;
-
+	
 private:
 	Global_Service_Locator* service_locator;
 	Object_Service_Locator object_service_locator;
 
+	int uniq_id;
 	SDL_Rect temp_location;
 
 	int SG_object_array_index;

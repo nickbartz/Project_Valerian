@@ -8,6 +8,7 @@
 #include<AI_Movement_Component.h>
 #include<AI_Rel_Component.h>
 #include<Service_Locator.h>
+#include<Cursor.h>
 
 AI_Job_Component::AI_Job_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Structure_Template sTemplate)
 {
@@ -59,7 +60,7 @@ void AI_Job_Component::Check_For_Messages()
 			{
 			case MESSAGE_TYPE_SG_ENTITY_MOVEMENT:
 				current_coord = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
-				if (new_message->Read_Message(6) == current_coord.x && new_message->Read_Message(7) == current_coord.y && new_message->Read_Message(3) == object_locator->Return_AI_Rel_Pointer()->Return_Object_Faction())
+				if (new_message->Read_Message(6) == current_coord.x && new_message->Read_Message(7) == current_coord.y && new_message->Read_Message(3) == object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION))
 				{
 					Structure_Job_Open_Door();
 				}
@@ -157,6 +158,18 @@ void AI_Job_Component::Process_Next_Goal()
 	}
 }
 
+void AI_Job_Component::Increment_Goal(int goal_increment)
+{
+	next_goal_num += goal_increment;
+}
+
+void AI_Job_Component::Decrement_Goal(int goal_increment)
+{
+	next_goal_num -= goal_increment;
+
+	if (next_goal_num < 0) next_goal_num = 0;
+}
+
 void AI_Job_Component::Action_Triage(int goal[])
 {
 	switch (goal[0])
@@ -179,6 +192,8 @@ void AI_Job_Component::Action_Triage(int goal[])
 	case ACTION_ASSESS_EXTERNAL:
 		Action_Assess_External(&goal[1]);
 		break;
+	case ACTION_GOAL_TRAVERSAL:
+		Action_Goal_Traversal(&goal[1]);
 	}
 }
 
@@ -203,6 +218,10 @@ void AI_Job_Component::Action_Edit_Internal(int goal[])
 		if (wait_timer <= 0) next_goal_num++;
 		else wait_timer--;
 		break;
+	case A_EI_SET_WAIT_TIMER:
+		wait_timer = goal[1];
+		next_goal_num++;
+		break;
 	case A_EI_CLOSE_DOOR:
 		object_locator->Return_Render_Pointer()->Change_Simple_Animation(SIMPLE_ANIMATION_DECREMENT_UNTIL_COMPLETE);
 		next_goal_num++;
@@ -210,7 +229,7 @@ void AI_Job_Component::Action_Edit_Internal(int goal[])
 	case A_EI_SET_TARGET_COORD_TO_STRUCTURE:
 		{
 		Object* structure = service_locator->get_Scene_Graph()->Return_Structure_By_Array_Num(goal[1]);
-		Coordinate destination = service_locator->get_Scene_Graph()->Return_Nearest_Accessible_Coordinate(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), structure->get_coordinate(), object_locator->Return_AI_Rel_Pointer()->Return_Object_Faction());
+		Coordinate destination = service_locator->get_Scene_Graph()->Return_Nearest_Accessible_Coordinate(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), structure->get_coordinate(), object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION));
 		object_locator->Return_AI_Movement_Pointer()->Set_Target_Coord(destination);
 		next_goal_num++;
 		}
@@ -222,7 +241,10 @@ void AI_Job_Component::Action_Edit_External(int goal[])
 	switch (goal[0])
 	{
 	case A_EE_FIRE_MINING_LASER_AT_STRUCTURE:
-		Fire_Mining_Laser_At_Object(service_locator->get_Scene_Graph()->Return_Structure_By_Array_Num(goal[1]));
+		int faction = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION);
+		service_locator->get_Scene_Graph()->Create_Laser_Between_Two_Points(object_locator->Return_Object_Pointer(), service_locator->get_Scene_Graph()->Return_Structure_By_Array_Num(goal[1]), 2);
+		service_locator->get_Scene_Graph()->Create_Projectile(object_locator->Return_Object_Pointer(), service_locator->get_Scene_Graph()->Return_Structure_By_Array_Num(goal[1]), 2,faction);
+		next_goal_num++;
 		break;
 	}
 }
@@ -235,6 +257,7 @@ void AI_Job_Component::Action_Assess_External(int goal[])
 	switch (goal[0])
 	{
 	case A_AE_OXYGENATE:
+		{
 		vector<Coordinate> oxygenation_vector;
 		map<Coordinate, bool> check_map;
 		bool leak_check = false;
@@ -243,7 +266,7 @@ void AI_Job_Component::Action_Assess_External(int goal[])
 		{
 			for (int i = 0; i < oxygenation_vector.size(); i++)
 			{
-				int message_content[8] = { MESSAGE_TYPE_STAT_UPDATE_REQUEST, OBJECT_TYPE_STRUCTURE, FOCUS_SPECIFC_OBJECT, STAT_ADJUST, oxygenation_vector[i].x,oxygenation_vector[i].y,STAT_STRUCTURE_OXYGEN_LEVEL,100/oxygenation_vector.size() };
+				int message_content[8] = { MESSAGE_TYPE_STAT_UPDATE_REQUEST, OBJECT_TYPE_STRUCTURE, FOCUS_SPECIFC_OBJECT, STAT_ADJUST, oxygenation_vector[i].x,oxygenation_vector[i].y,STAT_STRUCTURE_OXYGEN_LEVEL,100 / oxygenation_vector.size() };
 				service_locator->get_MB_Pointer()->Add_Custom_Message(8, message_content);
 			}
 			object_locator->Return_Render_Pointer()->Change_Simple_Animation(SIMPLE_ANIMATION_INCREMENT_AND_REPEAT);
@@ -253,12 +276,31 @@ void AI_Job_Component::Action_Assess_External(int goal[])
 			object_locator->Return_Render_Pointer()->Change_Simple_Animation(SIMPLE_ANIMATION_PAUSE);
 		}
 		next_goal_num++;
+		}
+		break;
+	case A_AE_CHECK_SIMPLE_DISTANCE:
+		if (service_locator->get_Scene_Graph()->Check_Simple_Distance_To_Object(object_locator->Return_Object_Pointer(), service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal[1], goal[2])) <= 1)
+		{
+			next_goal_num++;
+		}
 		break;
 	}
 }
 void AI_Job_Component::Action_Transfer(int goal[])
 {
 
+}
+void AI_Job_Component::Action_Goal_Traversal(int goal[])
+{
+	switch (goal[0])
+	{
+	case TRAVERSAL_GOAL_INCREMENT:
+		Increment_Goal(goal[1]);
+		break;
+	case TRAVERSAL_GOAL_DECREMENT:
+		Decrement_Goal(goal[1]);
+		break;
+	}
 }
 
 void AI_Job_Component::Structure_Job_Triage(int job)
@@ -297,14 +339,18 @@ void AI_Job_Component::Structure_Job_Open_Door()
 
 void AI_Job_Component::Structure_Send_Out_Mining_Request()
 {
-	int message[17] = { 
+	int message[42] = { 
 		MESSAGE_TYPE_ENTITY_JOB_REQUEST, 
-		JOB_TYPE_MINING, JOB_INST_START, 2, 
+		JOB_TYPE_MINING, JOB_INST_START, 6,  // NUMBER OF GOALS IN JOB
 		JOB_INST_NEW_GOAL, 4,  ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_STRUCTURE, object_locator->Return_Object_Pointer()->Get_Array_Index(), JOB_INST_END_GOAL, 
+		JOB_INST_NEW_GOAL, 6,  ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, OBJECT_TYPE_STRUCTURE, object_locator->Return_Object_Pointer()->Get_Array_Index(),1, JOB_INST_END_GOAL,
 		JOB_INST_NEW_GOAL, 4,  ACTION_EDIT_EXTERNAL, A_EE_FIRE_MINING_LASER_AT_STRUCTURE, object_locator->Return_Object_Pointer()->Get_Array_Index(), JOB_INST_END_GOAL,
+		JOB_INST_NEW_GOAL, 4,  ACTION_EDIT_INTERNAL, A_EI_SET_WAIT_TIMER, 20, JOB_INST_END_GOAL,
+		JOB_INST_NEW_GOAL, 3,  ACTION_EDIT_INTERNAL, A_EI_WAIT, JOB_INST_END_GOAL,
+		JOB_INST_NEW_GOAL, 4,  ACTION_GOAL_TRAVERSAL, TRAVERSAL_GOAL_DECREMENT, 3, JOB_INST_END_GOAL,
 		JOB_INST_END};
 
-	service_locator->get_MB_Pointer()->Add_Custom_Message(17, message);
+	service_locator->get_MB_Pointer()->Add_Custom_Message(42, message);
 
 }
 
@@ -334,16 +380,3 @@ void AI_Job_Component::Load_New_Job(int job_array_length, int job[])
 	}
 }
 
-// Common Actions
-
-void AI_Job_Component::Fire_Mining_Laser_At_Object(Object* target)
-{
-	// Change this depending on what sort of mining laser is being used
-	Projectile_Template mining_laser = service_locator->get_Game_Library()->Fetch_Projectile_Template(2);
-
-	AI_Movement_Component* object_movement_pointer = (AI_Movement_Component*)target->Return_Object_Component_Pointer(OBJECT_COMPONENT_MOVEMENT);
-	SDL_Point target_pos = { object_movement_pointer->Return_World_Pos().x, object_movement_pointer->Return_World_Pos().y };
-	SDL_Point start_pos = { object_locator->Return_AI_Movement_Pointer()->Return_World_Pos().x, object_locator->Return_AI_Movement_Pointer()->Return_World_Pos().y };
-	
-	service_locator->get_Scene_Graph()->Create_Projectile(object_locator->Return_Object_Pointer(), mining_laser, start_pos, target_pos);
-}

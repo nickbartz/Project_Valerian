@@ -59,6 +59,9 @@ struct Projectile_Template
 	string projectile_string;
 	SDL_Rect sprite_clip;
 	int num_animation_frames = 0;
+	int animation_delay = 0;
+	SDL_Color projectile_color = { 0,0,0,0 }; // For instances where a projectile is a simple point render, or for particle effects
+	int is_point_not_sprite = 0;
 };
 
 struct Item_Template
@@ -100,12 +103,12 @@ class Game_Library
 public:
 	Game_Library();
 
-	Structure_Template Fetch_Tile_Object_Config(int tile_id);
-	Entity_Template Fetch_Entity_Template(int entity_id);
-	Item_Template Fetch_Item_Template(int item_id);
-	Inventory_Template Fetch_Blueprint(int inventory_id);
-	Job_Template Fetch_Job_Template(int job_id);
-	Projectile_Template Fetch_Projectile_Template(int projectile_id);
+	Structure_Template* Fetch_Tile_Object_Config(int tile_id);
+	Entity_Template* Fetch_Entity_Template(int entity_id);
+	Item_Template* Fetch_Item_Template(int item_id);
+	Inventory_Template* Fetch_Blueprint(int inventory_id);
+	Job_Template* Fetch_Job_Template(int job_id);
+	Projectile_Template* Fetch_Projectile_Template(int projectile_id);
 
 	int Get_Num_Structure_Template();
 

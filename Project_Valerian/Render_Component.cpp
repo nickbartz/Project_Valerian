@@ -20,11 +20,14 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	switch (object_type)
 	{
 	case OBJECT_TYPE_PROJECTILE:
-		render_component = RENDER_COMPONENT_ANIMATED_CLIP;
-		spritesheet = SPRITESHEET_PROJECTILE;
-		sprite_clip = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id).sprite_clip;
-		max_animation_frames = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id).num_animation_frames;
+		if (service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->is_point_not_sprite == 1) render_component = RENDER_COMPONENT_POINT_RENDER;
+		else render_component = RENDER_COMPONENT_ANIMATED_CLIP;
 		simple_animation_type = SIMPLE_ANIMATION_BACK_AND_FORTH;
+		spritesheet = SPRITESHEET_PROJECTILE;
+		sprite_clip = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->sprite_clip;
+		max_animation_frames = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->num_animation_frames;
+		max_animation_delay = rand() % 10;
+		override_color = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->projectile_color;
 		break;
 	}
 }
@@ -109,6 +112,9 @@ void Render_Component::Draw(SDL_Rect pos_rect)
 	case RENDER_COMPONENT_ENTITY_COMPLEX:
 		Draw_With_Complex_Entity_Animation(pos_rect);
 		break;
+	case RENDER_COMPONENT_POINT_RENDER:
+		Draw_Point(pos_rect);
+		break;
 	}
 
 	Draw_Overlays(pos_rect);
@@ -154,12 +160,18 @@ void Render_Component::Draw_With_Multi_Clip(SDL_Rect pos_rect)
 
 void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 {	
+	
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
 
 	SDL_Rect anim_clip = { sprite_clip.x + current_animation_frame * SPRITE_SIZE, sprite_clip.y + orientation_y_clip_offset*SPRITE_SIZE, sprite_clip.w, sprite_clip.h };
 
 	// Adjust the draw rectangle by the camera position and camera zoom
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+
+	//if (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type() != OBJECT_TYPE_STRUCTURE)
+	//{
+	//	cout << draw_rect.x << ", " << draw_rect.y << endl;
+	//}
 
 	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE);
 
@@ -183,6 +195,14 @@ void Render_Component::Draw_With_Complex_Entity_Animation(SDL_Rect pos_rect)
 	}
 }
 
+void Render_Component::Draw_Point(SDL_Rect pos_rect)
+{
+	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
+	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+
+	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(-1, draw_rect, true, override_color, PRIMITIVE_TYPE_POINT);
+}
+
 // Draw function sub-functions
 
 void Render_Component::Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Rect sprite_clip, int animation_frame, int spritesheet)
@@ -199,11 +219,17 @@ void Render_Component::Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Re
 
 void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 {
-	if (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)
+	AI_Stats_Component* stats_pointer = object_locator->Return_AI_Stats_Pointer();
+
+	// Draw Oxygenation Level
+	if (stats_pointer->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)
 	{
 		int oxygen_level = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_OXYGEN_LEVEL);
 		if (oxygen_level > 0) Handle_Oxygenation_Overlay(pos_rect, oxygen_level);
 	}
+
+	// Draw Current Health
+	if (stats_pointer->Return_Stat_Value(STA))
 }
 
 void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level)
@@ -215,6 +241,11 @@ void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygena
 	SDL_Color overlay_color = { 0,0,255,oxygenation_level * 5 };
 
 	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, true, overlay_color);
+}
+
+void Render_Component::Handle_Current_Health_Overlay(SDL_Rect pos_rect, int current_health, int max_health)
+{
+	service_locator->
 }
 
 // Functions that support multisprites
@@ -537,51 +568,60 @@ void Render_Component::Build_Floor_Multisprite()
 // Animation Commands
 void Render_Component::Increment_Simple_Animation()
 {
-	switch (simple_animation_type)
+	if (animation_delay == 0)
 	{
-	case SIMPLE_ANIMATION_NULL:
-		break;
-	case SIMPLE_ANIMATION_INCREMENT_UNTIL_COMPLETE:
-		current_animation_frame++;
-		if (current_animation_frame >= max_animation_frames)
+		switch (simple_animation_type)
 		{
-			current_animation_frame = max_animation_frames;
-		}
-		break;
-	case SIMPLE_ANIMATION_DECREMENT_UNTIL_COMPLETE:
-		current_animation_frame--;
-		if (current_animation_frame <= 0)
-		{
-			current_animation_frame = 0;
-		}
-		break;
-	case SIMPLE_ANIMATION_PAUSE:
-		break;
-	case SIMPLE_ANIMATION_INCREMENT_AND_REPEAT:
-		current_animation_frame++;
-		if (current_animation_frame >= max_animation_frames)
-		{
-			current_animation_frame = 0;
-		}
-		break;
-	case SIMPLE_ANIMATION_BACK_AND_FORTH:
-		if (animation_direction == 1)
-		{
+		case SIMPLE_ANIMATION_NULL:
+			break;
+		case SIMPLE_ANIMATION_INCREMENT_UNTIL_COMPLETE:
 			current_animation_frame++;
 			if (current_animation_frame >= max_animation_frames)
 			{
-				animation_direction = -1;
+				current_animation_frame = max_animation_frames;
 			}
-		}
-		else if (animation_direction = -1)
-		{
+			break;
+		case SIMPLE_ANIMATION_DECREMENT_UNTIL_COMPLETE:
 			current_animation_frame--;
 			if (current_animation_frame <= 0)
 			{
-				animation_direction = 1;
+				current_animation_frame = 0;
 			}
+			break;
+		case SIMPLE_ANIMATION_PAUSE:
+			break;
+		case SIMPLE_ANIMATION_INCREMENT_AND_REPEAT:
+			current_animation_frame++;
+			if (current_animation_frame >= max_animation_frames)
+			{
+				current_animation_frame = 0;
+			}
+			break;
+		case SIMPLE_ANIMATION_BACK_AND_FORTH:
+			if (animation_direction == 1)
+			{
+				current_animation_frame++;
+				if (current_animation_frame >= max_animation_frames)
+				{
+					animation_direction = -1;
+				}
+			}
+			else if (animation_direction = -1)
+			{
+				current_animation_frame--;
+				if (current_animation_frame <= 0)
+				{
+					animation_direction = 1;
+				}
+			}
+			break;
 		}
-		break;
+		animation_delay = max_animation_delay;
+	}
+	else
+	{
+		animation_delay--;
+		if (animation_delay < 0) animation_delay = max_animation_delay;
 	}
 }
 void Render_Component::Increment_Entity_Animation()
