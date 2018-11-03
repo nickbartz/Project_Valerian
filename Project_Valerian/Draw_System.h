@@ -39,6 +39,9 @@ public:
 	// Query Functions
 	int Return_Text_Width(int font_type, string text);
 	int Return_Text_Height(int font_type, string text);
+	bool Return_Spritesheet_Prebaked_Status(int spritesheet);
+	void Set_Spritesheet_Prebaked_Status(int spritesheet_num, bool prebake_status);
+	void Set_Reset_Prebake_Status_Indicator(bool prebake_status);
 
 	// Multisprite functions
 	int Add_New_Spritesheet_To_Multisprite(int spritesheet_num, SDL_Renderer* game_renderer);
@@ -56,6 +59,7 @@ public:
 	void Clear_Text_Instruction_Array();
 
 	// Functions to Draw, called by main
+	void Update();
 	void Draw(SDL_Renderer* render_target);
 
 	void Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
@@ -74,17 +78,13 @@ private:
 
 	int count = 0;
 
+	bool reset_prebaked_spritesheets = false;
+
 	// Window Format
 	Uint32 window_format;
 
 	// Font Array
 	FC_Font* font_array[MAX_NUM_FONTS];
-
-	// Multisprites
-	int current_num_base_multisprites;
-	Spritesheet base_multisprite[MAX_SPRITES_PER_MULTISPRITE]; // composite sprites built up of smaller parts
-	int current_num_mid_multisprites;
-	Spritesheet mid_multisprite[MAX_SPRITES_PER_MULTISPRITE];
 
 	//Spritesheets
 	Spritesheet background_spritesheet;
@@ -97,6 +97,15 @@ private:
 	Spritesheet icon_spritesheet;
 	Spritesheet projectile_spritesheet;
 
+	// Multisprites // composite sprites built up of smaller sprites
+	int current_num_base_multisprites;
+	Spritesheet base_multisprite[MAX_SPRITES_PER_MULTISPRITE];
+	int current_num_mid_multisprites;
+	Spritesheet mid_multisprite[MAX_SPRITES_PER_MULTISPRITE];
+
+	// Pre_Baked Larger Multisprites
+	Spritesheet mid_prebaked_large_multisprite;
+
 	// Primitive arrays 
 	int count_num_primitives = -1;
 	Primitive_Instruction Primitive_Instruction_Array[MAX_NUM_PRIMITIVES];
@@ -104,5 +113,4 @@ private:
 	// Text print array
 	int count_num_print_text = -1;
 	Text_Instruction Text_Instruction_Array[MAX_NUM_TEXT_PRINT];
-
 };

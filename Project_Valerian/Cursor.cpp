@@ -62,6 +62,12 @@ SDL_Point Cursor::Convert_Coord_To_Screen_Pos(Coordinate point, bool center_of_t
 	}
 }
 
+SDL_Rect Cursor::Convert_World_Rect_To_Screen_Rect(SDL_Rect world_rect)
+{
+	SDL_Rect draw_rect = { (world_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (world_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, world_rect.w*camera.w/TILE_SIZE, world_rect.h*camera.w/TILE_SIZE };
+	return draw_rect;
+}
+
 void Cursor::Change_Cursor_Icon(int icon_clip_x, int icon_clip_y)
 {
 	mouse_icon_clip_x = icon_clip_x;
@@ -235,6 +241,7 @@ void Cursor::Parse_Input_Message(SDL_Event event)
 	}
 	else if (event.type == SDL_KEYDOWN)
 	{
+		service_pointer->get_Draw_System_Pointer()->Set_Reset_Prebake_Status_Indicator(true);
 		if (event.key.keysym.sym == SDLK_a) camera.x += 20;
 		else if (event.key.keysym.sym == SDLK_d) camera.x -= 20;
 		else if (event.key.keysym.sym == SDLK_w) camera.y += 20;

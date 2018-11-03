@@ -21,13 +21,19 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	{
 	case OBJECT_TYPE_PROJECTILE:
 		if (service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->is_point_not_sprite == 1) render_component = RENDER_COMPONENT_POINT_RENDER;
-		else render_component = RENDER_COMPONENT_ANIMATED_CLIP;
+		else if(service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->render == 1) render_component = RENDER_COMPONENT_ANIMATED_CLIP;
+		else render_component = RENDER_COMPONENT_NONE;
 		simple_animation_type = SIMPLE_ANIMATION_BACK_AND_FORTH;
 		spritesheet = SPRITESHEET_PROJECTILE;
 		sprite_clip = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->sprite_clip;
 		max_animation_frames = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->num_animation_frames;
-		max_animation_delay = rand() % 10;
+		max_animation_delay = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->animation_delay;
 		override_color = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->projectile_color;
+		break;
+	case OBJECT_TYPE_CONTAINER:
+		render_component = RENDER_COMPONENT_SIMPLECLIP;
+		spritesheet = SPRITESHEET_ICON;
+		sprite_clip = service_locator->get_Game_Library()->Fetch_Item_Template(object_template_id)->sprite_specs;
 		break;
 	}
 }
@@ -229,7 +235,10 @@ void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 	}
 
 	// Draw Current Health
-	if (stats_pointer->Return_Stat_Value(STA))
+	if (stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH) < stats_pointer->Return_Stat_Value(STAT_OBJECT_MAX_HEALTH) && stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH) > 0)
+	{
+		Handle_Current_Health_Overlay(pos_rect, stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH), stats_pointer->Return_Stat_Value(STAT_OBJECT_MAX_HEALTH));
+	}
 }
 
 void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level)
@@ -245,7 +254,12 @@ void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygena
 
 void Render_Component::Handle_Current_Health_Overlay(SDL_Rect pos_rect, int current_health, int max_health)
 {
-	service_locator->
+	int health_bar_height = 5;
+	SDL_Rect health_bar_rect = { pos_rect.x, pos_rect.y - health_bar_height, current_health*TILE_SIZE/max_health, health_bar_height };
+	SDL_Rect draw_rect = service_locator->get_Cursor_Pointer()->Convert_World_Rect_To_Screen_Rect(health_bar_rect);
+
+	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, true, { 255,0,100,255 }, PRIMITIVE_TYPE_RECT);
+	if (draw_rect.w > 0) service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, false, { 255,255,255,255 }, PRIMITIVE_TYPE_RECT);
 }
 
 // Functions that support multisprites

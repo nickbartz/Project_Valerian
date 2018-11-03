@@ -9,8 +9,10 @@ using namespace std;
 #include<Coordinate.h>
 #include<Adjacent_Type_Array.h>
 #include<Game_Library.h>
+#include<Job.h>
 
 class Global_Service_Locator;
+class Item_Slot;
 
 class Scene_Graph
 {
@@ -40,6 +42,10 @@ public:
 	// Create Projectiles
 	void Create_Projectile(Object* firing_object, Object* target_object, int projectile_id, int faction);
 	void Create_Laser_Between_Two_Points(Object* firing_object, Object* target_object, int projectile_id);
+
+	// Create Container
+	void Create_Container(Coordinate grid_point, Item_Slot inventory_array[], int num_items);
+	bool Check_Container_Placement(Coordinate grid_point);
 
 	// Accessors
 	Adjacent_Structure_Array Return_Neighboring_Tiles(Coordinate grid_point);
@@ -88,5 +94,11 @@ private:
 
 	int current_num_projectiles = 0;
 	Object projectile_array[WORLD_MAX_NUM_PROJECTILES];
+
+	int current_num_containers = 0;
+	Object container_array[WORLD_MAX_NUM_CONTAINERS];
+
+	int current_num_jobs = 0;
+	Job current_job_array[WORLD_MAX_NUM_JOBS];
 };
 

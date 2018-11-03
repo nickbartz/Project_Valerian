@@ -9,7 +9,7 @@
 #include<Scene_Graph.h>
 
 
-AI_Movement_Component::AI_Movement_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, SDL_Rect location, int object_speed)
+AI_Movement_Component::AI_Movement_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, SDL_Rect location, int object_type, int object_template)
 {
 	service_locator = sLocator;
 	object_locator = oLocator;
@@ -17,8 +17,20 @@ AI_Movement_Component::AI_Movement_Component(Global_Service_Locator* sLocator, O
 	world_pos = location;
 	world_coord = { location.x / TILE_SIZE, location.y / TILE_SIZE };
 
+	object_base_speed = 3;
+
 	target_pos = location;
-	object_base_speed = object_speed;
+
+	switch (object_type)
+	{
+	case OBJECT_TYPE_PROJECTILE:
+		object_base_speed = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template)->projectile_speed;
+		break;
+	case OBJECT_TYPE_CONTAINER:
+		bounce_direction = 1;
+		bounce_max = 5;
+		break;
+	}
 }
 
 void AI_Movement_Component::Check_For_Messages()
@@ -79,6 +91,25 @@ void AI_Movement_Component::Update()
 		{
 			Coordinate previous_world_coord = { world_coord.x, world_coord.y };
 			Coordinate next_step = { current_path.back().x_tile,current_path.back().y_tile };
+			
+			// Change L-Shaped Paths to Diagonal Where Possible
+			if (current_path.size() > 1)
+			{
+				Coordinate step_beyond = { current_path.end()[-2].x_tile, current_path.end()[-2].y_tile };
+				if (abs(step_beyond.x - previous_world_coord.x) == 1 && abs(step_beyond.y - previous_world_coord.y) == 1)
+				{
+					int inac_y = (step_beyond.y - next_step.y);
+					int inac_x = (step_beyond.x - next_step.x);
+
+					// NEED TO FIX THIS, IT IS NOT WORKING // 
+					if (!service_locator->get_Scene_Graph()->Tile_Is_Inaccessible({ inac_x, inac_y }, object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION)))
+					{
+						next_step = step_beyond;
+						current_path.pop_back();
+					}
+				}
+			}
+			
 			Set_Target_Pos(next_step.x * TILE_SIZE, next_step.y * TILE_SIZE);
 			world_coord = { next_step.x, next_step.y };
 			current_path.pop_back();
@@ -91,7 +122,7 @@ void AI_Movement_Component::Update()
 		}
 		break;
 	case OBJECT_TYPE_PROJECTILE:
-	{
+		{
 		world_pos.x += obj_x_vel;
 		cumulative_remainder_x += vel_remainder_x;
 
@@ -116,13 +147,28 @@ void AI_Movement_Component::Update()
 		// If the projectile has moved from one coordinate to another, send out an update message
 		if (Update_World_Coord({ world_pos.x, world_pos.y }))
 		{
-			Projectile_Template* projectile = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID(OBJECT_TYPE_PROJECTILE));
+			int projectile_template_num = object_locator->Return_AI_Stats_Pointer()->Return_Template_ID(OBJECT_TYPE_PROJECTILE);
 			int faction = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION);
 			int array_index = object_locator->Return_Object_Pointer()->Get_Array_Index();
-			int custom_message[9] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT,OBJECT_TYPE_ANY, FOCUS_ALL, world_coord.x, world_coord.y,faction, projectile->projectile_power, projectile->projectile_splash, array_index };
-			service_locator->get_MB_Pointer()->Add_Custom_Message(9, custom_message);
+			int custom_message[8] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT,OBJECT_TYPE_ANY, FOCUS_ALL, world_coord.x, world_coord.y,faction, projectile_template_num, array_index };
+			service_locator->get_MB_Pointer()->Add_Custom_Message(8, custom_message);
 		}
-	}
+		}
+		break;
+	case OBJECT_TYPE_CONTAINER:
+		if (bounce_delay == 0)
+		{
+			world_pos.y += bounce_direction;
+			current_bounce += 1;
+			if (current_bounce > bounce_max)
+			{
+				bounce_direction *= -1;
+				current_bounce = 0;
+			}
+		}
+		
+		bounce_delay += 1;
+		if (bounce_delay > max_bounce_delay) bounce_delay = 0;
 		break;
 	}
 }
@@ -131,8 +177,20 @@ bool AI_Movement_Component::Update_World_Coord(SDL_Point new_world_pos)
 {
 	bool coord_changed = false;
 	
-	int new_x_coord = new_world_pos.x / TILE_SIZE;
-	int new_y_coord = new_world_pos.y / TILE_SIZE;
+	int new_x_coord = 0;
+	int new_y_coord = 0;
+
+	if (new_world_pos.x < 0)
+	{
+		new_x_coord = (new_world_pos.x - TILE_SIZE) / TILE_SIZE;
+	}
+	else new_x_coord = new_world_pos.x / TILE_SIZE;
+
+	if (new_world_pos.y < 0)
+	{
+		new_y_coord = (new_world_pos.y - TILE_SIZE) / TILE_SIZE;
+	}
+	else new_y_coord = new_world_pos.y / TILE_SIZE;
 
 	if (world_coord.x != new_x_coord || world_coord.y != new_y_coord)
 	{

@@ -185,7 +185,6 @@ int main(int argc, char *args[])
 	// TEST VARIABLES
 	vector<vector<int>> new_room = game_library->Create_Room_From_Data_File(0, 0, "Data/test_room.csv");
 	scene_graph->Stamp_Room_From_Array(new_room, -2, -2, 2);
-
 	scene_graph->Create_New_Structure({ 0,-1 }, game_library->Fetch_Tile_Object_Config(4), 2);
 
 	scene_graph->Create_New_Structure({ -5, -10 }, game_library->Fetch_Tile_Object_Config(21), 1);
@@ -219,6 +218,7 @@ int main(int argc, char *args[])
 			}
 		}
 
+		draw_system->Update();
 		user_interface->Update();
 		scene_graph->Update();   // MAKES SURE ALL MESSAGES ARE SENT DURING THE UPDATE PROCESS
 		cursor->Update();

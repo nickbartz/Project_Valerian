@@ -36,10 +36,10 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config, neighbors);
 	object_service_locator.Register_Pointer(render_component);
 
-	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, object_config);
+	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, OBJECT_TYPE_STRUCTURE, object_config.structure_id);
 	object_service_locator.Register_Pointer(AI_Job);
 
-	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location);
+	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, OBJECT_TYPE_STRUCTURE, object_config.structure_id);
 	object_service_locator.Register_Pointer(AI_Movement);
 
 	AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
@@ -60,7 +60,7 @@ void Object::Init_Entity_From_Template(Entity_Template object_config, int factio
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config);
 	object_service_locator.Register_Pointer(render_component);
 
-	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location);
+	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, OBJECT_TYPE_ENTITY, object_config.entity_id);
 	object_service_locator.Register_Pointer(AI_Movement);
 
 	//AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
@@ -69,7 +69,7 @@ void Object::Init_Entity_From_Template(Entity_Template object_config, int factio
 	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, object_config.entity_inventory_pack);
 	object_service_locator.Register_Pointer(AI_Items);
 
-	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, object_config);
+	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, OBJECT_TYPE_ENTITY, object_config.entity_id);
 	object_service_locator.Register_Pointer(AI_Job);
 
 }
@@ -85,9 +85,29 @@ void Object::Init_Projectile_From_Template(Projectile_Template* projectile_confi
 	render_component = new Render_Component(service_locator, &object_service_locator, OBJECT_TYPE_PROJECTILE, projectile_config->projectile_template_id);
 	object_service_locator.Register_Pointer(render_component);
 
-	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, projectile_config->projectile_speed);
+	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, OBJECT_TYPE_PROJECTILE, projectile_config->projectile_template_id);
 	AI_Movement->Set_Projectile_Velocity(target);
 	object_service_locator.Register_Pointer(AI_Movement);
+}
+
+void Object::Init_Container_From_Inventory(Item_Slot inventory_pointer[], int num_inventory_items)
+{
+	object_service_locator.Register_Pointer(this);
+
+	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, OBJECT_TYPE_CONTAINER, 0);
+	object_service_locator.Register_Pointer(AI_Stats);
+
+	render_component = new Render_Component(service_locator, &object_service_locator, OBJECT_TYPE_CONTAINER, inventory_pointer[0].slot_item.item_template_id);
+	object_service_locator.Register_Pointer(render_component);
+
+	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, OBJECT_TYPE_CONTAINER, 0);
+	object_service_locator.Register_Pointer(AI_Movement);
+
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, 0);
+	object_service_locator.Register_Pointer(AI_Items);
+
+	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, OBJECT_TYPE_CONTAINER, 0);
+	object_service_locator.Register_Pointer(AI_Job);
 }
 
 int Object::Get_Assigned_Flag()

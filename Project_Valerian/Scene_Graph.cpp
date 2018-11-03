@@ -9,6 +9,7 @@
 #include<Draw_System.h>
 #include<Object.h>
 #include<AI_Stats_Component.h>
+#include<AI_Item_Component.h>
 
 Scene_Graph::Scene_Graph(Global_Service_Locator* sLocator)
 {
@@ -22,6 +23,8 @@ void Scene_Graph::Update()
 	for (int i = 0; i < current_num_entities; i++) if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Update();
 
 	for (int i = 0; i < current_num_projectiles; i++) if (projectile_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) projectile_array[i].Update();
+
+	for (int i = 0; i < current_num_containers; i++) if (container_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) container_array[i].Update();
 }
 
 void Scene_Graph::Collect_Bus_Messages()
@@ -31,6 +34,21 @@ void Scene_Graph::Collect_Bus_Messages()
 	for (int i = 0; i < current_num_entities; i++) if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Collect_Bus_Messages();
 
 	for (int i = 0; i < current_num_projectiles; i++) if (projectile_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) projectile_array[i].Collect_Bus_Messages();
+}
+
+void Scene_Graph::Draw()
+{
+	// Background will only draw if there is movement on the screen, otherwise is prebaked texture
+	Draw_Background();
+
+	for (int i = 0; i < current_num_structures; i++) if (structure_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) structure_array[i].Draw();
+
+	for (int i = 0; i < current_num_entities; i++) if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Draw();
+
+	for (int i = 0; i < current_num_projectiles; i++) if (projectile_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) projectile_array[i].Draw();
+
+	for (int i = 0; i < current_num_containers; i++) if (container_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) container_array[i].Draw();
+
 }
 
 void Scene_Graph::Create_Background()
@@ -58,23 +76,26 @@ void Scene_Graph::Create_Background()
 
 void Scene_Graph::Draw_Background()
 {
-	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
-	SDL_Rect pos_rect = { 0,0,0,0 };
-	
-	int camera_move_dampner = 10;
+	if (service_locator->get_Draw_System_Pointer()->Return_Spritesheet_Prebaked_Status(SPRITESHEET_BACKGROUND) == false)
+	{
+		SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
+		SDL_Rect pos_rect = { 0,0,0,0 };
 
-	for (int i = 0; i < WORLD_MAX_NUM_BACKGROUND_OBJECTS; i++)
-	{	
-		pos_rect = {
-			SCREEN_WIDTH/2 + background_objects[i].x+ (camera.x/camera_move_dampner)/ background_objects[i].depth,
-			SCREEN_HEIGHT/2 + background_objects[i].y+ (camera.y/camera_move_dampner)/ background_objects[i].depth,
-			TILE_SIZE/background_objects[i].depth,
-			TILE_SIZE/background_objects[i].depth
-		};
+		int camera_move_dampner = 10;
 
-		if (background_objects[i].type == 0) background_star_1.Draw(pos_rect);
-		else if (background_objects[i].type == 1) background_star_2.Draw(pos_rect);
-		else if (background_objects[i].type == 3) background_planetoid.Draw(pos_rect);
+		for (int i = 0; i < WORLD_MAX_NUM_BACKGROUND_OBJECTS; i++)
+		{
+			pos_rect = {
+				SCREEN_WIDTH / 2 + background_objects[i].x + (camera.x / camera_move_dampner) / background_objects[i].depth,
+				SCREEN_HEIGHT / 2 + background_objects[i].y + (camera.y / camera_move_dampner) / background_objects[i].depth,
+				TILE_SIZE / background_objects[i].depth,
+				TILE_SIZE / background_objects[i].depth
+			};
+
+			if (background_objects[i].type == 0) background_star_1.Draw(pos_rect);
+			else if (background_objects[i].type == 1) background_star_2.Draw(pos_rect);
+			else if (background_objects[i].type == 3) background_planetoid.Draw(pos_rect);
+		}
 	}
 }
 
@@ -118,7 +139,7 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, Structure_Template
 void Scene_Graph::Delete_Structure(Coordinate grid_point, int tile_layer)
 {
 	// Then we tell the tile map to de-reference the object at that layer at the grid point specified
-	//the tile map also sets the object that was previously there to unassigned so it can be overwritten
+	// the tile map also sets the object that was previously there to unassigned so it can be overwritten
 	tile_map[grid_point].Update_Tile_Structure(NULL, tile_layer);
 
 	// Finally we send a SG tile update message is sent to the main bus outlining what happened
@@ -222,32 +243,24 @@ void Scene_Graph::Create_Entity(Coordinate grid_point, Entity_Template entity, i
 
 }
 
-void Scene_Graph::Draw()
-{
-	Draw_Background();
 
-	for (int i = 0; i < current_num_structures; i++) if (structure_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) structure_array[i].Draw();
-
-	for (int i = 0; i < current_num_entities; i++) if (entity_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) entity_array[i].Draw();
-
-	for (int i = 0; i < current_num_projectiles; i++) if (projectile_array[i].Get_Assigned_Flag() == OBJECT_ASSIGNED) projectile_array[i].Draw();
-}
 
 // Projectile Creation Commands
 
 void Scene_Graph::Create_Projectile(Object* firing_object, Object* target_object, int projectile_id, int faction)
 {
-
 	Projectile_Template* projectile_config = service_locator->get_Game_Library()->Fetch_Projectile_Template(projectile_id);
-	SDL_Point start = { firing_object->get_coordinate().x*TILE_SIZE + TILE_SIZE/2, firing_object->get_coordinate().y*TILE_SIZE + TILE_SIZE/2};
-	SDL_Point target = { target_object->get_coordinate().x*TILE_SIZE + TILE_SIZE/2, target_object->get_coordinate().y*TILE_SIZE + TILE_SIZE/2};
+
+	int tile_offset = 0;
+	if (projectile_config->is_point_not_sprite == 1) tile_offset = TILE_SIZE / 2;
+
+	SDL_Point start = { firing_object->get_coordinate().x*TILE_SIZE + tile_offset, firing_object->get_coordinate().y*TILE_SIZE + tile_offset };
+	SDL_Point target = { target_object->get_coordinate().x*TILE_SIZE + tile_offset, target_object->get_coordinate().y*TILE_SIZE + tile_offset };
 
 	if (projectile_config->projectile_template_id != 0)
 	{
 		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
 		int array_index = 0;
-
-
 
 		for (int i = 0; i < WORLD_MAX_NUM_PROJECTILES; i++)
 		{
@@ -269,8 +282,8 @@ void Scene_Graph::Create_Projectile(Object* firing_object, Object* target_object
 		
 		// Finally we send a SG entity update message to the main bus outlining what happened
 		AI_Stats_Component* object_stats = (AI_Stats_Component*)firing_object->Return_Object_Component_Pointer(OBJECT_COMPONENT_STATS);
-		int update_message[9] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT , OBJECT_TYPE_ANY, FOCUS_ALL, projectile_array[array_index].get_coordinate().x, projectile_array[array_index].get_coordinate().y,object_stats->Return_Stat_Value(STAT_OBJECT_FACTION), projectile_config->projectile_power, projectile_config->projectile_splash, array_index };
-		service_locator->get_MB_Pointer()->Add_Custom_Message(9, update_message);
+		int update_message[8] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT , OBJECT_TYPE_ANY, FOCUS_ALL, projectile_array[array_index].get_coordinate().x, projectile_array[array_index].get_coordinate().y,object_stats->Return_Stat_Value(STAT_OBJECT_FACTION),projectile_id, array_index };
+		service_locator->get_MB_Pointer()->Add_Custom_Message(8, update_message);
 
 	}
 	else
@@ -296,6 +309,42 @@ void Scene_Graph::Create_Laser_Between_Two_Points(Object* firing_object, Object*
 	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(-1, { start.x, start.y, end.x, end.y }, true, { laser_color.r,laser_color.g,laser_color.b,laser_color.a }, PRIMITIVE_TYPE_LINE);
 	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(-1, { start.x-1, start.y, end.x-1, end.y }, true, { 255,255,255,255 }, PRIMITIVE_TYPE_LINE);
 	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(-1, { start.x-2, start.y, end.x-2, end.y }, true, { laser_color.r,laser_color.g,laser_color.b,laser_color.a },PRIMITIVE_TYPE_LINE);
+}
+
+// Container Creation Commands
+
+void Scene_Graph::Create_Container(Coordinate grid_point, Item_Slot inventory_array[], int num_items)
+{
+	if (Check_Container_Placement(grid_point))
+	{
+		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
+		int array_index = 0;
+
+		for (int i = 0; i < WORLD_MAX_NUM_CONTAINERS; i++)
+		{
+			// we place the object in the first array index with an "OBJECT_UNASSIGNED" type so we can overwrite objects no longer being used
+			if (container_array[i].Get_Assigned_Flag() == OBJECT_UNASSIGNED)
+			{
+				container_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, TILE_SIZE, TILE_SIZE }, service_locator);
+
+				container_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
+
+				array_index = i;
+				break;
+			}
+		}
+
+		if (array_index >= current_num_containers) current_num_containers++;
+
+		// Now we initialize the object we just created in the structure array with an object_config
+		container_array[array_index].Init_Container_From_Inventory(inventory_array, num_items);
+
+	}
+}
+
+bool Scene_Graph::Check_Container_Placement(Coordinate grid_point)
+{
+	return true;
 }
 
 // Accessors 

@@ -7,6 +7,7 @@
 #include<AI_Movement_Component.h>
 #include<AI_Job_Component.h>
 #include<Scene_Graph.h>
+#include<AI_Item_Component.h>
 
 
 using namespace std;
@@ -20,14 +21,16 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 	switch (oType)
 	{
 	case OBJECT_TYPE_STRUCTURE:
-		structure_template_num = oType;
+		structure_template_num = object_template_num;
 		break;
 	case OBJECT_TYPE_ENTITY:
-		entity_template_num = oType;
+		entity_template_num = object_template_num;
 		break;
 	case OBJECT_TYPE_PROJECTILE:
-		projectile_template_num = oType;
-		projectile_stats.remaining_lifespan = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_num)->projectile_range;
+		projectile_template_num = object_template_num;
+		object_stats.projectile_stats.remaining_lifespan = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_num)->projectile_range;
+		break;
+	case OBJECT_TYPE_CONTAINER:
 		break;
 	}
 
@@ -41,7 +44,7 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 	object_type = OBJECT_TYPE_STRUCTURE;
 	structure_template_num = sTemplate;
 
-	structure_stats = sStats;
+	object_stats.structure_stats = sStats;
 	Assign_Uniq_IDs(object_array_index);
 }
 
@@ -52,7 +55,7 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 	object_type = OBJECT_TYPE_ENTITY;
 	entity_template_num = entity_template_num;
 
-	entity_stats = eStats;
+	object_stats.entity_stats = eStats;
 	Assign_Uniq_IDs(object_array_index);
 }
 
@@ -79,23 +82,26 @@ int AI_Stats_Component::Get_Structure_Type()
 
 string AI_Stats_Component::Get_Entity_Name()
 {
-	return entity_stats.entity_last_name + ", " + entity_stats.entity_first_name;
+	return object_stats.entity_stats.entity_last_name + ", " + object_stats.entity_stats.entity_first_name;
 }
 
 void AI_Stats_Component::Update()
 {
-	// RUN OBJECT AI
-	switch (object_type)
+	if (!Check_For_Death())
 	{
-	case OBJECT_TYPE_ENTITY:
-		Entity_Manage_Job();
-		break;
-	case OBJECT_TYPE_STRUCTURE:
-		break;
-	case OBJECT_TYPE_PROJECTILE:
-		Adjust_Stat(STAT_PROJECTILE_RANGE, -1);
-		if (Return_Stat_Value(STAT_PROJECTILE_RANGE) <= 0) service_locator->get_Scene_Graph()->Delete_Projectile(object_locator->Return_Object_Pointer()->Get_Array_Index());
-		break;
+		// RUN OBJECT AI
+		switch (object_type)
+		{
+		case OBJECT_TYPE_ENTITY:
+			Entity_Manage_Job();
+			break;
+		case OBJECT_TYPE_STRUCTURE:
+			break;
+		case OBJECT_TYPE_PROJECTILE:
+			Adjust_Stat(STAT_PROJECTILE_RANGE, -1);
+			if (Return_Stat_Value(STAT_PROJECTILE_RANGE) <= 0) service_locator->get_Scene_Graph()->Delete_Projectile(object_locator->Return_Object_Pointer()->Get_Array_Index());
+			break;
+		}
 	}
 }
 
@@ -104,52 +110,46 @@ void AI_Stats_Component::Update_Stat(int stat_name, int new_value)
 	switch (stat_name)
 	{
 	case STAT_OBJECT_FACTION:
-		object_faction = new_value;
+		object_stats.object_faction = new_value;
 		break;
 	case STAT_STRUCTURE_BUILT_LEVEL:
-		structure_stats.built_level = new_value;
+		object_stats.structure_stats.built_level = new_value;
 		break;
-	case STAT_STRUCTURE_STRUCTURE_HEALTH:
-		structure_stats.structure_health = new_value;
+	case STAT_OBJECT_HEALTH:
+		object_stats.object_health = new_value;
 		break;
-	case STAT_STRUCTURE_STRUCTURE_MAX_HEALTH:
-		structure_stats.structure_max_health = new_value;
+	case STAT_OBJECT_MAX_HEALTH:
+		object_stats.object_max_health= new_value;
 		break;
 	case STAT_STRUCTURE_OXYGEN_LEVEL:
-		structure_stats.oxygen_level = new_value;
+		object_stats.structure_stats.oxygen_level = new_value;
 		break;
 	case STAT_STRUCTURE_POWERED:
-		structure_stats.powered = new_value;
+		object_stats.structure_stats.powered = new_value;
 		break;
 	case STAT_STRUCTURE_IMPASSABLE:
-		structure_stats.impassable = new_value;
-		break;
-	case STAT_ENTITY_HEALTH:
-		entity_stats.entity_health = new_value;
-		break;
-	case STAT_ENTITY_MAX_HEALTH:
-		entity_stats.entity_max_health = new_value;
+		object_stats.structure_stats.impassable = new_value;
 		break;
 	case STAT_ENTITY_HUNGER:
-		entity_stats.hunger = new_value;
+		object_stats.entity_stats.hunger = new_value;
 		break;
 	case STAT_ENTITY_TIREDNESS:
-		entity_stats.tiredness = new_value;
+		object_stats.entity_stats.tiredness = new_value;
 		break;
 	case STAT_ENTITY_OXYGEN:
-		entity_stats.oxygen = new_value;
+		object_stats.entity_stats.oxygen = new_value;
 		break;
 	case STAT_ENTITY_FEAR:
-		entity_stats.fear = new_value;
+		object_stats.entity_stats.fear = new_value;
 		break;
 	case STAT_ENTITY_SPEED:
-		entity_stats.speed = new_value;
+		object_stats.entity_stats.speed = new_value;
 		break;
 	case STAT_ENTITY_ENNUI:
-		entity_stats.ennui = new_value;
+		object_stats.entity_stats.ennui = new_value;
 		break;
 	case STAT_PROJECTILE_RANGE:
-		projectile_stats.remaining_lifespan = new_value;
+		object_stats.projectile_stats.remaining_lifespan = new_value;
 		break;
 	}
 }
@@ -159,46 +159,40 @@ void AI_Stats_Component::Adjust_Stat(int stat_name, int new_value)
 	switch (stat_name)
 	{
 	case STAT_STRUCTURE_BUILT_LEVEL:
-		structure_stats.built_level += new_value;
+		object_stats.structure_stats.built_level += new_value;
 		break;
-	case STAT_STRUCTURE_STRUCTURE_HEALTH:
-		structure_stats.structure_health += new_value;
+	case STAT_OBJECT_HEALTH:
+		object_stats.object_health += new_value;
 		break;
-	case STAT_STRUCTURE_STRUCTURE_MAX_HEALTH:
-		structure_stats.structure_max_health += new_value;
+	case STAT_OBJECT_MAX_HEALTH:
+		object_stats.object_max_health += new_value;
 		break;
 	case STAT_STRUCTURE_OXYGEN_LEVEL:
-		structure_stats.oxygen_level += new_value;
+		object_stats.structure_stats.oxygen_level += new_value;
 		break;
 	case STAT_STRUCTURE_POWERED:
-		structure_stats.powered += new_value;
-		break;
-	case STAT_ENTITY_HEALTH:
-		entity_stats.entity_health += new_value;
-		break;
-	case STAT_ENTITY_MAX_HEALTH:
-		entity_stats.entity_max_health += new_value;
+		object_stats.structure_stats.powered += new_value;
 		break;
 	case STAT_ENTITY_HUNGER:
-		entity_stats.hunger += new_value;
+		object_stats.entity_stats.hunger += new_value;
 		break;
 	case STAT_ENTITY_TIREDNESS:
-		entity_stats.tiredness += new_value;
+		object_stats.entity_stats.tiredness += new_value;
 		break;
 	case STAT_ENTITY_OXYGEN:
-		entity_stats.oxygen += new_value;
+		object_stats.entity_stats.oxygen += new_value;
 		break;
 	case STAT_ENTITY_FEAR:
-		entity_stats.fear += new_value;
+		object_stats.entity_stats.fear += new_value;
 		break;
 	case STAT_ENTITY_SPEED:
-		entity_stats.speed += new_value;
+		object_stats.entity_stats.speed += new_value;
 		break;
 	case STAT_ENTITY_ENNUI:
-		entity_stats.ennui += new_value;
+		object_stats.entity_stats.ennui += new_value;
 		break;
 	case STAT_PROJECTILE_RANGE:
-		projectile_stats.remaining_lifespan += new_value;
+		object_stats.projectile_stats.remaining_lifespan += new_value;
 		break;
 	}
 }
@@ -211,52 +205,46 @@ int AI_Stats_Component::Return_Stat_Value(int stat_name)
 		return uniq_id;
 		break;
 	case STAT_OBJECT_FACTION:
-		return object_faction;
+		return object_stats.object_faction;
 		break;
 	case STAT_STRUCTURE_BUILT_LEVEL:
-		return structure_stats.built_level;
+		return object_stats.structure_stats.built_level;
 		break;
-	case STAT_STRUCTURE_STRUCTURE_HEALTH:
-		return structure_stats.structure_health;
+	case STAT_OBJECT_HEALTH:
+		return object_stats.object_health;
 		break;
-	case STAT_STRUCTURE_STRUCTURE_MAX_HEALTH:
-		return structure_stats.structure_max_health;
+	case STAT_OBJECT_MAX_HEALTH:
+		return object_stats.object_max_health;
 		break;
 	case STAT_STRUCTURE_OXYGEN_LEVEL:
-		return structure_stats.oxygen_level;
+		return object_stats.structure_stats.oxygen_level;
 		break;
 	case STAT_STRUCTURE_POWERED:
-		return structure_stats.powered;
+		return object_stats.structure_stats.powered;
 		break;
 	case STAT_STRUCTURE_IMPASSABLE:
-		return structure_stats.impassable;
-		break;
-	case STAT_ENTITY_HEALTH:
-		return entity_stats.entity_health;
-		break;
-	case STAT_ENTITY_MAX_HEALTH:
-		return entity_stats.entity_max_health;
+		return object_stats.structure_stats.impassable;
 		break;
 	case STAT_ENTITY_HUNGER:
-		return entity_stats.hunger;
+		return object_stats.entity_stats.hunger;
 		break;
 	case STAT_ENTITY_TIREDNESS:
-		return entity_stats.tiredness;
+		return object_stats.entity_stats.tiredness;
 		break;
 	case STAT_ENTITY_OXYGEN:
-		return entity_stats.oxygen;
+		return object_stats.entity_stats.oxygen;
 		break;
 	case STAT_ENTITY_FEAR:
-		return entity_stats.fear;
+		return object_stats.entity_stats.fear;
 		break;
 	case STAT_ENTITY_SPEED:
-		return entity_stats.speed;
+		return object_stats.entity_stats.speed;
 		break;
 	case STAT_ENTITY_ENNUI:
-		return entity_stats.ennui;
+		return object_stats.entity_stats.ennui;
 		break;
 	case STAT_PROJECTILE_RANGE:
-		return projectile_stats.remaining_lifespan;
+		return object_stats.projectile_stats.remaining_lifespan;
 		break;
 	}
 }
@@ -294,9 +282,6 @@ void AI_Stats_Component::Check_For_Messages()
 		case MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION:
 			Update_Stat(STAT_STRUCTURE_OXYGEN_LEVEL, 0);
 			break;
-		case MESSAGE_TYPE_ENTITY_JOB_REQUEST:
-			if (object_type == OBJECT_TYPE_ENTITY) Assess_Job_Priority(&service_locator->get_MB_Pointer()->Custom_Message_Array[i]);
-			break;
 		}
 	}
 }
@@ -329,20 +314,12 @@ void AI_Stats_Component::Handle_Stat_Message(Custom_Message* custom_message)
 
 void AI_Stats_Component::Entity_Manage_Job()
 {
-	//Find_Highest_Priority_Job();
 
-	// Check to see if the "found" job is higher or lower priority than current job
-	// if there is no current job, go with highest priority available job
-
-	// If the highest priority job is already in action, do nothing
-
-	// If it isn't already in action - send command to AI_Job to load it as the new job
-
-	if (next_job_length > 0)
-	{
-		object_locator->Return_AI_Job_Pointer()->Load_New_Job(next_job_length, next_job);
-		Clear_Loaded_Job();
-	}
+//	if (next_job_length > 0)
+//	{
+//		object_locator->Return_AI_Job_Pointer()->Load_New_Job(next_job_length, next_job);
+//		Clear_Loaded_Job();
+//	}
 }
 
 void AI_Stats_Component::Load_Job_From_Message(Custom_Message* job_message)
@@ -367,8 +344,27 @@ void AI_Stats_Component::Clear_Loaded_Job()
 	next_job_length = 0;
 }
 
-void AI_Stats_Component::Assess_Job_Priority(Custom_Message* job_message)
+void AI_Stats_Component::Handle_Job_Message(Custom_Message* job_message)
 {
-	// TBD
-	Load_Job_From_Message(job_message);
+	
+}
+
+bool AI_Stats_Component::Check_For_Death()
+{
+	if (object_stats.object_health <= 0)
+	{
+		if (object_type == OBJECT_TYPE_STRUCTURE)
+		{
+			if (object_locator->Return_AI_Item_Pointer()->Return_Num_Occupied_Inventory_Slots() > 0)
+			{
+				service_locator->get_Scene_Graph()->Create_Container(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), object_locator->Return_AI_Item_Pointer()->Return_Inventory_Slot_As_Pointer(0), object_locator->Return_AI_Item_Pointer()->Return_Num_Inventory_Slots());
+			}
+
+			service_locator->get_Scene_Graph()->Delete_Structure(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num)->tile_layer);
+			service_locator->get_Scene_Graph()->Create_Projectile(object_locator->Return_Object_Pointer(), object_locator->Return_Object_Pointer(), 3, 0);
+
+		}
+		return true;
+	}
+	else return false;
 }

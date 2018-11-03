@@ -38,6 +38,7 @@ public:
 	SDL_Point Get_Mouse_World_Pos();
 
 	SDL_Point Convert_Coord_To_Screen_Pos(Coordinate coordinate, bool center_of_tile = true);
+	SDL_Rect Convert_World_Rect_To_Screen_Rect(SDL_Rect world_rect);
 
 	void Collect_Bus_Messages();
 	void Update();

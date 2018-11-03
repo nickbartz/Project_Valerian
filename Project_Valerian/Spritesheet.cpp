@@ -41,11 +41,17 @@ void Spritesheet::Init(std::string path, SDL_Renderer* game_renderer, Uint32 win
 	init = true;
 }
 
-void Spritesheet::Init_As_Multisprite(SDL_Renderer* game_renderer)
+void Spritesheet::Init_As_Multisprite(SDL_Renderer* game_renderer, int sprite_width, int sprite_height)
 {
 	if (spritesheet_texture != NULL) SDL_DestroyTexture(spritesheet_texture);
-	spritesheet_texture = SDL_CreateTexture(game_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, TILE_SIZE, TILE_SIZE);
+	spritesheet_texture = SDL_CreateTexture(game_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, sprite_width, sprite_height);
 	init = true;
+}
+
+void Spritesheet::Initialize_Prebaked_Texture_Layer(SDL_Renderer* game_renderer, int width, int height)
+{
+	if (prebaked_layer_texture != NULL) SDL_DestroyTexture(prebaked_layer_texture);
+	prebaked_layer_texture = SDL_CreateTexture(game_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
 }
 
 void Spritesheet::Deinitialize()
@@ -63,16 +69,65 @@ void Spritesheet::Draw_Directly(SDL_Renderer* game_renderer, SDL_Rect position_r
 	SDL_RenderCopyEx(game_renderer, spritesheet_texture, &clip_rect, &position_rect, angle, center, render_flip);
 }
 
-void Spritesheet::Draw(SDL_Renderer* game_renderer)
+void Spritesheet::Draw(SDL_Renderer* game_renderer, bool use_prebaked)
 {
+	if (use_prebaked == false)
+	{
+		for (int i = 0; i < current_num_instructions; i++)
+		{
+			SDL_RenderCopyEx(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect, instruction_array[i].angle, instruction_array[i].center, instruction_array[i].flip);
+			//SDL_RenderCopy(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect);
+		}
+
+		// After the spritesheet draws it also automatically flushes its instuctions array so no need for a dedicated clear instructions function
+		current_num_instructions = 0;
+	}
+	else if (use_prebaked == true)
+	{
+		if (prebaked_layer_init == false) Draw_Sprite_Instructions_To_Texture(game_renderer);
+		else if (prebaked_layer_init == true)
+		{
+			Draw_Prebaked_Texture(game_renderer);
+		}
+
+		current_num_instructions = 0;
+	}
+
+}
+
+bool Spritesheet::Get_Prebake_Init()
+{
+	return prebaked_layer_init;
+}
+
+void Spritesheet::Set_Prebake_Init(bool init)
+{
+	prebaked_layer_init = init;
+}
+
+void Spritesheet::Draw_Sprite_Instructions_To_Texture(SDL_Renderer* game_renderer)
+{
+	SDL_SetRenderTarget(game_renderer, prebaked_layer_texture);
+	SDL_SetRenderDrawColor(game_renderer, 0, 0, 0, 0);
+	SDL_RenderClear(game_renderer);
+
 	for (int i = 0; i < current_num_instructions; i++)
 	{
 		SDL_RenderCopyEx(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect, instruction_array[i].angle, instruction_array[i].center, instruction_array[i].flip);
-		//SDL_RenderCopy(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect);
 	}
+
+	SDL_SetRenderTarget(game_renderer, NULL);
+
+	prebaked_layer_init = true;
+}
+
+void Spritesheet::Draw_Prebaked_Texture(SDL_Renderer* game_renderer)
+{
+	SDL_Rect screen_rect = { 0,0,SCREEN_WIDTH,SCREEN_HEIGHT};
+	SDL_Rect texture_clip = { 0,0,SCREEN_WIDTH,SCREEN_HEIGHT };
 	
-	// After the spritesheet draws it also automatically flushes its instuctions array so no need for a dedicated clear instructions function
-	current_num_instructions = 0;
+	SDL_RenderCopyEx(game_renderer, prebaked_layer_texture, &texture_clip, &screen_rect, 0.0, NULL, SDL_FLIP_NONE);
+
 }
 
 void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip)
@@ -85,13 +140,30 @@ void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_
 	}
 	else
 	{
+		current_num_instructions = 0;
 		std::cout << "warning, sprite instruction overflow" << std::endl;
 	}
 }
 
-void Spritesheet::Set_Sprite_As_Render_Target(SDL_Renderer* game_renderer)
+void Spritesheet::Set_SDL_Texture_As_Render_Target(SDL_Renderer* game_renderer)
 {
-	SDL_SetRenderTarget(game_renderer, spritesheet_texture);
+	if (spritesheet_texture != NULL)
+	{
+		if (SDL_SetRenderTarget(game_renderer, spritesheet_texture) != 0)
+		{
+			cout << "error setting texture as render target" << endl;
+		}
+	}
+	else
+	{
+		cout << "cannot set null texture as render target" << endl;
+	}
+
+}
+
+void Spritesheet::Sprite_Clear_Instructions()
+{
+	current_num_instructions = 0;
 }
 
 void Spritesheet::free()

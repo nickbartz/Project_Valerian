@@ -24,8 +24,8 @@ void AI_Rel_Component::Check_For_Messages()
 		{
 			if (Check_Object_Range({ message->Read_Message(3), message->Read_Message(4)}) == 0)
 			{
-				Object* new_projectile = service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(OBJECT_TYPE_PROJECTILE, message->Read_Message(8));
-				Add_Projectile_Relationship(new_projectile);
+				Object* new_projectile = service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(OBJECT_TYPE_PROJECTILE, message->Read_Message(7));
+				Add_Projectile_Relationship(new_projectile, message->Read_Message(6));
 			}
 		}
 			break;
@@ -79,13 +79,13 @@ void AI_Rel_Component::Update()
 	if (current_num_projectile_relationships > 0) Update_Projectile_Relationships();
 }
 
-void AI_Rel_Component::Add_Projectile_Relationship(Object* projectile)
+void AI_Rel_Component::Add_Projectile_Relationship(Object* projectile, int projectile_temp_num)
 {
 	int array_pos = Add_Object_Relationship(projectile);
 
 	if (array_pos >= 0)
 	{
-		Projectile_Relationship new_proj_rel = { 1, array_pos,0 };
+		Projectile_Relationship new_proj_rel = { 1, array_pos,0,projectile_temp_num };
 
 		for (int i = 0; i < AI_REL_MAX_PROJECTILE_RELATIONSHIPS; i++)
 		{
@@ -129,9 +129,11 @@ void AI_Rel_Component::Update_Projectile_Relationships()
 					Remove_Projectile_Relationship(i);
 				}
 				// Take damage from any projectile that is of a different faction than your own
-				else
+				else if (projectile_rel_array[i].damage_taken == 0)
 				{
-
+					int projectile_power = service_locator->get_Game_Library()->Fetch_Projectile_Template(projectile_rel_array[i].projectile_template_num)->projectile_power;
+					object_locator->Return_AI_Stats_Pointer()->Adjust_Stat(STAT_OBJECT_HEALTH, -projectile_power);
+					projectile_rel_array[i].damage_taken = projectile_power;
 				}
 			}
 

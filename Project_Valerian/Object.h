@@ -12,6 +12,7 @@ class AI_Movement_Component;
 class AI_Rel_Component;
 class AI_Item_Component;
 class Coordinate;
+class Item_Slot;
 
 class Object
 {
@@ -40,6 +41,7 @@ public:
 	void Init_Structure_From_Template(Structure_Template object_config, Adjacent_Structure_Array neighbors, int faction);
 	void Init_Entity_From_Template(Entity_Template object_config, int faction);
 	void Init_Projectile_From_Template(Projectile_Template* projectile_config, SDL_Point target, int faction);
+	void Init_Container_From_Inventory(Item_Slot inventory_pointer[], int num_inventory_items);
 
 	void Set_Assigned_Flag(int assigned_flag); 	// Unassigning an object means we're setting its type to unassigned so that it can be overwritten in whatever array it is in
 

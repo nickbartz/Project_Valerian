@@ -52,11 +52,14 @@ public:
 
 	// Accessors
 	int Return_Num_Inventory_Slots();
+	int Return_Num_Occupied_Inventory_Slots();
 	Item_Slot* Return_Inventory_Slot_As_Pointer(int slot_num);
 
 private:
 	Global_Service_Locator* service_locator;
 	Object_Service_Locator* object_locator;
+
+	void Copy_Inventory_From_Pointer(Item_Slot pointer[], int num_inventory_slots);
 
 	int num_inventory_slots = 0;
 	Item_Slot inventory_array[MAX_NUM_INVENTORY_SLOTS];

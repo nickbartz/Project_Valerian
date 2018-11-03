@@ -5,7 +5,6 @@
 #include<fstream>
 #include<istream>
 
-
 using namespace std;
 
 Game_Library::Game_Library()
@@ -15,7 +14,58 @@ Game_Library::Game_Library()
 	Load_Item_Templates("Data/Inventory_Data.csv");
 	Load_Blueprints("Data/Blueprint_Data.csv");
 	Load_Projectiles("Data/Projectile_Data.csv");
-	Load_Jobs("Data/Job_Data.csv");
+
+	Load_Job_Code_String_To_Enum_Crosswalk();
+	Load_Jobs("Data/Job_Data.csv", "Data/Job_Goal_Data.csv");
+}
+
+void Game_Library::Load_Job_Code_String_To_Enum_Crosswalk()
+{
+	job_codes.insert(pair<string, int>("JOB_NULL", JOB_NULL));
+	job_codes.insert(pair<string, int>("JOB_INST_START", JOB_INST_START));
+	job_codes.insert(pair<string, int>("JOB_INST_NEW_GOAL", JOB_INST_NEW_GOAL));
+	job_codes.insert(pair<string, int>("OB_INST_END_GOAL", JOB_INST_END_GOAL));
+	job_codes.insert(pair<string, int>("JOB_INST_END", JOB_INST_END));
+	job_codes.insert(pair<string, int>("JOB_TYPE_MINING", JOB_TYPE_MINING));
+	job_codes.insert(pair<string, int>("JOB_TYPE_CONTAINER_PICKUP", JOB_TYPE_CONTAINER_PICKUP));
+	job_codes.insert(pair<string, int>("ACTION_NONE", ACTION_NONE));
+	job_codes.insert(pair<string, int>("ACTION_CREATE", ACTION_CREATE));
+	job_codes.insert(pair<string, int>("ACTION_DESTROY", ACTION_DESTROY));
+	job_codes.insert(pair<string, int>("ACTION_EDIT_INTERNAL", ACTION_EDIT_INTERNAL));
+	job_codes.insert(pair<string, int>("ACTION_EDIT_EXTERNAL", ACTION_EDIT_EXTERNAL));
+	job_codes.insert(pair<string, int>("ACTION_ASSESS_INTERNAL", ACTION_ASSESS_INTERNAL));
+	job_codes.insert(pair<string, int>("ACTION_ASSESS_EXTERNAL", ACTION_ASSESS_EXTERNAL));
+	job_codes.insert(pair<string, int>("ACTION_TRANSFER", ACTION_TRANSFER));
+	job_codes.insert(pair<string, int>("ACTION_GOAL_TRAVERSAL", ACTION_GOAL_TRAVERSAL));
+	job_codes.insert(pair<string, int>("A_AE_NULL", A_AE_NULL));
+	job_codes.insert(pair<string, int>("A_AE_OXYGENATE", A_AE_OXYGENATE));
+	job_codes.insert(pair<string, int>("A_AE_CHECK_SIMPLE_DISTANCE", A_AE_CHECK_SIMPLE_DISTANCE));
+	job_codes.insert(pair<string, int>("A_AE_CHECK_OBJECT_STAT", A_AE_CHECK_OBJECT_STAT));
+	job_codes.insert(pair<string, int>("A_EI_OPEN_DOOR", A_EI_OPEN_DOOR));
+	job_codes.insert(pair<string, int>("A_EI_WAIT", A_EI_WAIT));
+	job_codes.insert(pair<string, int>("A_EI_OPEN_DOOR", A_EI_OPEN_DOOR));
+	job_codes.insert(pair<string, int>("A_EI_SET_WAIT_TIMER", A_EI_SET_WAIT_TIMER));
+	job_codes.insert(pair<string, int>("A_EI_CLOSE_DOOR", A_EI_CLOSE_DOOR));
+	job_codes.insert(pair<string, int>("A_EI_SET_TARGET_COORD_TO_OBJECT", A_EI_SET_TARGET_COORD_TO_OBJECT));
+	job_codes.insert(pair<string, int>("A_EE_TOGGLE_MINE_OBJECT", A_EE_TOGGLE_MINE_OBJECT));
+	job_codes.insert(pair<string, int>("A_EE_FIRE_MINING_LASER_AT_STRUCTURE", A_EE_FIRE_MINING_LASER_AT_STRUCTURE));
+	job_codes.insert(pair<string, int>("TRAVERSAL_GOAL_DECREMENT", TRAVERSAL_GOAL_DECREMENT));
+	job_codes.insert(pair<string, int>("TRAVERSAL_GOAL_INCREMENT", TRAVERSAL_GOAL_INCREMENT));
+	job_codes.insert(pair<string, int>("LOWER_THAN_OR_EQUAL_TO", LOWER_THAN_OR_EQUAL_TO));
+
+
+}
+
+int Game_Library::Get_Job_Code_From_String(string query)
+{
+	try
+	{
+		return stoi(query);
+	}
+	catch(exception& e)
+	{
+		return job_codes[query];
+	}
 }
 
 void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
@@ -132,16 +182,36 @@ void Game_Library::Load_Blueprints(string blueprint_path)
 
 }
 
-void Game_Library::Load_Jobs(string job_template_path)
+void Game_Library::Load_Jobs(string job_template_path, string goal_template_path)
 {
 	vector<vector<string>> vector_loaded_job_templates = readCSV(job_template_path);
+	vector<vector<string>> vector_loaded_goal_templates = readCSV(goal_template_path);
+
+	for (int i = 1; i < vector_loaded_goal_templates.size(); i++)
+	{
+		int goal_length = stoi(vector_loaded_goal_templates[i][2]);
+
+		loaded_goals[i - 1].job_goal_id = stoi(vector_loaded_goal_templates[i][0]);
+		loaded_goals[i - 1].goal_string_name = vector_loaded_goal_templates[i][1];
+		loaded_goals[i - 1].goal_length = goal_length;
+		
+		for (int p = 3; p < 3 + goal_length; p++)
+		{
+			loaded_goals[i - 1].goal_instruction_array[p-3] = Get_Job_Code_From_String(vector_loaded_goal_templates[i][p]);
+		}
+
+		num_loaded_goals++;
+	}
 
 	for (int i = 1; i < vector_loaded_job_templates.size(); i++)
 	{
-		Job_Template new_job_template;
-		new_job_template.job_id = stoi(vector_loaded_job_templates[i][0]);
-		new_job_template.job_string_name = vector_loaded_job_templates[i][2];
-		new_job_template.job_standard_priority = stoi(vector_loaded_job_templates[i][3]);
+		Job new_job_template = Job(stoi(vector_loaded_job_templates[i][0]), vector_loaded_job_templates[i][1]);
+		int num_job_goals = stoi(vector_loaded_job_templates[i][4]);
+		 
+		for (int p = 5; p < 5 + num_job_goals; p++)
+		{
+			new_job_template.Add_Job_Goal(loaded_goals[stoi(vector_loaded_job_templates[i][p])],p-5);
+		}
 
 		loaded_jobs[i - 1] = new_job_template;
 		num_loaded_jobs++;
@@ -172,6 +242,7 @@ void Game_Library::Load_Projectiles(string projectile_template_path)
 		new_projectile_template.projectile_color.b = stoi(vector_loaded_templates[i][15]);
 		new_projectile_template.projectile_color.a = stoi(vector_loaded_templates[i][16]);
 		new_projectile_template.is_point_not_sprite = stoi(vector_loaded_templates[i][17]);
+		new_projectile_template.render = stoi(vector_loaded_templates[i][18]);
 
 		loaded_projectiles[i - 1] = new_projectile_template;
 		num_loaded_projectiles++;
@@ -339,7 +410,7 @@ Inventory_Template* Game_Library::Fetch_Blueprint(int blueprint_id)
 	}
 }
 
-Job_Template* Game_Library::Fetch_Job_Template(int job_id)
+Job* Game_Library::Fetch_Job_Template(int job_id)
 {
 	return &loaded_jobs[job_id];
 }

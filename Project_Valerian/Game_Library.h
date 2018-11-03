@@ -7,6 +7,8 @@ using namespace std;
 #include<vector>
 #include<SDL.h>
 #include<Render_Component.h>
+#include<Job.h>
+#include<unordered_map>
 
 struct Structure_Template
 {
@@ -62,6 +64,7 @@ struct Projectile_Template
 	int animation_delay = 0;
 	SDL_Color projectile_color = { 0,0,0,0 }; // For instances where a projectile is a simple point render, or for particle effects
 	int is_point_not_sprite = 0;
+	int render = 1;
 };
 
 struct Item_Template
@@ -85,13 +88,6 @@ struct Equipment_Template
 
 };
 
-struct Job_Template
-{
-	int job_id;
-	string job_string_name;
-	int job_standard_priority;
-};
-
 enum class CSVState {
 	UnquotedField,
 	QuotedField,
@@ -107,16 +103,19 @@ public:
 	Entity_Template* Fetch_Entity_Template(int entity_id);
 	Item_Template* Fetch_Item_Template(int item_id);
 	Inventory_Template* Fetch_Blueprint(int inventory_id);
-	Job_Template* Fetch_Job_Template(int job_id);
+	Job* Fetch_Job_Template(int job_id);
 	Projectile_Template* Fetch_Projectile_Template(int projectile_id);
 
 	int Get_Num_Structure_Template();
+
+	void Load_Job_Code_String_To_Enum_Crosswalk();
+	int Get_Job_Code_From_String(string query);
 
 	void Load_Tiles_From_Data_File(string tiles_path);
 	void Load_Entity_Templates(string entity_template_path, string entity_animation_path);
 	void Load_Item_Templates(string item_template_path);
 	void Load_Blueprints(string blueprints_path);
-	void Load_Jobs(string jobs_path);
+	void Load_Jobs(string jobs_path, string goals_path);
 	void Load_Projectiles(string projectiles_path);
 
 	vector<vector<int>> Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename);
@@ -140,7 +139,12 @@ private:
 	Inventory_Template loaded_blueprints[MAX_NUM_TEMPLATES];
 	int num_loaded_blueprints = 0;
 
-	Job_Template loaded_jobs[MAX_NUM_TEMPLATES];
+	unordered_map<string, int> job_codes;
+
+	Job_Goal loaded_goals[MAX_NUM_TEMPLATES];
+	int num_loaded_goals = 0;
+
+	Job loaded_jobs[MAX_NUM_TEMPLATES];
 	int num_loaded_jobs = 0;
 
 	Projectile_Template loaded_projectiles[MAX_NUM_TEMPLATES];

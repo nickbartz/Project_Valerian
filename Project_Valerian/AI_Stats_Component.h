@@ -7,8 +7,6 @@ class Custom_Message;
 
 struct Entity_Stats
 {
-	int entity_health = 100;
-	int entity_max_health = 100;
 	int hunger = 0;
 	int tiredness = 0;
 	int oxygen = 100;
@@ -22,8 +20,6 @@ struct Entity_Stats
 struct Structure_Stats
 {
 	int built_level = 0;
-	int structure_health = 100;
-	int structure_max_health = 100;
 	int oxygen_level = 0;
 	int powered = 0;
 	int impassable = 0;
@@ -33,6 +29,16 @@ struct Structure_Stats
 struct Projectile_Stats
 {
 	int remaining_lifespan;
+};
+
+struct Object_Stats
+{
+	int object_faction = 0;
+	int object_health = 100;
+	int object_max_health = 100;
+	Entity_Stats entity_stats;
+	Structure_Stats structure_stats;
+	Projectile_Stats projectile_stats;
 };
 
 class AI_Stats_Component
@@ -49,6 +55,7 @@ public:
 
 	void Update_Stat(int stat_name, int new_value );
 	void Adjust_Stat(int stat_name, int new_value);
+
 	int Return_Template_ID(int object_type);
 	int Return_Stat_Value(int stat_name);
 	int Return_Object_Type();
@@ -68,12 +75,7 @@ private:
 	int entity_template_num = 0;
 	int projectile_template_num = 0;
 
-	// GENERIC STATS GO HERE
-	int object_faction = 0;
-
-	Structure_Stats structure_stats;
-	Entity_Stats entity_stats;
-	Projectile_Stats projectile_stats;
+	Object_Stats object_stats;
 
 	int object_type;
 	int uniq_id;
@@ -81,13 +83,16 @@ private:
 
 	void Handle_Stat_Message(Custom_Message* array_message);
 
-	// OBJECT AI START HERE
+	// Loaded Jobs
+	void Load_Job_From_Message(Custom_Message* job_message);
+	void Clear_Loaded_Job();
 	int next_job[MAX_LENGTH_CUSTOM_MESSAGE];
 	int next_job_length = 0;
 
+
+	bool Check_For_Death();
+
 	void Entity_Manage_Job();
-	void Load_Job_From_Message(Custom_Message* job_message);
-	void Clear_Loaded_Job();
-	void Assess_Job_Priority(Custom_Message* job_message);
+	void Handle_Job_Message(Custom_Message* job_message);
 
 };

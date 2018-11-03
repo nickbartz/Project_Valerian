@@ -21,6 +21,17 @@ int AI_Item_Component::Return_Num_Inventory_Slots()
 	return num_inventory_slots;
 }
 
+int AI_Item_Component::Return_Num_Occupied_Inventory_Slots()
+{
+	int count = 0;
+	for (int i = 0; i < num_inventory_slots; i++)
+	{
+		if (inventory_array[i].item_quantity > 0) count++;
+	}
+
+	return count;
+}
+
 Item_Slot* AI_Item_Component::Return_Inventory_Slot_As_Pointer(int item_id)
 {
 	return &inventory_array[item_id];
@@ -67,5 +78,13 @@ void AI_Item_Component::Populate_Starter_Inventory(int starter_id)
 				cout << "trying to add an item that doesn't exist" << endl;
 			}
 		}
+	}
+}
+
+void AI_Item_Component::Copy_Inventory_From_Pointer(Item_Slot pointer[], int num_inventory_slots)
+{
+	for (int i = 0; i < num_inventory_slots; i++)
+	{
+		if (pointer[i].item_quantity > 0) Add_Item_To_Inventory(pointer[i].slot_item.item_template_id, pointer[i].item_quantity, true, pointer[i].slot_item.current_stats);
 	}
 }

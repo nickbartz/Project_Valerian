@@ -10,18 +10,22 @@ Draw_System::Draw_System(Global_Service_Locator* sLocator, FC_Font* font_array_s
 
 	service_locator = sLocator;
 
-	window_format = wFormat;
+	window_format = wFormat;	
 }
 
 void Draw_System::Init_Sprites(SDL_Renderer* game_renderer)
 {
 	background_spritesheet.Init("Sprites/background_spritesheet.png", game_renderer, window_format );
+	background_spritesheet.Initialize_Prebaked_Texture_Layer(game_renderer, SCREEN_WIDTH, SCREEN_HEIGHT); // This is option A for how to do prebaked textures 
+
 	base_spritesheet.Init("Sprites/base_tile_spritesheet.png", game_renderer, window_format);
 	mid_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer, window_format);
 	mid_2_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer, window_format);
 	entity_spritesheet.Init("Sprites/Entity_Spritesheet.png", game_renderer, window_format);
 	icon_spritesheet.Init("Sprites/Icon_Spritesheet.png", game_renderer, window_format);
 	projectile_spritesheet.Init("Sprites/Projectile_Spritesheet.png", game_renderer, window_format);
+
+	mid_prebaked_large_multisprite.Init_As_Multisprite(game_renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
 // Query Functions
@@ -34,6 +38,31 @@ int Draw_System::Return_Text_Width(int font_type, string text)
 int Draw_System::Return_Text_Height(int font_type, string text)
 {
 	return FC_GetHeight(font_array[font_type], text.c_str());
+}
+
+bool Draw_System::Return_Spritesheet_Prebaked_Status(int spritesheet)
+{
+	switch (spritesheet)
+	{
+	case SPRITESHEET_BACKGROUND:
+		return background_spritesheet.Get_Prebake_Init();
+		break;
+	}
+}
+
+void Draw_System::Set_Spritesheet_Prebaked_Status(int spritesheet_num, bool prebake_status)
+{
+	switch (spritesheet_num)
+	{
+	case SPRITESHEET_BACKGROUND:
+		background_spritesheet.Set_Prebake_Init(prebake_status);
+		break;
+	}
+}
+
+void Draw_System::Set_Reset_Prebake_Status_Indicator(bool prebake_status)
+{
+	reset_prebaked_spritesheets = prebake_status;
 }
 
 // Multisprite Functions
@@ -70,8 +99,8 @@ int Draw_System::Add_New_Spritesheet_To_Multisprite(int spritesheet, SDL_Rendere
 void Draw_System::Stamp_Sprite_Onto_Multisprite(int spritesheet_num, int multisprite_num, SDL_Rect clip, SDL_Rect stamp_rect, bool clear_sprite)
 {
 	// Set the render target to the SDL_Texture on the multisprite of our choice
-	if (spritesheet_num == SPRITESHEET_BASE) 	base_multisprite[multisprite_num].Set_Sprite_As_Render_Target(service_locator->get_Game_Renderer());
-	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multisprite_num].Set_Sprite_As_Render_Target(service_locator->get_Game_Renderer());
+	if (spritesheet_num == SPRITESHEET_BASE) 	base_multisprite[multisprite_num].Set_SDL_Texture_As_Render_Target(service_locator->get_Game_Renderer());
+	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multisprite_num].Set_SDL_Texture_As_Render_Target(service_locator->get_Game_Renderer());
 	
 	if (!clear_sprite)
 	{
@@ -172,6 +201,15 @@ void Draw_System::Clear_Text_Instruction_Array()
 }
 
 
+void Draw_System::Update()
+{
+	if (reset_prebaked_spritesheets == true)
+	{
+		Set_Spritesheet_Prebaked_Status(SPRITESHEET_BACKGROUND, false);
+		Set_Reset_Prebake_Status_Indicator(false);
+	}
+}
+
 // Full Draw Function
 
 void Draw_System::Draw(SDL_Renderer* render_target)
@@ -188,8 +226,11 @@ void Draw_System::Draw(SDL_Renderer* render_target)
 	Draw_Text_Strings(render_target);
 	Draw_Sprites(render_target, SPRITESHEET_ICON);
 	Draw_Primitives(render_target, 2);
-	Draw_Text_Strings(render_target,2);
+	Draw_Text_Strings(render_target, 2);
 
+
+	//prebaked_background_multisprite.Draw_Directly(render_target, { 0,0,SCREEN_WIDTH,SCREEN_HEIGHT }, { 0,0,SCREEN_WIDTH,SCREEN_HEIGHT });
+	
 }
 
 // Functions for drawing primitives
@@ -228,7 +269,7 @@ void Draw_System::Draw_Sprites(SDL_Renderer* render_target, int spritesheet)
 	switch (spritesheet)
 	{
 	case SPRITESHEET_BACKGROUND:
-		if (background_spritesheet.is_init() == true) background_spritesheet.Draw(render_target);
+		if (background_spritesheet.is_init() == true) background_spritesheet.Draw(render_target, true);
 		break;
 	case SPRITESHEET_BASE:
 		if (base_spritesheet.is_init() == true) base_spritesheet.Draw(render_target);
@@ -320,8 +361,6 @@ void Draw_System::Draw_Text_Strings(SDL_Renderer* render_target, int layer)
 	}
 
 }
-
-// 
 
 void Draw_System::free()
 {

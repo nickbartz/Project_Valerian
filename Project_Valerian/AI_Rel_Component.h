@@ -42,10 +42,11 @@ private:
 		int init = 0;
 		int rel_array_num = -1;
 		int damage_taken = 0;
+		int projectile_template_num = 0;
 	};
 	Projectile_Relationship projectile_rel_array[AI_REL_MAX_PROJECTILE_RELATIONSHIPS];
 
-	void Add_Projectile_Relationship(Object* projectile);
+	void Add_Projectile_Relationship(Object* projectile, int projectile_temp_num);
 	void Remove_Projectile_Relationship(int projectile_array_num);
 	int current_num_projectile_relationships = 0;
 	void Update_Projectile_Relationships();

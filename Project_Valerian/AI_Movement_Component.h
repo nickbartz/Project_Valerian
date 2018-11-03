@@ -10,7 +10,7 @@ class Object_Service_Locator;
 class AI_Movement_Component
 {
 public:
-	AI_Movement_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, SDL_Rect location, int object_speed = 3);
+	AI_Movement_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, SDL_Rect location, int object_type, int object_template_id);
 
 	void Check_For_Messages();
 	void Update();
@@ -47,5 +47,11 @@ private:
 	Coordinate target_coord;
 	SDL_Rect target_pos;
 	vector<Tile_Queue> current_path;
+
+	int bounce_direction = 0;
+	int current_bounce = 0;
+	int bounce_max = 0;
+	int bounce_delay = 0;
+	int max_bounce_delay = 5;
 
 };
