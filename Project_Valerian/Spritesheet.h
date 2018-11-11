@@ -25,11 +25,12 @@ public:
 		double angle = 0.0;
 		SDL_Point* center = NULL;
 		SDL_RendererFlip flip = SDL_FLIP_NONE;
+		SDL_Color color_shift = { 255,255,255,255 };
 	};
 
 	void Draw(SDL_Renderer* game_renderer, bool use_prebaked = false);
 	void Draw_Directly(SDL_Renderer* game_renderer, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
-	void Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
+	void Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE, SDL_Color color_shift = { 255,255,255,255 });
 
 	bool Get_Prebake_Init();
 	void Set_Prebake_Init(bool init);

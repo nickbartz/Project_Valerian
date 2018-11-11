@@ -19,6 +19,7 @@ struct Structure_Template
 	int structure_type = STRUCTURE_TYPE_NULL;
 	int structure_id = STRUCTURE_ID_NULL;
 	string structure_name = "Null";
+	string structure_type_string = "Null Type";
 
 	// Config for Renderer Component
 	int render_component_type = RENDER_COMPONENT_NONE;
@@ -35,10 +36,13 @@ struct Structure_Template
 	int job_type = JOB_NULL;
 
 	// Other stats
+	int max_built_level = 255;
 	int is_inaccessible = 0;
 
-	// Inventory_Pack
+	// Item_Pack
 	int inventory_pack = 0;
+	int blueprint_pack = 0;
+	int equipment_pack = 0;
 };
 
 struct Entity_Template
@@ -97,8 +101,9 @@ enum class CSVState {
 class Game_Library
 {
 public:
-	Game_Library();
+	Game_Library(Global_Service_Locator* service_locator);
 
+	// Acessors of Templates
 	Structure_Template* Fetch_Tile_Object_Config(int tile_id);
 	Entity_Template* Fetch_Entity_Template(int entity_id);
 	Item_Template* Fetch_Item_Template(int item_id);
@@ -106,8 +111,9 @@ public:
 	Job* Fetch_Job_Template(int job_id);
 	Projectile_Template* Fetch_Projectile_Template(int projectile_id);
 
+	// Accessors of Template Info
 	int Get_Num_Structure_Template();
-
+	int Fetch_Structure_Type_ID_From_Name(string name);
 	void Load_Job_Code_String_To_Enum_Crosswalk();
 	int Get_Job_Code_From_String(string query);
 
@@ -126,6 +132,7 @@ public:
 	bool is_door(int tile_type);
 
 private:
+	Global_Service_Locator * service_locator;
 
 	Structure_Template loaded_tiles[MAX_NUM_TEMPLATES];
 	int num_loaded_tiles = 0;

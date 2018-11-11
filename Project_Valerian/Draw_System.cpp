@@ -125,44 +125,44 @@ void Draw_System::Remove_Multisprite(int spritesheet_num, int multisprite_num)
 
 
 // Functions for adding or removing draw jobs from render cycle
-void Draw_System::Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip)
+void Draw_System::Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip, SDL_Color color_shift)
 {
 	switch (spritesheet)
 	{
 	case SPRITESHEET_BACKGROUND:
-		background_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		background_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
 		break;
 	case SPRITESHEET_BASE:
-		base_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		base_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
 		break;
 	case SPRITESHEET_BASE_OVERLAY:
-		base_overlay.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		base_overlay.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
 		break;
 	case SPRITESHEET_MID_1:
-		mid_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		mid_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
 		break;
 	case SPRITESHEET_MID_1_OVERLAY:
-		mid_overlay_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		mid_overlay_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
 		break;
 	case SPRITESHEET_MID_2:
-		mid_2_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		mid_2_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
 		break;
 	case SPRITESHEET_ENTITY:
-		entity_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		entity_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
 		break;
 	case SPRITESHEET_ICON:
-		icon_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		icon_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
 		break;
 	case SPRITESHEET_PROJECTILE:
-		projectile_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip);
+		projectile_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
 		break;
 	}
 }
 
-void Draw_System::Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect)
+void Draw_System::Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip, SDL_Color color_shift)
 {
-	if (spritesheet_num == SPRITESHEET_BASE) base_multisprite[multi_tile_num].Add_Sprite_Instructions(pos_rect, { 0,0,TILE_SIZE,TILE_SIZE });
-	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multi_tile_num].Add_Sprite_Instructions(pos_rect, { 0,0,TILE_SIZE,TILE_SIZE });
+	if (spritesheet_num == SPRITESHEET_BASE) base_multisprite[multi_tile_num].Add_Sprite_Instructions(pos_rect, { 0,0,TILE_SIZE,TILE_SIZE }, angle, center, render_flip, color_shift);
+	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multi_tile_num].Add_Sprite_Instructions(pos_rect, { 0,0,TILE_SIZE,TILE_SIZE }, angle, center, render_flip, color_shift);
 }
 
 void Draw_System::Add_Primitive_To_Render_Cycle(int init, SDL_Rect pos_rect, bool filled, SDL_Color primitive_color, int primitive_type)

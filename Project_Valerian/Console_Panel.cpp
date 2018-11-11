@@ -3,6 +3,7 @@
 #include<Game_Library.h>
 #include<Object.h>
 #include<AI_Item_Component.h>
+#include<AI_Job_Component.h>
 
 UI_Panel_Generic::UI_Panel_Generic(Global_Service_Locator* sLocator, int wName, SDL_Rect rect)
 {
@@ -33,6 +34,7 @@ void UI_Panel_Generic::Change_Rect(SDL_Rect new_rect)
 
 void UI_Panel_Console::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 {
+	background_component.Draw(draw_system, base_rect);
 	message_stream.Draw(draw_system, base_rect);
 }
 
@@ -101,7 +103,7 @@ void UI_Panel_Object_Inventory::Init(Object* object)
 {
 	background_component = UI_Component_Generic(service_locator, offset_rect, true);
 
-	AI_Item_Component* object_item_component = (AI_Item_Component*)object->Return_Object_Component_Pointer(OBJECT_COMPONENT_ITEM);
+	AI_Item_Component* object_item_component = object->Return_AI_Item_Component();
 
 	if (object_item_component != NULL)
 	{		
@@ -131,6 +133,90 @@ void UI_Panel_Object_Inventory::Init(Object* object)
 }
 
 void UI_Panel_Object_Inventory::Check_For_Clicks()
+{
+
+}
+
+void UI_Panel_Object_Stats::Draw(Draw_System* draw_system, SDL_Rect base_rect)
+{
+	background_component.Draw(draw_system, base_rect);
+
+	for (int i = 0; i < num_stats; i++)
+	{
+		graphic_button_array[i].Draw(draw_system, base_rect);
+	}
+}
+
+void UI_Panel_Object_Stats::Init(Object* object)
+{
+	background_component = UI_Component_Generic(service_locator, offset_rect, true);
+
+	graphic_button_array.push_back(UI_Component_Stat_Button(service_locator, { offset_rect.x, offset_rect.y, offset_rect.w ,25 }));
+	graphic_button_array[0].Init(object, STAT_OBJECT_HEALTH, "Health");
+	num_stats++;
+}
+
+void UI_Panel_Object_Stats::Check_For_Clicks()
+{
+
+}
+
+void UI_Panel_Object_Jobs::Draw(Draw_System* draw_system, SDL_Rect base_rect)
+{
+	background_component.Draw(draw_system, base_rect);
+
+	if (linked_job_component->Return_Current_Job_Pointer() != NULL)
+	{
+		if (reset == true)
+		{
+			object_job.Change_Component_Title(linked_job_component->Return_Current_Job_Pointer()->Return_Job_String_Name(), { 5,3,25,25 }, { 255,255,255,255 });
+			goal_list.Clear_All_Messages_From_Stream();
+
+			if (linked_job_component->Return_Current_Num_Goals() > 0)
+			{
+				for (int i = 0; i < linked_job_component->Return_Current_Num_Goals(); i++)
+				{
+					goal_list.Set_Message_At_Array_Num(linked_job_component->Return_Goal_At_Array_Num(i)->goal_string_name, i);
+				}
+				goal_list.Set_Bold_Line(linked_job_component->Return_Current_Goal_Index());
+			}
+
+			reset = false;
+		}
+
+		goal_list.Set_Bold_Line(linked_job_component->Return_Current_Goal_Index());
+		goal_list.Draw(draw_system, base_rect);
+	}
+	else
+	{
+		if (reset == false)
+		{
+			object_job.Change_Component_Title("No Current Job", { 5,3,25,25 }, { 255,255,255,255 });
+			reset = true;
+		}
+	}
+
+	object_job.Draw(draw_system, base_rect);
+
+}
+
+void UI_Panel_Object_Jobs::Init(Object* object)
+{
+	linked_object = object;
+
+	background_component = UI_Component_Generic(service_locator, offset_rect, true);
+	SDL_Rect object_job_rect = { offset_rect.x, offset_rect.y, offset_rect.w, 25 };
+
+	object_job = UI_Component_Generic(service_locator, object_job_rect);
+	linked_job_component = object->Return_AI_Job_Component();
+	
+	object_job.Change_Component_Title("No Current_Job", { 5,4,25,25 }, { 255,255,255,255 });
+
+	SDL_Rect message_stream_rect = { offset_rect.x, offset_rect.y + 25, offset_rect.w, offset_rect.h - 25 };
+	goal_list = UI_Component_Message_Stream(service_locator, message_stream_rect,15);
+}
+
+void UI_Panel_Object_Jobs::Check_For_Clicks()
 {
 
 }

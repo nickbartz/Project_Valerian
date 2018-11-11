@@ -49,8 +49,8 @@ public:
 	void Remove_Multisprite(int spritesheet_num, int multisprite_num);
 
 	// Functions to Add or Remove From the Draw Array
-	void Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
-	void Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect);
+	void Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE, SDL_Color color_tint = {255,255,255,255});
+	void Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE,  SDL_Color color_shift = { 255,255,255,255 });
 
 	void Add_Primitive_To_Render_Cycle(int init, SDL_Rect pos_rect, bool filled, SDL_Color primitive_color, int primitive_type = PRIMITIVE_TYPE_RECT);
 	void Clear_Primitive_Instruction_Array();

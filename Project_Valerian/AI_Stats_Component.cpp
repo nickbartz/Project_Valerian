@@ -21,16 +21,19 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 	switch (oType)
 	{
 	case OBJECT_TYPE_STRUCTURE:
-		structure_template_num = object_template_num;
+		object_template_id = object_template_num;
 		break;
 	case OBJECT_TYPE_ENTITY:
-		entity_template_num = object_template_num;
+		object_template_id = object_template_num;
 		break;
 	case OBJECT_TYPE_PROJECTILE:
-		projectile_template_num = object_template_num;
+		object_template_id = object_template_num;
 		object_stats.projectile_stats.remaining_lifespan = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_num)->projectile_range;
 		break;
 	case OBJECT_TYPE_CONTAINER:
+		break;
+	case OBJECT_TYPE_SCAFFOLD:
+		object_template_id = object_template_num;
 		break;
 	}
 
@@ -42,7 +45,7 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 	service_locator = sLocator;
 	object_locator = oLocator;
 	object_type = OBJECT_TYPE_STRUCTURE;
-	structure_template_num = sTemplate;
+	object_template_id = sTemplate;
 
 	object_stats.structure_stats = sStats;
 	Assign_Uniq_IDs(object_array_index);
@@ -67,17 +70,17 @@ void AI_Stats_Component::Assign_Uniq_IDs(int object_array_index)
 
 string AI_Stats_Component::Get_Structure_Common_Name()
 {
-	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num)->structure_name;
+	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id)->structure_name;
 }
 
 int AI_Stats_Component::Get_Structure_Name()
 {
-	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num)->structure_id;
+	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id)->structure_id;
 }
 
 int AI_Stats_Component::Get_Structure_Type()
 {
-	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num)->structure_type;
+	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id)->structure_type;
 }
 
 string AI_Stats_Component::Get_Entity_Name()
@@ -93,13 +96,11 @@ void AI_Stats_Component::Update()
 		switch (object_type)
 		{
 		case OBJECT_TYPE_ENTITY:
-			Entity_Manage_Job();
 			break;
 		case OBJECT_TYPE_STRUCTURE:
 			break;
 		case OBJECT_TYPE_PROJECTILE:
 			Adjust_Stat(STAT_PROJECTILE_RANGE, -1);
-			if (Return_Stat_Value(STAT_PROJECTILE_RANGE) <= 0) service_locator->get_Scene_Graph()->Delete_Projectile(object_locator->Return_Object_Pointer()->Get_Array_Index());
 			break;
 		}
 	}
@@ -249,20 +250,9 @@ int AI_Stats_Component::Return_Stat_Value(int stat_name)
 	}
 }
 
-int AI_Stats_Component::Return_Template_ID(int object_type)
+int AI_Stats_Component::Return_Template_ID()
 {
-	switch (object_type)
-	{
-	case OBJECT_TYPE_STRUCTURE:
-		return structure_template_num;
-		break;
-	case OBJECT_TYPE_ENTITY:
-		return entity_template_num;
-		break;
-	case OBJECT_TYPE_PROJECTILE:
-		return projectile_template_num;
-		break;
-	}
+	return object_template_id;
 }
 
 int AI_Stats_Component::Return_Object_Type()
@@ -312,59 +302,47 @@ void AI_Stats_Component::Handle_Stat_Message(Custom_Message* custom_message)
 	}
 }
 
-void AI_Stats_Component::Entity_Manage_Job()
-{
-
-//	if (next_job_length > 0)
-//	{
-//		object_locator->Return_AI_Job_Pointer()->Load_New_Job(next_job_length, next_job);
-//		Clear_Loaded_Job();
-//	}
-}
-
-void AI_Stats_Component::Load_Job_From_Message(Custom_Message* job_message)
-{
-	Clear_Loaded_Job();
-	
-	for (int i = 1; i < job_message->Get_Message_Length(); i++)
-	{
-		next_job[i - 1] = job_message->Read_Message(i);
-	}
-
-	next_job_length = job_message->Get_Message_Length() - 1;
-}
-
-void AI_Stats_Component::Clear_Loaded_Job()
-{
-	for (int i = 0; i < MAX_LENGTH_CUSTOM_MESSAGE; i++)
-	{
-		next_job[i] = 0;
-	}
-
-	next_job_length = 0;
-}
-
-void AI_Stats_Component::Handle_Job_Message(Custom_Message* job_message)
-{
-	
-}
-
 bool AI_Stats_Component::Check_For_Death()
 {
-	if (object_stats.object_health <= 0)
+	switch (object_type)
 	{
-		if (object_type == OBJECT_TYPE_STRUCTURE)
+	case OBJECT_TYPE_STRUCTURE:
+		if (object_stats.object_health <= 0)
 		{
 			if (object_locator->Return_AI_Item_Pointer()->Return_Num_Occupied_Inventory_Slots() > 0)
 			{
-				service_locator->get_Scene_Graph()->Create_Container(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), object_locator->Return_AI_Item_Pointer()->Return_Inventory_Slot_As_Pointer(0), object_locator->Return_AI_Item_Pointer()->Return_Num_Inventory_Slots());
+				service_locator->get_Scene_Graph()->Create_Container(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), object_locator->Return_AI_Item_Pointer()->Return_Inventory_Slot_As_Pointer(0), object_locator->Return_AI_Item_Pointer()->Return_Num_Inventory_Slots(), 1);
 			}
 
-			service_locator->get_Scene_Graph()->Delete_Structure(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_num)->tile_layer);
+			service_locator->get_Scene_Graph()->Delete_Structure_Update_Tile_Map_Send_Message(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id)->tile_layer);
 			service_locator->get_Scene_Graph()->Create_Projectile(object_locator->Return_Object_Pointer(), object_locator->Return_Object_Pointer(), 3, 0);
 
+			return true;
 		}
-		return true;
+		break;
+	case OBJECT_TYPE_ENTITY:
+		break;
+	case OBJECT_TYPE_PROJECTILE:
+		if (Return_Stat_Value(STAT_PROJECTILE_RANGE) <= 0)
+		{
+			service_locator->get_Scene_Graph()->Delete_Object(OBJECT_TYPE_PROJECTILE, object_locator->Return_Object_Pointer()->Get_Array_Index());
+			return true;
+		}
+		break;
+	case OBJECT_TYPE_CONTAINER:
+		if (object_locator->Return_AI_Item_Pointer()->Return_Num_Occupied_Inventory_Slots() == 0)
+		{
+			service_locator->get_Scene_Graph()->Delete_Object(OBJECT_TYPE_CONTAINER, object_locator->Return_Object_Pointer()->Get_Array_Index());
+			return true;
+		}
+		break;
+	case OBJECT_TYPE_SCAFFOLD:
+		if (object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->max_built_level)
+		{
+			service_locator->get_Scene_Graph()->Create_New_Structure(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), object_template_id, object_stats.object_faction, true);
+			service_locator->get_Scene_Graph()->Delete_Object(OBJECT_TYPE_SCAFFOLD, object_array_locator);
+		}
+		break;
 	}
-	else return false;
+	return false;
 }

@@ -75,8 +75,10 @@ void Spritesheet::Draw(SDL_Renderer* game_renderer, bool use_prebaked)
 	{
 		for (int i = 0; i < current_num_instructions; i++)
 		{
+			SDL_SetTextureBlendMode(spritesheet_texture, SDL_BLENDMODE_BLEND);
+			SDL_SetTextureColorMod(spritesheet_texture, instruction_array[i].color_shift.r, instruction_array[i].color_shift.g, instruction_array[i].color_shift.b);
+			SDL_SetTextureAlphaMod(spritesheet_texture, instruction_array[i].color_shift.a);
 			SDL_RenderCopyEx(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect, instruction_array[i].angle, instruction_array[i].center, instruction_array[i].flip);
-			//SDL_RenderCopy(game_renderer, spritesheet_texture, &instruction_array[i].clip_rect, &instruction_array[i].position_rect);
 		}
 
 		// After the spritesheet draws it also automatically flushes its instuctions array so no need for a dedicated clear instructions function
@@ -130,9 +132,9 @@ void Spritesheet::Draw_Prebaked_Texture(SDL_Renderer* game_renderer)
 
 }
 
-void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip)
+void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip, SDL_Color color_shift)
 {
-	Sprite_Instructions new_instruction = { position_rect, clip_rect,angle,center,render_flip };
+	Sprite_Instructions new_instruction = { position_rect, clip_rect,angle,center,render_flip, color_shift};
 	if (current_num_instructions < MAX_SPRITE_INSTRUCTIONS)
 	{
 		instruction_array[current_num_instructions] = new_instruction;

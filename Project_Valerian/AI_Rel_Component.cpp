@@ -35,7 +35,6 @@ void AI_Rel_Component::Check_For_Messages()
 
 int AI_Rel_Component::Check_Object_Range(Coordinate coord)
 {
-	//cout << object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord().x << ", " << object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord().y << " : " << coord.x << ", " << coord.y << endl;
 	int dif_x = abs(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord().x - coord.x);
 	int dif_y = abs(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord().y - coord.y);
 
@@ -134,6 +133,8 @@ void AI_Rel_Component::Update_Projectile_Relationships()
 					int projectile_power = service_locator->get_Game_Library()->Fetch_Projectile_Template(projectile_rel_array[i].projectile_template_num)->projectile_power;
 					object_locator->Return_AI_Stats_Pointer()->Adjust_Stat(STAT_OBJECT_HEALTH, -projectile_power);
 					projectile_rel_array[i].damage_taken = projectile_power;
+					Remove_Projectile_Relationship(i);
+					Obj_Relationship_Array[projectile_rel_array[i].rel_array_num].object_pointer->Set_Assigned_Flag(OBJECT_UNASSIGNED);
 				}
 			}
 

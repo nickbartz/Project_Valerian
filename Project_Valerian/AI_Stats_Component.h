@@ -56,7 +56,7 @@ public:
 	void Update_Stat(int stat_name, int new_value );
 	void Adjust_Stat(int stat_name, int new_value);
 
-	int Return_Template_ID(int object_type);
+	int Return_Template_ID();
 	int Return_Stat_Value(int stat_name);
 	int Return_Object_Type();
 
@@ -71,28 +71,15 @@ private:
 	Object_Service_Locator* object_locator;
 
 	// Theoretically not a great idea to copy the entire template to each object, maybe just use template_id and then reference as in projectile example below
-	int structure_template_num = 0;
-	int entity_template_num = 0;
-	int projectile_template_num = 0;
-
 	Object_Stats object_stats;
-
+	int object_template_id = 0;
 	int object_type;
 	int uniq_id;
 	int object_array_locator;
 
 	void Handle_Stat_Message(Custom_Message* array_message);
 
-	// Loaded Jobs
-	void Load_Job_From_Message(Custom_Message* job_message);
-	void Clear_Loaded_Job();
-	int next_job[MAX_LENGTH_CUSTOM_MESSAGE];
-	int next_job_length = 0;
-
-
 	bool Check_For_Death();
 
-	void Entity_Manage_Job();
-	void Handle_Job_Message(Custom_Message* job_message);
 
 };

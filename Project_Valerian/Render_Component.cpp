@@ -8,6 +8,7 @@
 #include<Game_Library.h>
 #include<AI_Stats_Component.h>>
 #include<AI_Movement_Component.h>
+#include<Scene_Graph.h>
 
 using namespace std;
 
@@ -19,9 +20,51 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 
 	switch (object_type)
 	{
+	case OBJECT_TYPE_SCAFFOLD:
+		{Structure_Template * object_config = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id);
+		render_component = object_config->render_component_type;
+		multiclip_type = object_config->multiclip_type;
+		spritesheet = object_config->spritesheet;
+		is_scaffold = true;
+		override_color = { 100,255,255,100 };
+
+		sprite_clip = object_config->tile_clip;
+		sprite_coords = object_config->tile_specs;
+
+		max_animation_frames = object_config->num_animation_frame;
+		neighbors = service_locator->get_Scene_Graph()->Return_Neighboring_Tiles(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord());
+
+		// If the object is a multiclip, handle multiclip
+		if (render_component == RENDER_COMPONENT_MULTICLIP)
+		{
+			Initialize_Dedicated_Multisprite();
+			Adjust_Multisprite_To_Surroundings();
+		}
+		// If the object is a door, handle door
+		else if (object_config->structure_type == 8)
+		{
+			Adjust_Door_Orientation();
+		}
+		}
+		break;
+	case OBJECT_TYPE_ENTITY:
+		{Entity_Template* entity_config = service_locator->get_Game_Library()->Fetch_Entity_Template(object_template_id);
+		render_component = entity_config->render_component;
+		num_entity_animations = entity_config->num_entity_animations;
+		num_entity_components = entity_config->num_entity_components;
+
+		for (int i = 0; i < entity_config->num_entity_animations; i++)
+		{
+			for (int p = 0; p < entity_config->num_entity_components; p++)
+			{
+				entity_animations[i][p] = entity_config->entity_animations[i][p];
+			}
+		}
+		}
+		break;
 	case OBJECT_TYPE_PROJECTILE:
-		if (service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->is_point_not_sprite == 1) render_component = RENDER_COMPONENT_POINT_RENDER;
-		else if(service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->render == 1) render_component = RENDER_COMPONENT_ANIMATED_CLIP;
+		{if (service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->is_point_not_sprite == 1) render_component = RENDER_COMPONENT_POINT_RENDER;
+		else if (service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->render == 1) render_component = RENDER_COMPONENT_ANIMATED_CLIP;
 		else render_component = RENDER_COMPONENT_NONE;
 		simple_animation_type = SIMPLE_ANIMATION_BACK_AND_FORTH;
 		spritesheet = SPRITESHEET_PROJECTILE;
@@ -29,24 +72,26 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 		max_animation_frames = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->num_animation_frames;
 		max_animation_delay = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->animation_delay;
 		override_color = service_locator->get_Game_Library()->Fetch_Projectile_Template(object_template_id)->projectile_color;
+		}
 		break;
 	case OBJECT_TYPE_CONTAINER:
-		render_component = RENDER_COMPONENT_SIMPLECLIP;
+		{render_component = RENDER_COMPONENT_SIMPLECLIP;
 		spritesheet = SPRITESHEET_ICON;
 		sprite_clip = service_locator->get_Game_Library()->Fetch_Item_Template(object_template_id)->sprite_specs;
 		break;
+		}
 	}
 }
 
 // Init for Structures
 Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator,  Structure_Template object_config, Adjacent_Structure_Array neighbor_array)
 {
+	service_locator = sLocator;
+	object_locator = oLocator;
+
 	render_component = object_config.render_component_type;
 	multiclip_type = object_config.multiclip_type;
 	spritesheet = object_config.spritesheet;
-
-	service_locator = sLocator;
-	object_locator = oLocator;
 
 	sprite_clip = object_config.tile_clip;
 	sprite_coords = object_config.tile_specs;
@@ -64,25 +109,6 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	else if (object_config.structure_type == 8)
 	{
 		Adjust_Door_Orientation();
-	}
-}
-
-// Init for Entities
-Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, Entity_Template entity_config)
-{
-	service_locator = sLocator;
-	object_locator = oLocator;
-	
-	render_component = entity_config.render_component;
-	num_entity_animations = entity_config.num_entity_animations;
-	num_entity_components = entity_config.num_entity_components;
-
-	for (int i = 0; i < entity_config.num_entity_animations; i++)
-	{
-		for (int p = 0; p < entity_config.num_entity_components; p++)
-		{
-			entity_animations[i][p] = entity_config.entity_animations[i][p];
-		}
 	}
 }
 
@@ -124,6 +150,7 @@ void Render_Component::Draw(SDL_Rect pos_rect)
 	}
 
 	Draw_Overlays(pos_rect);
+
 }
 
 // Component draw functions
@@ -141,7 +168,7 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 	// Adjust the draw rectangle by the camera position and camera zoom
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
 
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE);
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 
 	// If the sprite is several stories high, the 2nd story needs to be printed seperately and later so that i will appear to float above any people walking around so they appear to go behind it
 	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
@@ -151,7 +178,7 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 
 		// Now re-do the draw rect and send a new instruction to the draw system to draw that 2nd story 
 		draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((pos_rect.y - TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
-		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE);
+		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 	}
 }
 
@@ -161,7 +188,7 @@ void Render_Component::Draw_With_Multi_Clip(SDL_Rect pos_rect)
 
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, sprite_coords.w*camera.w, sprite_coords.h*camera.w };
 
-	service_locator->get_Draw_System_Pointer()->Add_Multisprite_Render_Job_To_Render_Cycle(spritesheet, dedicated_multisprite_num, draw_rect);
+	service_locator->get_Draw_System_Pointer()->Add_Multisprite_Render_Job_To_Render_Cycle(spritesheet, dedicated_multisprite_num, draw_rect, 0.0, NULL, SDL_FLIP_NONE, override_color);
 }
 
 void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
@@ -174,12 +201,7 @@ void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 	// Adjust the draw rectangle by the camera position and camera zoom
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
 
-	//if (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type() != OBJECT_TYPE_STRUCTURE)
-	//{
-	//	cout << draw_rect.x << ", " << draw_rect.y << endl;
-	//}
-
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE);
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 
 	// If the sprite is several stories high, the 2nd story needs to be printed seperately and later so that i will appear to float above any people walking around so they appear to go behind it
 	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
@@ -189,7 +211,7 @@ void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 
 		// Now re-do the draw rect and send a new instruction to the draw system to draw that 2nd story 
 		draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((pos_rect.y - TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
-		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE);
+		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 	}
 }
 
@@ -220,12 +242,16 @@ void Render_Component::Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Re
 	// Adjust the draw rectangle by the camera position and camera zoom
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
 
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE);
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 }
 
 void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 {
 	AI_Stats_Component* stats_pointer = object_locator->Return_AI_Stats_Pointer();
+	int current_health = stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH);
+	int max_health = stats_pointer->Return_Stat_Value(STAT_OBJECT_MAX_HEALTH);
+	int built_level = stats_pointer->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL);
+	int max_built_level = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(stats_pointer->Return_Template_ID())->max_built_level;
 
 	// Draw Oxygenation Level
 	if (stats_pointer->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)
@@ -235,10 +261,27 @@ void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 	}
 
 	// Draw Current Health
-	if (stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH) < stats_pointer->Return_Stat_Value(STAT_OBJECT_MAX_HEALTH) && stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH) > 0)
+	if ( current_health < max_health && current_health > 0)
 	{
-		Handle_Current_Health_Overlay(pos_rect, stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH), stats_pointer->Return_Stat_Value(STAT_OBJECT_MAX_HEALTH));
+		Handle_Progress_Overlays(pos_rect, { 255,0,100,255 }, 5, current_health, max_health);
 	}
+
+	if (built_level < max_built_level)
+	{
+		Handle_Progress_Overlays(pos_rect, { 100,100,255,255 }, 11, built_level, max_built_level);
+	}
+
+
+	//Coordinate object_location = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
+	//string x_coord = to_string(object_location.x);
+	//string y_coord = to_string(object_location.y);
+	//x_coord.push_back(',');
+	//for (int i = 0; i < y_coord.size(); i++)
+	//{
+	//	x_coord.push_back(y_coord[i]);
+	//}
+	//service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, service_locator->get_Cursor_Pointer()->Convert_World_Rect_To_Screen_Rect(object_locator->Return_AI_Movement_Pointer()->Return_World_Pos()), false, { 255,255,255,255 }, PRIMITIVE_TYPE_RECT);
+	//service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1, service_locator->get_Cursor_Pointer()->Convert_World_Rect_To_Screen_Rect(object_locator->Return_AI_Movement_Pointer()->Return_World_Pos()), FONT_SMALL_BOLD,x_coord, {0,255,255,255} });
 }
 
 void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level)
@@ -252,13 +295,12 @@ void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygena
 	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, true, overlay_color);
 }
 
-void Render_Component::Handle_Current_Health_Overlay(SDL_Rect pos_rect, int current_health, int max_health)
+void Render_Component::Handle_Progress_Overlays(SDL_Rect pos_rect, SDL_Color bar_color, int height_offset, int current_health, int max_health)
 {
-	int health_bar_height = 5;
-	SDL_Rect health_bar_rect = { pos_rect.x, pos_rect.y - health_bar_height, current_health*TILE_SIZE/max_health, health_bar_height };
-	SDL_Rect draw_rect = service_locator->get_Cursor_Pointer()->Convert_World_Rect_To_Screen_Rect(health_bar_rect);
+	SDL_Rect progress_bar_Rect = { pos_rect.x, pos_rect.y - height_offset, current_health*TILE_SIZE/max_health, height_offset };
+	SDL_Rect draw_rect = service_locator->get_Cursor_Pointer()->Convert_World_Rect_To_Screen_Rect(progress_bar_Rect);
 
-	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, true, { 255,0,100,255 }, PRIMITIVE_TYPE_RECT);
+	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, true, bar_color, PRIMITIVE_TYPE_RECT);
 	if (draw_rect.w > 0) service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, false, { 255,255,255,255 }, PRIMITIVE_TYPE_RECT);
 }
 

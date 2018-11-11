@@ -136,6 +136,7 @@ void UI::Parse_Loaded_Actions()
 {
 	int icon_clip_x = 0;
 	int icon_clip_y = 0;
+	Coordinate click_coord = service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord();
 	
 	// See if there's a main action loaded 
 	if (current_action_loaded)
@@ -149,14 +150,19 @@ void UI::Parse_Loaded_Actions()
 				switch (action_support[1])
 				{
 				case UI_ACTION_SUPPORTING_TYPE_SET_STRUCTURE_BUILD:
-					service_pointer->get_Scene_Graph()->Create_New_Structure(service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord(), service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2]),2);
+					//service_pointer->get_Scene_Graph()->Create_New_Structure(service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord(), service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2]),2);
+					service_pointer->get_Scene_Graph()->Create_New_Scaffold(service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord(), action_support[2], 2);
 					break;
 				case UI_ACTION_SUPPORTING_TYPE_DELETE_STRUCTURE:
 					service_pointer->get_Scene_Graph()->Delete_Structure_Highest_Layer(service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord());
 					break;
 				case UI_ACTION_SUPPORTING_TYPE_SET_RALLY_POINT:
-					int custom_message[6] = {MESSAGE_TYPE_SET_ENTITY_RALLY_POINT, OBJECT_TYPE_ENTITY, FOCUS_RANGE, 0,service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord().x,service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord().y };
-					service_pointer->get_MB_Pointer()->Add_Custom_Message(6, custom_message);
+					{int custom_message[6] = { MESSAGE_TYPE_SET_ENTITY_RALLY_POINT, OBJECT_TYPE_ENTITY, FOCUS_RANGE, 0,service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord().x,service_pointer->get_Cursor_Pointer()->Get_Mouse_Grid_Coord().y };
+					service_pointer->get_MB_Pointer()->Add_Custom_Message(6, custom_message); }
+					break;
+				case UI_ACTION_SUPPORTING_TYPE_SET_ASTEROID_MINE:
+					{Object* asteroid = service_pointer->get_Scene_Graph()->Return_Structure_At_Coord_By_Layer(click_coord.x, click_coord.y, TILE_LAYER_MID);
+					if (asteroid != NULL) service_pointer->get_Scene_Graph()->Job_Create_Mine_Asteroid(asteroid);}
 					break;
 				}
 				break;
@@ -188,6 +194,8 @@ void UI::Parse_Loaded_Actions()
 			icon_clip_x = 2*SPRITE_SIZE;
 			icon_clip_y = 0;
 			service_pointer->get_Cursor_Pointer()->Change_Cursor_Icon(icon_clip_x, icon_clip_y);
+			break;
+		case UI_ACTION_SUPPORTING_TYPE_SET_ASTEROID_MINE:
 			break;
 		}
 	}

@@ -15,7 +15,7 @@ AI_Movement_Component::AI_Movement_Component(Global_Service_Locator* sLocator, O
 	object_locator = oLocator;
 
 	world_pos = location;
-	world_coord = { location.x / TILE_SIZE, location.y / TILE_SIZE };
+	Update_World_Coord(world_pos);
 
 	object_base_speed = 3;
 
@@ -42,6 +42,7 @@ void AI_Movement_Component::Check_For_Messages()
 		case MESSAGE_TYPE_SET_ENTITY_RALLY_POINT:
 			if (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type() == OBJECT_TYPE_ENTITY)
 			{
+				object_locator->Return_AI_Job_Pointer()->Clear_Job();
 				Set_Target_Coord({ service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(4), service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(5) });
 			}
 			break;
@@ -87,7 +88,7 @@ void AI_Movement_Component::Update()
 		}
 		// If there is no difference between the target position and the current position, it must mean that the entity has moved to the next coordinate in the path already
 		// consequently the path has to be updated to reflect this and a new target assigned
-		else if (current_path.size() != 0)
+		else if (delta_x == 0 && delta_y == 0 && current_path.size() != 0)
 		{
 			Coordinate previous_world_coord = { world_coord.x, world_coord.y };
 			Coordinate next_step = { current_path.back().x_tile,current_path.back().y_tile };
@@ -111,7 +112,6 @@ void AI_Movement_Component::Update()
 			}
 			
 			Set_Target_Pos(next_step.x * TILE_SIZE, next_step.y * TILE_SIZE);
-			world_coord = { next_step.x, next_step.y };
 			current_path.pop_back();
 
 			// We need to send a message to the message bus that the entity has shifted target tiles
@@ -145,9 +145,9 @@ void AI_Movement_Component::Update()
 		}
 
 		// If the projectile has moved from one coordinate to another, send out an update message
-		if (Update_World_Coord({ world_pos.x, world_pos.y }))
+		if (Update_World_Coord(world_pos))
 		{
-			int projectile_template_num = object_locator->Return_AI_Stats_Pointer()->Return_Template_ID(OBJECT_TYPE_PROJECTILE);
+			int projectile_template_num = object_locator->Return_AI_Stats_Pointer()->Return_Template_ID();
 			int faction = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION);
 			int array_index = object_locator->Return_Object_Pointer()->Get_Array_Index();
 			int custom_message[8] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT,OBJECT_TYPE_ANY, FOCUS_ALL, world_coord.x, world_coord.y,faction, projectile_template_num, array_index };
@@ -171,12 +171,17 @@ void AI_Movement_Component::Update()
 		if (bounce_delay > max_bounce_delay) bounce_delay = 0;
 		break;
 	}
+
+	if (delta_x != 0 || delta_y != 0) Update_World_Coord(world_pos);
 }
 
-bool AI_Movement_Component::Update_World_Coord(SDL_Point new_world_pos)
+bool AI_Movement_Component::Update_World_Coord(SDL_Rect new_world_rect)
 {
 	bool coord_changed = false;
 	
+	// Use the center point of the rect for accurate coordinate determination
+	SDL_Point new_world_pos = { new_world_rect.x + new_world_rect.w / 2, new_world_rect.y + new_world_rect.h / 2 };
+
 	int new_x_coord = 0;
 	int new_y_coord = 0;
 
@@ -221,15 +226,17 @@ void AI_Movement_Component::Set_Projectile_Velocity(SDL_Point target)
 {
 	int delta_x = target.x - world_pos.x;
 	int delta_y = target.y - world_pos.y;
+	int direction_x = 0;
+	int direction_y = 0;
 
-	if (delta_x == 0) obj_x_vel = object_base_speed;
-	else if (delta_y == 0) obj_x_vel = object_base_speed;
+	if (delta_x != 0) direction_x = delta_x / abs(delta_x);
+	if (delta_y != 0) direction_y = delta_y / abs(delta_y);
+
+	if (delta_x == 0) obj_y_vel = direction_y*object_base_speed, obj_x_vel = 0;
+	else if (delta_y == 0) obj_x_vel = direction_x*object_base_speed, obj_y_vel = 0;
 	else if (delta_x == 0 && delta_y == 0) obj_x_vel = 0, obj_y_vel = 0;
 	else
 	{
-		int direction_x = delta_x / abs(delta_x);
-		int direction_y = delta_y / abs(delta_y);
-
 		double lambda = sqrt(1 + (delta_y*delta_y) / (delta_x*delta_x));
 
 		double x_vel_double = object_base_speed / lambda;
@@ -241,6 +248,7 @@ void AI_Movement_Component::Set_Projectile_Velocity(SDL_Point target)
 		vel_remainder_x = direction_x * (x_vel_double - abs(obj_x_vel));
 		vel_remainder_y = direction_y * (y_vel_double - abs(obj_y_vel));
 	}
+
 }
 
 void AI_Movement_Component::Set_Target_Coord(Coordinate grid_coord)
@@ -257,4 +265,10 @@ void AI_Movement_Component::Set_Target_Coord(Coordinate grid_coord)
 			current_path.pop_back();
 		}
 	}
+}
+
+void AI_Movement_Component::Stop_Moving()
+{
+	current_path.clear();
+	target_pos = world_pos;
 }

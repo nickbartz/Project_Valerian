@@ -30,8 +30,15 @@ public:
 	bool Is_Structure_Inaccessible(int faction);
 	int Return_Object_Array_Index();
 	Coordinate get_coordinate();
-	void* Return_Object_Component_Pointer(int component_type);
+	SDL_Rect get_world_pos();
 	int Get_Uniq_ID();
+
+	Render_Component* Return_Render_Component();
+	AI_Stats_Component* Return_Stats_Component();
+	AI_Job_Component* Return_AI_Job_Component();
+	AI_Movement_Component* Return_AI_Movement_Component();
+	AI_Rel_Component* Return_AI_Rel_Component();
+	AI_Item_Component* Return_AI_Item_Component();
 
 	// Draw functions
 	void Draw();
@@ -42,6 +49,7 @@ public:
 	void Init_Entity_From_Template(Entity_Template object_config, int faction);
 	void Init_Projectile_From_Template(Projectile_Template* projectile_config, SDL_Point target, int faction);
 	void Init_Container_From_Inventory(Item_Slot inventory_pointer[], int num_inventory_items);
+	void Init_Scaffold_From_Template(int structure_template_id, int faction);
 
 	void Set_Assigned_Flag(int assigned_flag); 	// Unassigning an object means we're setting its type to unassigned so that it can be overwritten in whatever array it is in
 

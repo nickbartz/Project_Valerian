@@ -60,6 +60,7 @@ bool init()
 			{
 				//Initialize renderer color
 				SDL_SetRenderDrawColor(Game_Renderer, 0x0, 0x0, 0x0, 0x0);
+				SDL_SetRenderDrawBlendMode(Game_Renderer, SDL_BLENDMODE_BLEND);
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -143,7 +144,7 @@ int main(int argc, char *args[])
 	unique_ptr<Global_Service_Locator> service_locator(new Global_Service_Locator());
 
 	// Load Game Library
-	unique_ptr<Game_Library> game_library(new Game_Library());
+	unique_ptr<Game_Library> game_library(new Game_Library(service_locator.get()));
 
 	// Create Draw System & Load Sprites
 	unique_ptr<Draw_System> draw_system(new Draw_System{service_locator.get(), font_array, SDL_GetWindowPixelFormat(Game_Window) });
@@ -161,8 +162,6 @@ int main(int argc, char *args[])
 
 	// Create World Map
 	unique_ptr<Scene_Graph> scene_graph(new Scene_Graph(service_locator.get()));
-
-
 
 	// Create the Pathfinder 
 	unique_ptr<Path_Field> pathfinder(new Path_Field(service_locator.get()));
@@ -185,11 +184,13 @@ int main(int argc, char *args[])
 	// TEST VARIABLES
 	vector<vector<int>> new_room = game_library->Create_Room_From_Data_File(0, 0, "Data/test_room.csv");
 	scene_graph->Stamp_Room_From_Array(new_room, -2, -2, 2);
-	scene_graph->Create_New_Structure({ 0,-1 }, game_library->Fetch_Tile_Object_Config(4), 2);
 
-	scene_graph->Create_New_Structure({ -5, -10 }, game_library->Fetch_Tile_Object_Config(21), 1);
-	scene_graph->Create_New_Structure({ -5, -9 }, game_library->Fetch_Tile_Object_Config(22),1);
-	scene_graph->Create_New_Structure({ -5, -8 }, game_library->Fetch_Tile_Object_Config(23), 1);
+	scene_graph->Create_New_Structure({ 0,-1 }, 4, 2);
+	scene_graph->Create_New_Structure({ 9,-1 }, 14, 2);
+
+	scene_graph->Create_New_Structure({ -5, -10 }, 21, 1);
+	scene_graph->Create_New_Structure({ -5, -9 }, 22,1);
+	scene_graph->Create_New_Structure({ -5, -8 }, 23, 1);
 	
 	scene_graph->Create_Entity({ 1,-1 }, *game_library->Fetch_Entity_Template(2), 2);
 	//scene_graph->Create_Entity({ 2,-1 }, *game_library->Fetch_Entity_Template(1), 2);

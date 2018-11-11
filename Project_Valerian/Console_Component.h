@@ -21,7 +21,7 @@ public:
 	void Assign_Window(int window_name);
 	void Assign_Panel(int panel_name);
 	void Set_Font_Type(int font_type);
-	void Change_Component_Title(string new_title);
+	void Change_Component_Title(string new_title, SDL_Rect text_offset_rect = {}, SDL_Color text_color = {});
 
 	// Accessors
 	SDL_Rect Return_Rect();
@@ -46,7 +46,7 @@ protected:
 	// Variables relating to the component if it is a simple button
 	bool draw_title = false;
 	string title= "";
-	SDL_Rect text_offset;
+	SDL_Rect text_offset = { 0,0,25,25 };
 	int font_type = FONT_DEFAULT;
 	SDL_Color text_color;
 
@@ -76,7 +76,7 @@ protected:
 class UI_Component_Message_Stream : public UI_Component_Generic
 {
 public:
-	UI_Component_Message_Stream(Global_Service_Locator* service_locator = NULL, int window_name = WINDOW_NULL, int panel_name = PANEL_NULL, int button_action = BUTTON_ACTION_DO_NOTHING, SDL_Rect placement_rect = { 5,5,100,100 }, int max_lines = 20) :UI_Component_Generic(service_locator, placement_rect)
+	UI_Component_Message_Stream(Global_Service_Locator* service_locator = NULL, SDL_Rect placement_rect = { 5,5,100,100 }, int max_lines = 20) :UI_Component_Generic(service_locator, placement_rect)
 	{
 		max_message_lines = max_lines;
 
@@ -86,11 +86,15 @@ public:
 		}
 	}
 
+	void Set_Message_At_Array_Num(string new_message, int array_num);
+	void Set_Bold_Line(int bold_line);
 	void Push_Message_Into_Stream(string new_message);
+	void Clear_All_Messages_From_Stream();
 	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
 
 private:
 	int max_message_lines;
+	int bold_line = -1;
 
 	string message_array[UI_MAX_CONSOLE_MESSAGES];
 
@@ -131,4 +135,20 @@ private:
 	Item_Slot * slot_pointer;
 	int spritesheet_num;
 	SDL_Rect sprite_clip;
+};
+
+class UI_Component_Stat_Button : public UI_Component_Generic
+{
+public:
+	UI_Component_Stat_Button(Global_Service_Locator* service_locator = NULL, SDL_Rect placement_rect = { 0,0,0,0 }) :UI_Component_Generic(service_locator, placement_rect, false)
+	{
+	}
+	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
+	void Init(Object* reference_object, int stat_name, string stat_s_name);
+
+private:
+	Object * reference_object;
+	int stat_name;
+	string stat_string_name;
+	int string_width_offset = 90;
 };

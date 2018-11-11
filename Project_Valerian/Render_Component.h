@@ -25,9 +25,6 @@ public:
 	// Init for structures
 	Render_Component(Global_Service_Locator* service_locator, Object_Service_Locator* oLocator, Structure_Template object_config, Adjacent_Structure_Array neighbors);
 
-	// Init for entities
-	Render_Component(Global_Service_Locator* service_locator, Object_Service_Locator* oLocator, Entity_Template entity_config);
-
 	void Update();
 
 	void Draw(SDL_Rect pos_rect);
@@ -44,7 +41,7 @@ public:
 
 	// Overlay Specific Functions
 	void Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level);
-	void Handle_Current_Health_Overlay(SDL_Rect pos_rect, int current_health, int max_health);
+	void Handle_Progress_Overlays(SDL_Rect pos_rect, SDL_Color bar_color, int height_offset, int current_health, int max_health);
 
 	void Initialize_Dedicated_Multisprite();
 	void Deinitialize_Dedicated_Multisprite();
@@ -70,7 +67,6 @@ public:
 	// Animation Commands
 	void Increment_Simple_Animation();
 	void Change_Simple_Animation(int new_animation);
-
 	void Increment_Entity_Animation();
 	void Change_Entity_Current_Animation(int new_animation);
 
@@ -88,7 +84,7 @@ private:
 	int current_animation_frame = 0;
 	int animation_direction = 1;
 	int simple_animation_type = SIMPLE_ANIMATION_NULL;
-	SDL_Color override_color = { 0,0,0,0 };
+	SDL_Color override_color = { 255,255,255,255 };
 
 	// STRUCTURE_SPECIFIC VARIABLES
 	int multiclip_type;
@@ -97,6 +93,7 @@ private:
 	SDL_Rect sprite_coords;
 	Adjacent_Structure_Array neighbors;
 	int orientation_y_clip_offset = 0; // 0 is horizontal, 1 is vertical
+	bool is_scaffold = false;
 
 	// ENTITY SPECIFIC VARIABLES
 	Animation_State entity_animations[MAX_NUM_ANIMATIONS][MAX_NUM_COMPONENTS];

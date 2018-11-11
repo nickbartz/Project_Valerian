@@ -7,8 +7,10 @@
 
 using namespace std;
 
-Game_Library::Game_Library()
+Game_Library::Game_Library(Global_Service_Locator* sLocator)
 {
+	service_locator = sLocator;
+	
 	Load_Tiles_From_Data_File("Data/Tile_Data.csv");
 	Load_Entity_Templates("Data/Entity_Templates.csv", "Data/Entity_Animations.csv");
 	Load_Item_Templates("Data/Inventory_Data.csv");
@@ -56,6 +58,19 @@ void Game_Library::Load_Job_Code_String_To_Enum_Crosswalk()
 
 }
 
+int Game_Library::Fetch_Structure_Type_ID_From_Name(string structure_type)
+{
+	for (int i = 0; i < num_loaded_tiles; i++)
+	{
+		if (structure_type == loaded_tiles[i].structure_type_string)
+		{
+			return loaded_tiles[i].structure_type;
+		}
+	}
+	
+	return 0;
+}
+
 int Game_Library::Get_Job_Code_From_String(string query)
 {
 	try
@@ -83,6 +98,7 @@ void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
 
 		new_config.structure_id = stoi(vector_loaded_tiles[i + 1][0]);
 		new_config.structure_name = vector_loaded_tiles[i + 1][3];
+		new_config.structure_type_string = vector_loaded_tiles[i + 1][4];
 		new_config.render_component_type = stoi(vector_loaded_tiles[i + 1][7]);
 		new_config.spritesheet = stoi(vector_loaded_tiles[i + 1][11]);
 		new_config.tile_specs.x = stoi(vector_loaded_tiles[i + 1][12]);
@@ -101,6 +117,9 @@ void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
 		new_config.icon_clip_y = stoi(vector_loaded_tiles[i + 1][25])*SPRITE_SIZE;
 		new_config.is_inaccessible = stoi(vector_loaded_tiles[i + 1][26]);
 		new_config.inventory_pack = stoi(vector_loaded_tiles[i + 1][27]);
+		new_config.blueprint_pack = stoi(vector_loaded_tiles[i + 1][28]);
+		new_config.equipment_pack = stoi(vector_loaded_tiles[i + 1][29]);
+		new_config.max_built_level = stoi(vector_loaded_tiles[i + 1][30]);
 		loaded_tiles[i] = new_config;
 		num_loaded_tiles++;
 	}
@@ -205,13 +224,17 @@ void Game_Library::Load_Jobs(string job_template_path, string goal_template_path
 
 	for (int i = 1; i < vector_loaded_job_templates.size(); i++)
 	{
-		Job new_job_template = Job(stoi(vector_loaded_job_templates[i][0]), vector_loaded_job_templates[i][1]);
+		Job new_job_template = Job(service_locator, stoi(vector_loaded_job_templates[i][0]), vector_loaded_job_templates[i][2]);
 		int num_job_goals = stoi(vector_loaded_job_templates[i][4]);
-		 
+
+		Goal_Set new_goal_set;
+
 		for (int p = 5; p < 5 + num_job_goals; p++)
 		{
-			new_job_template.Add_Job_Goal(loaded_goals[stoi(vector_loaded_job_templates[i][p])],p-5);
+			new_goal_set.Add_Job_Goal_to_Goal_Set(loaded_goals[stoi(vector_loaded_job_templates[i][p])],p-5);
 		}
+
+		if (new_goal_set.num_goals_in_set > 0) new_job_template.Add_Goal_Set(new_goal_set);
 
 		loaded_jobs[i - 1] = new_job_template;
 		num_loaded_jobs++;

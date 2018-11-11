@@ -1,5 +1,5 @@
 Projectile_ID,Projectile_Name,Projectile_Name_String,SPRITE_CLIP_X,SPRITE_CLIP_Y,SPRITE_CLIP_W,SPRITE_CLIP_H,Projectile_Power,Projectile_Speed,Projectile_Animation_Frames,Projectile_Range,Projectile_Splash,Projectile_Animation_Delay,P_Color_R,P_Color_G,P_Color_B,P_Color_A,Is_Point_Not_Sprite,Render
 0,Projectile_Null,Null Projectile,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,1
 1,Projectile_Basic,Basic Projectile,0,0,1,1,1,2,8,5,1,1,0,0,0,0,0,1
-2,Projectile_Red_Mining,Red Mining Laser,0,3,1,1,1,1,2,45,1,1,255,100,100,255,1,1
+2,Projectile_Red_Mining,Red Mining Laser,0,3,1,1,1,1,2,80,1,1,255,100,100,255,0,0
 3,Projectile_Grey_Explosion,Grey Explosion,0,1,1,1,0,0,8,16,1,1,0,0,0,0,0,1

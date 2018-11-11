@@ -5,6 +5,8 @@
 #include<UI.h>
 #include<AI_Item_Component.h>
 #include<Game_Library.h>
+#include<Object.h>
+#include<AI_Stats_Component.h>
 
 UI_Component_Generic::UI_Component_Generic(Global_Service_Locator* sLocator, SDL_Rect placement_rect, bool component_is_filled, SDL_Color bColor, bool is_highlight, SDL_Color hColor)
 {
@@ -135,9 +137,12 @@ void UI_Component_Generic::Check_For_Click()
 	}
 }
 
-void UI_Component_Generic::Change_Component_Title(string new_title)
+void UI_Component_Generic::Change_Component_Title(string new_title, SDL_Rect t_offset, SDL_Color t_color)
 {
 	title = new_title;
+	draw_title = true;
+	text_offset = t_offset;
+	text_color = t_color;
 }
 
 // Draw Functions
@@ -183,10 +188,23 @@ void UI_Component_Message_Stream::Draw(Draw_System* draw_system, SDL_Rect base_r
 	for (int i = 0; i < max_message_lines; i++)
 	{
 		SDL_Rect draw_rect = { base_rect.x + offset_rect.x + 5, base_rect.y + offset_rect.y + spacer*20 + 5, offset_rect.w, offset_rect.h };
-		Draw_System::Text_Instruction new_text_instruction = { 1,draw_rect, font_type,message_array[i] };
+		//THIS IS DUMB JUST TO GET A SINGLE LINE TO SHOW UP BOLD IN MESSAGE FEED - NEED A MORE THOROUGH IMPLEMENTATION
+		int font = font_type;
+		if (i == bold_line) font = FONT_SMALL_BOLD;
+		Draw_System::Text_Instruction new_text_instruction = { 1,draw_rect, font,message_array[i] };
 		draw_system->Add_Text_Job_To_Render_Cycle(new_text_instruction);
 		spacer++;
 	}
+}
+
+void UI_Component_Message_Stream::Set_Bold_Line(int bLine)
+{
+	bold_line = bLine;
+}
+
+void UI_Component_Message_Stream::Set_Message_At_Array_Num(string new_message, int array_num)
+{
+	message_array[array_num] = new_message;
 }
 
 void UI_Component_Message_Stream::Push_Message_Into_Stream(string new_message)
@@ -200,6 +218,16 @@ void UI_Component_Message_Stream::Push_Message_Into_Stream(string new_message)
 
 	message_array[0] = new_message;
 }
+
+void UI_Component_Message_Stream::Clear_All_Messages_From_Stream()
+{
+	for (int i = 0; i < max_message_lines; i++)
+	{
+		message_array[i] = "-";
+	}
+}
+
+// Graphic Button Functions
 
 void UI_Component_Graphic_Button::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 {
@@ -246,6 +274,8 @@ void UI_Component_Graphic_Button::Fetch_Sprite_Details_From_Object_ID()
 	}
 }
 
+// Item Slot Buttons Functions
+
 void UI_Component_Item_Slot_Button::Draw(SDL_Rect base_rect)
 {
 	UI_Component_Generic::Draw(service_locator->get_Draw_System_Pointer(), base_rect);
@@ -271,4 +301,25 @@ void UI_Component_Item_Slot_Button::Draw(SDL_Rect base_rect)
 void UI_Component_Item_Slot_Button::Init(Item_Slot* sPointer)
 {
 	slot_pointer = sPointer;
+}
+
+// Stat Buttons Functions
+
+void UI_Component_Stat_Button::Draw(Draw_System* draw_system, SDL_Rect base_rect)
+{
+	UI_Component_Generic::Draw(service_locator->get_Draw_System_Pointer(), base_rect);
+	AI_Stats_Component* ai_stats = reference_object->Return_Stats_Component();
+	int stat_value = ai_stats->Return_Stat_Value(stat_name);
+	SDL_Rect text_rect = { base_rect.x + offset_rect.x + 3, base_rect.y + offset_rect.y + 5, offset_rect.w, offset_rect.h };
+	SDL_Rect stat_rect = { base_rect.x + offset_rect.x + 3 + string_width_offset, base_rect.y + offset_rect.y + 5, offset_rect.w, offset_rect.h };
+	service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1,text_rect,FONT_DEFAULT, stat_string_name,{255,255,255,255} });
+	service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1,stat_rect,FONT_DEFAULT, to_string(stat_value) ,{ 255,255,255,255 } });
+}
+
+void UI_Component_Stat_Button::Init(Object* ref_object, int s_name, string stat_s_name)
+{
+	reference_object = ref_object;
+	stat_name = s_name;
+	stat_string_name = stat_s_name;
+
 }

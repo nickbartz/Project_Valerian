@@ -23,7 +23,7 @@ UI_Window_Generic::UI_Window_Generic(Global_Service_Locator* sLocator, int windo
 
 void UI_Window_Generic::Change_Window_Name(string new_name)
 {
-	window_title_bar.Change_Component_Title(new_name);
+	window_title_bar.Change_Component_Title(new_name, { 5,3,0,0 });
 }
 
 SDL_Rect UI_Window_Generic::Return_Rect()
@@ -77,6 +77,7 @@ void UI_Window_Generic::Create_Panel_Header(SDL_Rect pos_rect, int panel_name, s
 	panel_headers[active_panel_headers].Assign_Window(window_name);
 	panel_headers[active_panel_headers].Assign_Panel(panel_name);
 	panel_headers[active_panel_headers].Make_Button(panel_title, text_offset, BUTTON_ACTION_SWITCH_PANEL, text_color);
+	panel_headers[active_panel_headers].Set_Font_Type(FONT_LARGE_BOLD);
 	active_panel_headers++;
 }
 
@@ -193,9 +194,17 @@ void UI_Window_Object_Diagnostic::Draw(Draw_System* draw_system)
 {
 	UI_Window_Generic::Draw(draw_system);
 
-	if (currently_active_panel == object_inventory.Get_Panel_Name())
+	switch (currently_active_panel)
 	{
+	case PANEL_OBJECT_INVENTORY:
 		object_inventory.Draw(draw_system, base_window_rect);
+		break;
+	case PANEL_OBJECT_STATS:
+		object_stats.Draw(draw_system, base_window_rect);
+		break;
+	case PANEL_OBJECT_JOBS:
+		object_jobs.Draw(draw_system, base_window_rect);
+		break;
 	}
 }
 
@@ -203,11 +212,15 @@ void UI_Window_Object_Diagnostic::Init(int base_x, int base_y, Object* diagnosti
 {
 	Change_Rect({ base_x,base_y, base_window_rect.w, base_window_rect.h });
 	currently_open = true;
-	AI_Stats_Component* object_stats_pointer = (AI_Stats_Component*)diagnostic_object->Return_Object_Component_Pointer(OBJECT_COMPONENT_STATS);
+	AI_Stats_Component* object_stats_pointer = diagnostic_object->Return_Stats_Component();
 
 	if (object_stats_pointer->Return_Object_Type() == OBJECT_TYPE_ENTITY)
 	{
 		Change_Window_Name(object_stats_pointer->Get_Entity_Name());
+	}
+	else if (object_stats_pointer->Return_Object_Type() == OBJECT_TYPE_CONTAINER)
+	{
+		Change_Window_Name("Container");
 	}
 	else if (object_stats_pointer->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)
 	{
@@ -215,6 +228,8 @@ void UI_Window_Object_Diagnostic::Init(int base_x, int base_y, Object* diagnosti
 	}
 
 	object_inventory.Init(diagnostic_object);
+	object_stats.Init(diagnostic_object);
+	object_jobs.Init(diagnostic_object);
 }
 
 void UI_Window_Screen_Buttons::Init()
@@ -228,12 +243,18 @@ void UI_Window_Screen_Buttons::Init()
 	int rally_length = 2;
 	int rally_array[2] = { UI_ACTION_CATEGORY_SUPPORTING,UI_ACTION_SUPPORTING_TYPE_SET_RALLY_POINT };
 	UI_Static_Button_Set_Rally_Point.Set_Click_Message(rally_length, rally_array);
+
+	UI_Static_Button_Mark_Asteroid_For_Mining.Init(OBJECT_TYPE_NULL, 0, { 7 * SPRITE_SIZE,1 * SPRITE_SIZE,SPRITE_SIZE,SPRITE_SIZE });
+	int mining_message_length = 2;
+	int mining_message[2] = { UI_ACTION_CATEGORY_SUPPORTING,UI_ACTION_SUPPORTING_TYPE_SET_ASTEROID_MINE };
+	UI_Static_Button_Mark_Asteroid_For_Mining.Set_Click_Message(mining_message_length, mining_message);
 }
 
 void UI_Window_Screen_Buttons::Draw()
 {
 	UI_Static_Button_Delete_Structure.Draw(service_locator->get_Draw_System_Pointer(),base_window_rect);
 	UI_Static_Button_Set_Rally_Point.Draw(service_locator->get_Draw_System_Pointer(), base_window_rect);
+	UI_Static_Button_Mark_Asteroid_For_Mining.Draw(service_locator->get_Draw_System_Pointer(), base_window_rect);
 }
 
 void UI_Window_Screen_Buttons::Respond_To_Mouse()
@@ -244,4 +265,5 @@ void UI_Window_Screen_Buttons::Respond_To_Mouse()
 	// Check to see if anyof the buttons are clicked
 	UI_Static_Button_Delete_Structure.Check_For_Click();
 	UI_Static_Button_Set_Rally_Point.Check_For_Click();
+	UI_Static_Button_Mark_Asteroid_For_Mining.Check_For_Click();
 }

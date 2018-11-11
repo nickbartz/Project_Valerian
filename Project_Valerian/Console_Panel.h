@@ -6,6 +6,8 @@
 
 class Global_Service_Locator;
 class Object;
+class Job;
+class AI_Job_Component;
 
 class UI_Panel_Generic
 {
@@ -31,8 +33,9 @@ public:
 	{
 		panel_name = pName;
 		
-		message_stream = UI_Component_Message_Stream(service_locator, window, panel_name, BUTTON_ACTION_DO_NOTHING, { offset_rect.x,offset_rect.y,offset_rect.w,offset_rect.h }, min(UI_MAX_CONSOLE_MESSAGES, offset_rect.h / 20));
+		message_stream = UI_Component_Message_Stream(service_locator, { offset_rect.x,offset_rect.y,offset_rect.w,offset_rect.h }, min(UI_MAX_CONSOLE_MESSAGES, offset_rect.h / 20));
 		message_stream.Set_Font_Type(FONT_SMALL);
+		background_component = UI_Component_Generic(service_locator, offset_rect, true);
 	}
 	
 	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
@@ -40,6 +43,7 @@ public:
 
 private:
 	UI_Component_Message_Stream message_stream;
+	UI_Component_Generic background_component;
 
 };
 
@@ -85,4 +89,50 @@ private:
 	int panel_columns;
 	vector <UI_Component_Item_Slot_Button> graphic_button_array;
 	UI_Component_Generic background_component;
+};
+
+class UI_Panel_Object_Stats : public UI_Panel_Generic
+{
+public:
+	UI_Panel_Object_Stats(Global_Service_Locator* service_locator = NULL, int window_name = WINDOW_OBJECT_DIAGNOSTIC, SDL_Rect offset_rect = { 0,0,100,100 }) : UI_Panel_Generic(service_locator, window_name, offset_rect)
+	{
+		panel_name = PANEL_OBJECT_STATS;
+	}
+
+	void Init(Object* object);
+	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
+	void Check_For_Clicks();
+
+private:
+	Object * linked_object;
+
+	int num_stats = 0;
+	vector <UI_Component_Stat_Button> graphic_button_array;
+	UI_Component_Generic background_component;
+
+};
+
+class UI_Panel_Object_Jobs : public UI_Panel_Generic
+{
+public:
+	UI_Panel_Object_Jobs(Global_Service_Locator* service_locator = NULL, int window_name = WINDOW_OBJECT_DIAGNOSTIC, SDL_Rect offset_rect = { 0,0,100,100 }) : UI_Panel_Generic(service_locator, window_name, offset_rect)
+	{
+		panel_name = PANEL_OBJECT_JOBS;
+	}
+
+	void Init(Object* object);
+	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
+	void Check_For_Clicks();
+
+private:
+	Object * linked_object;
+	AI_Job_Component* linked_job_component;
+	Job* object_current_job;
+	bool reset = true;
+
+	int num_stats = 0;
+	UI_Component_Generic object_job;
+	UI_Component_Message_Stream goal_list;
+	UI_Component_Generic background_component;
+
 };

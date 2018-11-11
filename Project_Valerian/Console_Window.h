@@ -106,8 +106,12 @@ public:
 	{
 		// Create Wall Structure Menu Panels
 		Create_Panel_Header({ 0,window_title_height,30,panel_bar_height }, PANEL_OBJECT_INVENTORY, "Inventory", { 5,3,0,0 }, { 255,255,255,255 });
+		Create_Panel_Header({ 0,window_title_height,30,panel_bar_height }, PANEL_OBJECT_STATS, "Stats", { 5,3,0,0 }, { 255,255,255,255 });
+		Create_Panel_Header({ 0,window_title_height,30,panel_bar_height }, PANEL_OBJECT_JOBS, "Jobs", { 5,3,0,0 }, { 255,255,255,255 });
 
 		object_inventory = UI_Panel_Object_Inventory(service_locator, 6, 8, WINDOW_OBJECT_DIAGNOSTIC, { 0,window_title_height + panel_bar_height,base_rect.w,base_rect.h - window_title_height + panel_bar_height });
+		object_stats = UI_Panel_Object_Stats(service_locator, WINDOW_OBJECT_DIAGNOSTIC, { 0,window_title_height + panel_bar_height,base_rect.w,base_rect.h - window_title_height + panel_bar_height });
+		object_jobs = UI_Panel_Object_Jobs(service_locator, WINDOW_OBJECT_DIAGNOSTIC, { 0,window_title_height + panel_bar_height,base_rect.w,base_rect.h - window_title_height + panel_bar_height });
 
 		Size_Panel_Headers();
 
@@ -122,6 +126,8 @@ public:
 
 private:
 	UI_Panel_Object_Inventory object_inventory;
+	UI_Panel_Object_Stats object_stats;
+	UI_Panel_Object_Jobs object_jobs;
 };
 
 class UI_Window_Screen_Buttons : public UI_Window_Generic
@@ -133,6 +139,8 @@ public:
 		UI_Static_Button_Delete_Structure = UI_Component_Graphic_Button(service_locator, delete_structure_rect);
 		SDL_Rect rally_point_rect = { 0,TILE_SIZE,TILE_SIZE,TILE_SIZE };
 		UI_Static_Button_Set_Rally_Point = UI_Component_Graphic_Button(service_locator, rally_point_rect);
+		SDL_Rect mining_button_rect = { 0,2*TILE_SIZE,TILE_SIZE,TILE_SIZE };
+		UI_Static_Button_Mark_Asteroid_For_Mining = UI_Component_Graphic_Button(service_locator, mining_button_rect);
 	}
 
 	void Init();
@@ -142,4 +150,5 @@ public:
 private:
 	UI_Component_Graphic_Button UI_Static_Button_Delete_Structure;
 	UI_Component_Graphic_Button UI_Static_Button_Set_Rally_Point;
+	UI_Component_Graphic_Button UI_Static_Button_Mark_Asteroid_For_Mining;
 };

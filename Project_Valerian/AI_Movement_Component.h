@@ -18,6 +18,7 @@ public:
 	void Set_Target_Coord(Coordinate grid_point);
 	void Set_Target_Pos(int pos_x, int pos_y);
 	void Set_Projectile_Velocity(SDL_Point target);
+	void Stop_Moving();
 
 	// Accessors
 	SDL_Rect Return_World_Pos();
@@ -25,9 +26,9 @@ public:
 
 private:
 	SDL_Rect world_pos;
-	Coordinate world_coord;
+	Coordinate world_coord = { 0,0 };
 
-	bool Update_World_Coord(SDL_Point new_world_pos);
+	bool Update_World_Coord(SDL_Rect new_world_rect);
 
 	int object_base_speed = 3;
 	int obj_x_vel = 0.0; // For projectiles

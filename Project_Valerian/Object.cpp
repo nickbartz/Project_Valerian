@@ -32,6 +32,7 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, object_config.structure_id, structure_stats);
 	object_service_locator.Register_Pointer(AI_Stats);
 	AI_Stats->Update_Stat(STAT_OBJECT_FACTION, faction);
+	AI_Stats->Update_Stat(STAT_STRUCTURE_BUILT_LEVEL, object_config.max_built_level);
 
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config, neighbors);
 	object_service_locator.Register_Pointer(render_component);
@@ -45,7 +46,25 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
 	object_service_locator.Register_Pointer(AI_Relationship);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, object_config.inventory_pack);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, object_config.blueprint_pack, object_config.inventory_pack);
+	object_service_locator.Register_Pointer(AI_Items);
+}
+
+void Object::Init_Scaffold_From_Template(int structure_template_id, int faction)
+{
+	object_service_locator.Register_Pointer(this);
+
+	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, OBJECT_TYPE_SCAFFOLD, structure_template_id);
+	object_service_locator.Register_Pointer(AI_Stats);
+	AI_Stats->Update_Stat(STAT_OBJECT_FACTION, faction);
+
+	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, OBJECT_TYPE_STRUCTURE, structure_template_id);
+	object_service_locator.Register_Pointer(AI_Movement);
+
+	render_component = new Render_Component(service_locator, &object_service_locator, OBJECT_TYPE_SCAFFOLD, structure_template_id);
+	object_service_locator.Register_Pointer(render_component);
+
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, 0);
 	object_service_locator.Register_Pointer(AI_Items);
 }
 
@@ -57,11 +76,11 @@ void Object::Init_Entity_From_Template(Entity_Template object_config, int factio
 	object_service_locator.Register_Pointer(AI_Stats);
 	AI_Stats->Update_Stat(STAT_OBJECT_FACTION, faction);
 
-	render_component = new Render_Component(service_locator, &object_service_locator, object_config);
-	object_service_locator.Register_Pointer(render_component);
-
 	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, OBJECT_TYPE_ENTITY, object_config.entity_id);
 	object_service_locator.Register_Pointer(AI_Movement);
+
+	render_component = new Render_Component(service_locator, &object_service_locator, OBJECT_TYPE_ENTITY, object_config.entity_id);
+	object_service_locator.Register_Pointer(render_component);
 
 	//AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
 	//object_service_locator.Register_Pointer(AI_Relationship);
@@ -104,6 +123,7 @@ void Object::Init_Container_From_Inventory(Item_Slot inventory_pointer[], int nu
 	object_service_locator.Register_Pointer(AI_Movement);
 
 	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, 0);
+	AI_Items->Copy_Inventory_From_Pointer(inventory_pointer, num_inventory_items);
 	object_service_locator.Register_Pointer(AI_Items);
 
 	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, OBJECT_TYPE_CONTAINER, 0);
@@ -162,26 +182,52 @@ Coordinate Object::get_coordinate()
 	return AI_Movement->Return_Grid_Coord();
 }
 
-void* Object::Return_Object_Component_Pointer(int component_type)
+SDL_Rect Object::get_world_pos()
 {
-	switch (component_type)
-	{
-	case OBJECT_COMPONENT_STATS:
-		return AI_Stats;
-		break;
-	case OBJECT_COMPONENT_MOVEMENT:
-		return AI_Movement;
-		break;
-	case OBJECT_COMPONENT_ITEM:
-		return AI_Items;
-		break;
-	case OBJECT_COMPONENT_JOB:
-		return AI_Job;
-		break;
-	case OBJECT_COMPONENT_RELATIONSHIP:
-		return AI_Relationship;
-		break;
-	}
+	return AI_Movement->Return_World_Pos();
+}
+
+Render_Component* Object::Return_Render_Component()
+{
+	if (render_component != NULL) return render_component;
+	else cout << "function trying to return null render_component" << endl;
+
+	return NULL;
+}
+AI_Stats_Component* Object::Return_Stats_Component()
+{
+	if (AI_Stats != NULL) return AI_Stats;
+	else cout << "function trying to return null stats_component" << endl;
+
+	return NULL;
+}
+AI_Job_Component* Object::Return_AI_Job_Component()
+{
+	if (AI_Job != NULL) return AI_Job;
+	else cout << "function trying to return null jobs component" << endl;
+
+	return NULL;
+}
+AI_Movement_Component* Object::Return_AI_Movement_Component()
+{
+	if (AI_Movement != NULL) return AI_Movement;
+	else cout << "function trying to return null movement component" << endl;
+
+	return NULL;
+}
+AI_Rel_Component* Object::Return_AI_Rel_Component()
+{
+	if (AI_Relationship != NULL) return AI_Relationship;
+	else cout << "function trying to return null relationship component" << endl;
+
+	return NULL;
+}
+AI_Item_Component* Object::Return_AI_Item_Component()
+{
+	if (AI_Items != NULL) return AI_Items;
+	else cout << "function trying to return null items component" << endl;
+
+	return NULL;
 }
 
 // Core Object Functions

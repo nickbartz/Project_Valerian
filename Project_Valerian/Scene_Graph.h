@@ -11,8 +11,11 @@ using namespace std;
 #include<Game_Library.h>
 #include<Job.h>
 
+
 class Global_Service_Locator;
 class Item_Slot;
+class Blueprint;
+class Item;
 
 class Scene_Graph
 {
@@ -25,16 +28,15 @@ public:
 	void Draw_Background();
 	void Update_Tile_Map(Coordinate grid_point, int tile_layer, Object* structure);
 
-	// Create Objects
+	// Create Structures
 	bool Check_Tile_Placement(Coordinate grid_point, Structure_Template structure);
 	void Create_Background();
-	void Create_New_Structure(Coordinate grid_point, Structure_Template* structure, int faction, bool update_message = true);
+	void Create_New_Structure(Coordinate grid_point, int structure_template_id, int faction, bool update_message = true);
 	void Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset, int faction);
 
-	// Delete Objects
-	void Delete_Structure(Coordinate grid_point, int tile_layer);
-	void Delete_Structure_Highest_Layer(Coordinate grid_point);
-	void Delete_Projectile(int projectile_array_num);
+	// Create Scaffolds
+	bool Check_Scaffold_Placement(Coordinate grid_point, int structure_id);
+	void Create_New_Scaffold(Coordinate grid_point, int structure_template_id, int faction);
 
 	// Create Entities
 	void Create_Entity(Coordinate grid_point, Entity_Template entity, int faction);
@@ -44,18 +46,39 @@ public:
 	void Create_Laser_Between_Two_Points(Object* firing_object, Object* target_object, int projectile_id);
 
 	// Create Container
-	void Create_Container(Coordinate grid_point, Item_Slot inventory_array[], int num_items);
+	void Create_Container(Coordinate grid_point, Item_Slot inventory_array[], int num_items, int pickup_flag = 0);
 	bool Check_Container_Placement(Coordinate grid_point);
 
+	// Job Related Functions
+	void Add_Job_To_Job_Array(Job new_job);
+	void Job_Create_Pickup_Container(Object* container);
+	void Job_Create_Mine_Asteroid(Object* asteroid);
+	void Job_Create_Build_Scaffold(Object* scaffold);
+	bool Job_Create_Transport_Items_For_Blueprint(Object* requestee, Blueprint blueprint, bool create_job);
+
+	bool Create_Shuttle_Goalsets_From_Item_Slot(vector<Goal_Set> &goal_set_vector, Item_Slot item_slot, Object* requestee);
+	Goal_Set Create_Shuttle_Item_Goalset(Item item, int amount_of_item, Object* ideal_storage_location, Object* requestee);
+
+	Job* Return_Job_With_Highest_Priority_Correlation(int dummy_variable);
+	void Check_If_Job_Can_Be_Closed(int job_array_num);
+
+	// Delete Objects
+	void Delete_Object(int object_type, int array_num);
+	void Delete_Structure_Update_Tile_Map_Send_Message(Coordinate grid_point, int tile_layer);
+	void Delete_Structure_Highest_Layer(Coordinate grid_point);
+	
 	// Accessors
 	Adjacent_Structure_Array Return_Neighboring_Tiles(Coordinate grid_point);
+	vector<Object*> Return_Vector_Of_Storage_Locations_With_Item(Item item);
+	int Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(vector<Object*> storage_locations_with_item, Item item);
 	int Return_Current_Structure_Count();
 	Object* Return_Object_At_Coord(int coord_x, int coord_y);
-	
+	Object* Return_Structure_At_Coord_By_Layer(int coord_x, int coord_y, int layer);
+	Object* Return_Nearest_Structure_By_Type(Object* local_object, string structure_type);
 	Object* Return_Object_By_Type_And_Array_Num(int object_type, int array_num);
 	Object* Return_Structure_By_Array_Num(int array_num);
 	Object* Return_Entity_By_Array_Num(int array_num);
-
+	
 	// Queries
 	int Check_Simple_Distance_To_Object(Object* object_a, Object* object_b);
 	Coordinate Return_Nearest_Accessible_Coordinate(Coordinate origin, Coordinate destination, int requesting_faction);
@@ -76,8 +99,6 @@ private:
 		int depth;
 		int type;
 	};
-
-	// Background Objects
 	Background_Object background_objects[1000];
 	Object background_star_1;
 	Object background_star_2;
@@ -97,6 +118,9 @@ private:
 
 	int current_num_containers = 0;
 	Object container_array[WORLD_MAX_NUM_CONTAINERS];
+
+	int current_num_scaffolds = 0;
+	Object scaffold_array[WORLD_MAX_NUM_SCAFFOLDS];
 
 	int current_num_jobs = 0;
 	Job current_job_array[WORLD_MAX_NUM_JOBS];
