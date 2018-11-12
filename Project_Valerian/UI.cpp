@@ -130,6 +130,11 @@ void UI::Update()
 	static_buttons.Draw();
 	if (entity_diagnostic_array[0].is_open()) entity_diagnostic_array[0].Draw(service_pointer->get_Draw_System_Pointer());
 	if (entity_diagnostic_array[1].is_open()) entity_diagnostic_array[1].Draw(service_pointer->get_Draw_System_Pointer());
+
+	int num_active_jobs = service_pointer->get_Scene_Graph()->Return_Current_Num_Jobs_In_Array();
+	string job_counter = "Num Jobs: ";
+	job_counter += to_string(num_active_jobs);
+	service_pointer->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1, {0,32,128,32},FONT_SMALL, job_counter, {255,255,255,255} });
 }
 
 void UI::Parse_Loaded_Actions()

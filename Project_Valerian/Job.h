@@ -24,8 +24,9 @@ struct Goal_Set
 
 	int goal_set_uniq_id = rand() % 100;
 	int num_goals_in_set = 0;
-	Object* assigned_object;
-	int max_num_assigned_objects;
+	vector<Object*> assigned_objects;
+	int current_num_assigned_objects = 0;
+	int max_num_assigned_objects = 1;
 	vector<Job_Goal> mini_goal_array ;
 };
 
@@ -44,6 +45,7 @@ public:
 	int Get_Job_Type();
 	int Get_Job_Uniq_ID();
 	int Get_Num_Goal_Sets();
+	int Get_Num_Unassigned_Goalsets();
 
 	// Functions relating to how the job is stored on the scene graph
 	void Set_Job_Array_Num(int job_array_num);

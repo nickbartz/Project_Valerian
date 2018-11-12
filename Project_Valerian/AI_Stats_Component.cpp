@@ -22,6 +22,7 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 	{
 	case OBJECT_TYPE_STRUCTURE:
 		object_template_id = object_template_num;
+		object_stats.structure_stats.impassable = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_num)->is_inaccessible;
 		break;
 	case OBJECT_TYPE_ENTITY:
 		object_template_id = object_template_num;
@@ -34,6 +35,7 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 		break;
 	case OBJECT_TYPE_SCAFFOLD:
 		object_template_id = object_template_num;
+		object_stats.structure_stats.impassable = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_num)->is_inaccessible;
 		break;
 	}
 

@@ -9,6 +9,9 @@ using namespace std;
 #include<Render_Component.h>
 #include<Job.h>
 #include<unordered_map>
+#include<AI_Item_Component.h>
+
+class Blueprint;
 
 struct Structure_Template
 {
@@ -40,9 +43,8 @@ struct Structure_Template
 	int is_inaccessible = 0;
 
 	// Item_Pack
-	int inventory_pack = 0;
-	int blueprint_pack = 0;
-	int equipment_pack = 0;
+	int has_starter_inventory = 0;
+	int scaffold_blueprint_id = 0;
 };
 
 struct Entity_Template
@@ -51,7 +53,7 @@ struct Entity_Template
 	int render_component = RENDER_COMPONENT_ENTITY_COMPLEX;
 	int num_entity_animations = 0;
 	int num_entity_components = 0;
-	int entity_inventory_pack = 0;
+	int entity_has_starter_inventory = 0;
 	Animation_State entity_animations[MAX_NUM_ANIMATIONS][MAX_NUM_COMPONENTS];
 };
 
@@ -81,12 +83,6 @@ struct Item_Template
 	SDL_Rect sprite_specs = { 0,0,SPRITE_SIZE,SPRITE_SIZE };
 };
 
-struct Inventory_Template
-{
-	int inventory_pack_num = 0;
-	int inventory_pack[5][2];
-};
-
 struct Equipment_Template
 {
 
@@ -107,7 +103,8 @@ public:
 	Structure_Template* Fetch_Tile_Object_Config(int tile_id);
 	Entity_Template* Fetch_Entity_Template(int entity_id);
 	Item_Template* Fetch_Item_Template(int item_id);
-	Inventory_Template* Fetch_Blueprint(int inventory_id);
+	Blueprint* Fetch_Blueprint(int inventory_id);
+	vector<Blueprint*> Fetch_All_Blueprints_Of_Type_For_Object(int type, int object_type, int object_template_id);
 	Job* Fetch_Job_Template(int job_id);
 	Projectile_Template* Fetch_Projectile_Template(int projectile_id);
 
@@ -116,6 +113,7 @@ public:
 	int Fetch_Structure_Type_ID_From_Name(string name);
 	void Load_Job_Code_String_To_Enum_Crosswalk();
 	int Get_Job_Code_From_String(string query);
+	int Get_Object_Type_Enum_From_Object_Type_String(string query);
 
 	void Load_Tiles_From_Data_File(string tiles_path);
 	void Load_Entity_Templates(string entity_template_path, string entity_animation_path);
@@ -143,7 +141,7 @@ private:
 	Item_Template loaded_Items[MAX_NUM_TEMPLATES];
 	int num_loaded_Items = 0;
 
-	Inventory_Template loaded_blueprints[MAX_NUM_TEMPLATES];
+	Blueprint loaded_blueprints[MAX_NUM_TEMPLATES];
 	int num_loaded_blueprints = 0;
 
 	unordered_map<string, int> job_codes;

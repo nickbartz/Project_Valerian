@@ -97,16 +97,16 @@ void AI_Job_Component::Update_Entity_Manage_Jobs()
 		{
 			Clear_Job();
 			Update_Entity_Choose_Job();
-			if (current_job != NULL) Add_All_Job_Goals_To_Array();
+			if (current_job != NULL) Query_Job_For_Goals();
 		}
 	}
 	else if (current_num_job_goals == 0)
 	{
-		if (current_job != NULL) Add_All_Job_Goals_To_Array();
+		if (current_job != NULL) Query_Job_For_Goals();
 		else
 		{
 			Update_Entity_Choose_Job();
-			if (current_job != NULL) Add_All_Job_Goals_To_Array();
+			if (current_job != NULL) Query_Job_For_Goals();
 		}
 	}
 }
@@ -168,7 +168,7 @@ void AI_Job_Component::Check_For_Messages_Structure()
 			new_message = &service_locator->get_MB_Pointer()->Custom_Message_Array[i];
 			if (new_message->Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION)
 			{
-				if (current_num_job_goals == 0) Add_All_Job_Goals_To_Array();
+				if (current_num_job_goals == 0) Query_Job_For_Goals();
 				next_goal_index = 0;
 			}
 		}
@@ -183,7 +183,7 @@ void AI_Job_Component::Check_For_Messages_Structure()
 				current_coord = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
 				if (abs(new_message->Read_Message(6) - current_coord.x) <= 1 && abs(new_message->Read_Message(7) - current_coord.y) <= 1 && new_message->Read_Message(3) == object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION))
 				{
-					if (current_num_job_goals == 0) Add_All_Job_Goals_To_Array();
+					if (current_num_job_goals == 0) Query_Job_For_Goals();
 					next_goal_index = 0;
 				}
 				break;
@@ -219,25 +219,31 @@ void AI_Job_Component::Check_For_Messages_Entity()
 
 // Goal Addition and Subtraction 
 
-void AI_Job_Component::Add_All_Job_Goals_To_Array()
+void AI_Job_Component::Query_Job_For_Goals()
 {
-	Clear_All_Goals_From_Array();
-
 	Goal_Set* goals_received_from_job = current_job->Get_Job_Goals(object_locator->Return_Object_Pointer());
-	job_goal_set_id = goals_received_from_job->goal_set_uniq_id;
 
-	if (goals_received_from_job->mini_goal_array.size() > 0)
+	if (goals_received_from_job != NULL && goals_received_from_job->mini_goal_array.size() > 0)
 	{
+		int insertion_index = next_goal_index;
 		for (int i = 0; i < goals_received_from_job->mini_goal_array.size(); i++)
 		{
-			current_goals.push_back(goals_received_from_job->mini_goal_array[i]);
+			current_goals.insert(current_goals.begin() + insertion_index, goals_received_from_job->mini_goal_array[i]);
+			//current_goals.push_back(goals_received_from_job->mini_goal_array[i]);
 			current_num_job_goals++;
+			insertion_index++;
 		}
 	}
 	else
 	{
 		cout << "current job returned NULL goal set, should not happen" << endl;
 	}
+
+	// Comment out to get list of current goals
+	//for (int i = 0; i < current_goals.size(); i++)
+	//{
+	//	cout << i << " : " << current_goals[i].goal_string_name << endl;
+	//}
 }
 
 void AI_Job_Component::Add_Non_Job_Goal_To_Goal_Array(Job_Goal goal)
@@ -264,6 +270,7 @@ void AI_Job_Component::Process_Next_Goal()
 
 	if (next_goal_index < current_num_job_goals && current_goals[next_goal_index].goal_instruction_array[0] != ACTION_NONE)
 	{
+		//cout << "processing: " << current_goals[next_goal_index].goal_string_name << endl;
 		Action_Triage(&current_goals[next_goal_index]);
 	}
 }
@@ -371,7 +378,13 @@ void AI_Job_Component::Action_Assess_Internal(Job_Goal* goal)
 	switch (goal->goal_instruction_array[1])
 	{
 	case A_AI_CHECK_JOB_FOR_MORE_GOALSETS:
+		// We're going to move onto the next goal first, so that if we do add more goalsets, we're not repeating the "check job" goal later on
 		next_goal_index++;
+		if (current_job != NULL && current_job->Get_Num_Unassigned_Goalsets() > 0)
+		{
+			Query_Job_For_Goals();
+		}
+
 		break;
 	}
 }
@@ -470,11 +483,22 @@ void AI_Job_Component::Action_Goal_Traversal(Job_Goal* goal)
 
 void AI_Job_Component::Action_Manage_Goal_Set_End(Job_Goal* goal)
 {
-	current_job->Close_Out_Goal_Set(job_goal_set_id);
-	if (current_job->Return_Is_Init() == false)
+	current_job->Close_Out_Goal_Set(goal->goal_instruction_array[1]);
+	next_goal_index++;
+
+	if (next_goal_index >= current_num_job_goals)
 	{
-		Clear_Job();
+		if (current_job->Return_Is_Init() == false || current_job->Get_Num_Unassigned_Goalsets() <= 0)
+		{
+
+			Clear_Job();
+		}
+		else
+		{
+			Query_Job_For_Goals();
+		}
 	}
+
 }
 
 void AI_Job_Component::Increment_Goal(int goal_increment)

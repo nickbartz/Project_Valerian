@@ -52,6 +52,20 @@ int Job::Get_Num_Goal_Sets()
 	return current_num_goal_sets;
 }
 
+int Job::Get_Num_Unassigned_Goalsets()
+{
+	int num_unassigned_goalsets = 0;
+	for (int i = 0; i < current_num_goal_sets; i++)
+	{
+		if (smart_goal_set[i].current_num_assigned_objects < smart_goal_set[i].max_num_assigned_objects)
+		{
+			num_unassigned_goalsets++;
+		}
+	}
+
+	return num_unassigned_goalsets;
+}
+
 void Job::Add_Goal_Set(Goal_Set new_goal_set)
 {
 	smart_goal_set.push_back(new_goal_set);
@@ -60,7 +74,18 @@ void Job::Add_Goal_Set(Goal_Set new_goal_set)
 
 Goal_Set* Job::Get_Job_Goals(Object* object)
 {	
-	return &smart_goal_set.back();
+	for (int i = 0; i < smart_goal_set.size(); i++)
+	{
+		if (smart_goal_set[i].current_num_assigned_objects < smart_goal_set[i].max_num_assigned_objects)
+		{
+			smart_goal_set[i].assigned_objects.push_back(object);
+			smart_goal_set[i].current_num_assigned_objects++;
+			return &smart_goal_set[i];
+		}
+	}
+
+	cout << "returning a null goal_set" << endl;
+	return NULL;
 }
 
 int Job::Get_Job_Type()
@@ -94,7 +119,6 @@ void Job::Close_Out_Goal_Set(int goal_set_id)
 	{
 		if (smart_goal_set[i].goal_set_uniq_id == goal_set_id)
 		{
-
 			smart_goal_set.erase(smart_goal_set.begin() + i);
 			current_num_goal_sets--;
 			break;

@@ -214,17 +214,20 @@ void UI_Window_Object_Diagnostic::Init(int base_x, int base_y, Object* diagnosti
 	currently_open = true;
 	AI_Stats_Component* object_stats_pointer = diagnostic_object->Return_Stats_Component();
 
-	if (object_stats_pointer->Return_Object_Type() == OBJECT_TYPE_ENTITY)
+	switch (object_stats_pointer->Return_Object_Type())
 	{
+	case OBJECT_TYPE_ENTITY:
 		Change_Window_Name(object_stats_pointer->Get_Entity_Name());
-	}
-	else if (object_stats_pointer->Return_Object_Type() == OBJECT_TYPE_CONTAINER)
-	{
+		break;
+	case OBJECT_TYPE_CONTAINER:
 		Change_Window_Name("Container");
-	}
-	else if (object_stats_pointer->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)
-	{
+		break;
+	case OBJECT_TYPE_STRUCTURE:
 		Change_Window_Name(object_stats_pointer->Get_Structure_Common_Name());
+		break;
+	case OBJECT_TYPE_SCAFFOLD:
+		Change_Window_Name("Scaffold: " + object_stats_pointer->Get_Structure_Common_Name());
+		break;
 	}
 
 	object_inventory.Init(diagnostic_object);

@@ -155,7 +155,11 @@ void Scene_Graph::Delete_Structure_Update_Tile_Map_Send_Message(Coordinate grid_
 
 void Scene_Graph::Delete_Structure_Highest_Layer(Coordinate grid_point)
 {
-	if (tile_map[grid_point].Return_Tile_Type_By_Layer(TILE_LAYER_MID) != 0)
+	if (tile_map[grid_point].Return_Tile_Type_By_Layer(TILE_LAYER_SCAFFOLD) != 0)
+	{
+		Delete_Scaffold(grid_point);
+	}
+	else if (tile_map[grid_point].Return_Tile_Type_By_Layer(TILE_LAYER_MID) != 0)
 	{
 		Delete_Structure_Update_Tile_Map_Send_Message(grid_point, TILE_LAYER_MID);
 	}
@@ -298,11 +302,16 @@ void Scene_Graph::Create_New_Scaffold(Coordinate grid_point, int structure_templ
 
 		if (array_index >= current_num_scaffolds) current_num_scaffolds++;
 
+		tile_map[{grid_point.x, grid_point.y}].Update_Tile_Structure(&scaffold_array[array_index], TILE_LAYER_SCAFFOLD);
+
 		// Now we initialize the object we just created in the scaffold array with an object_config
 		scaffold_array[array_index].Init_Scaffold_From_Template(structure_template_id, faction);
-
-		Job_Create_Build_Scaffold(&scaffold_array[array_index]);
 	}
+}
+
+void Scene_Graph::Delete_Scaffold(Coordinate grid_point)
+{
+	tile_map[grid_point].Update_Tile_Structure(NULL, TILE_LAYER_SCAFFOLD);
 }
 
 // Projectile Creation Commands
@@ -418,19 +427,17 @@ bool Scene_Graph::Check_Container_Placement(Coordinate grid_point)
 
 void Scene_Graph::Add_Job_To_Job_Array(Job new_job)
 {
-	for (int i = 0; i < WORLD_MAX_NUM_JOBS; i++)
+	for (int i = 0; i < WORLD_MAX_NUM_JOBS + 1; i++)
 	{
 		if (current_job_array[i].Return_Is_Init() == false)
 		{
 			current_job_array[i] = new_job;
 			current_job_array[i].Set_Init(true);
 			current_job_array[i].Set_Job_Array_Num(i);
-			if (i >= current_num_jobs) current_num_jobs++;
+			current_num_jobs++;
 			break;
 		}
 	}
-
-
 }
 
 void Scene_Graph::Job_Create_Pickup_Container(Object* container)
@@ -445,12 +452,12 @@ void Scene_Graph::Job_Create_Pickup_Container(Object* container)
 		int move_to_container[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, OBJECT_TYPE_CONTAINER, container->Get_Array_Index() };
 		int check_distance[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, OBJECT_TYPE_CONTAINER, container->Get_Array_Index(),1 };
 		int transfer_from_container[4] = { ACTION_TRANSFER, A_AT_TAKE_ALL_INVENTORY_FROM_OBJECT, OBJECT_TYPE_CONTAINER, container->Get_Array_Index() };
-		int close_job[1] = { ACTION_CLOSE_OUT_GOAL_SET };
+		int close_job[2] = { ACTION_CLOSE_OUT_GOAL_SET,new_goalset.goal_set_uniq_id };
 
 		new_goalset.Add_Raw_Job_Goal_to_Goalset("Go to container", move_to_container, 4);
 		new_goalset.Add_Raw_Job_Goal_to_Goalset("Check Distance", check_distance, 5);
 		new_goalset.Add_Raw_Job_Goal_to_Goalset("Transfer Inventory From Container", transfer_from_container, 4);
-		new_goalset.Add_Raw_Job_Goal_to_Goalset("Close Job", close_job, 1);
+		new_goalset.Add_Raw_Job_Goal_to_Goalset("Close Job", close_job, 2);
 
 		new_container_pickup_job.Add_Goal_Set(new_goalset);
 
@@ -462,6 +469,7 @@ void Scene_Graph::Job_Create_Mine_Asteroid(Object* asteroid)
 {
 	Job new_mining_job = *service_locator->get_Game_Library()->Fetch_Job_Template(3);
 	Goal_Set new_goal_set;
+	new_goal_set.max_num_assigned_objects = 2;
 
 	int go_to_structure[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, OBJECT_TYPE_STRUCTURE, asteroid->Get_Array_Index() };
 	int check_distance[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, OBJECT_TYPE_STRUCTURE, asteroid->Get_Array_Index(),1 };
@@ -471,7 +479,7 @@ void Scene_Graph::Job_Create_Mine_Asteroid(Object* asteroid)
 	int set_wait_timer[3] = { ACTION_EDIT_INTERNAL, A_EI_SET_WAIT_TIMER, };
 	int wait[2] = { ACTION_EDIT_INTERNAL, A_EI_WAIT };
 	int go_back_four[3] = { ACTION_GOAL_TRAVERSAL, TRAVERSAL_GOAL_DECREMENT, 4 };
-	int close_job[1] = { ACTION_CLOSE_OUT_GOAL_SET };
+	int close_job[2] = { ACTION_CLOSE_OUT_GOAL_SET, new_goal_set.goal_set_uniq_id };
 
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Go to asteroid", go_to_structure, 4);
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Check distance from asteroid", check_distance, 5);
@@ -481,7 +489,7 @@ void Scene_Graph::Job_Create_Mine_Asteroid(Object* asteroid)
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Set wait timer", set_wait_timer, 3);
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Wait", wait, 2);
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Go back four steps", go_back_four, 3);
-	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Close job", close_job, 1);
+	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Close job", close_job, 2);
 
 	new_mining_job.Add_Goal_Set(new_goal_set);
 	Add_Job_To_Job_Array(new_mining_job);
@@ -491,6 +499,7 @@ void Scene_Graph::Job_Create_Build_Scaffold(Object* scaffold)
 {
 	Job new_scaffold_job = *service_locator->get_Game_Library()->Fetch_Job_Template(5);
 	Goal_Set new_goal_set;
+	new_goal_set.max_num_assigned_objects = 4;
 	int max_built_level = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(scaffold->Return_Stats_Component()->Return_Template_ID())->max_built_level;
 
 	int go_to_scaffold[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, OBJECT_TYPE_SCAFFOLD, scaffold->Get_Array_Index() };
@@ -501,7 +510,7 @@ void Scene_Graph::Job_Create_Build_Scaffold(Object* scaffold)
 	int set_wait_timer[3] = { ACTION_EDIT_INTERNAL, A_EI_SET_WAIT_TIMER, };
 	int wait[2] = { ACTION_EDIT_INTERNAL, A_EI_WAIT };
 	int go_back_four[3] = { ACTION_GOAL_TRAVERSAL, TRAVERSAL_GOAL_DECREMENT, 4 };
-	int close_job[1] = { ACTION_CLOSE_OUT_GOAL_SET };
+	int close_job[2] = { ACTION_CLOSE_OUT_GOAL_SET,new_goal_set.goal_set_uniq_id };
 
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Go to Scaffold", go_to_scaffold, 4);
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Check distance from scaffold", check_distance, 5);
@@ -511,25 +520,25 @@ void Scene_Graph::Job_Create_Build_Scaffold(Object* scaffold)
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Set wait timer", set_wait_timer, 3);
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Wait", wait, 2);
 	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Go back four steps", go_back_four, 3);
-	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Close job", close_job, 1);
+	new_goal_set.Add_Raw_Job_Goal_to_Goalset("Close job", close_job, 2);
 
 	new_scaffold_job.Add_Goal_Set(new_goal_set);
 	Add_Job_To_Job_Array(new_scaffold_job);
 
 }
 
-bool Scene_Graph::Job_Create_Transport_Items_For_Blueprint(Object* requestee, Blueprint blueprint, bool create_job)
+bool Scene_Graph::Job_Create_Transport_Items_For_Blueprint(Object* requestee, Blueprint* blueprint, bool create_job)
 {
-	Job Blueprint_Transport_Job;
+	Job Blueprint_Transport_Job = *service_locator->get_Game_Library()->Fetch_Job_Template(6);
 
 	vector<Goal_Set> Goalsets_Item_Transport;
 
-	for (int i = 0; i < blueprint.Num_Items_In_Blueprint; i++)
+	for (int i = 0; i < blueprint->Num_Items_In_Blueprint; i++)
 	{
-		if (Create_Shuttle_Goalsets_From_Item_Slot(Goalsets_Item_Transport, blueprint.blueprint_items[i], requestee) == false) return false;
+		if (Create_Shuttle_Goalsets_From_Item_Slot(Goalsets_Item_Transport, blueprint->blueprint_items[i], requestee) == false) return false;
 	}
 
-	if (create_job)
+	if (create_job && Goalsets_Item_Transport.size() > 0)
 	{
 		for (int i = 0; i < Goalsets_Item_Transport.size(); i++)
 		{
@@ -549,7 +558,7 @@ bool Scene_Graph::Create_Shuttle_Goalsets_From_Item_Slot(vector<Goal_Set> &goal_
 
 	vector<Object*> storage_locations_with_item = Return_Vector_Of_Storage_Locations_With_Item(item);
 
-	while (storage_locations_with_item.size() > 0 || quantity_left > 0)
+	while (storage_locations_with_item.size() > 0 && quantity_left > 0)
 	{
 		int ideal_storage_location_index = Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(storage_locations_with_item, item);
 
@@ -557,7 +566,7 @@ bool Scene_Graph::Create_Shuttle_Goalsets_From_Item_Slot(vector<Goal_Set> &goal_
 
 		AI_Item_Component* object_item_ai_pointer = ideal_storage_location->Return_AI_Item_Component();
 
-		int amount_of_item = object_item_ai_pointer->Return_Amount_Of_Item_In_Inventory(item);
+		int amount_of_item = min(quantity_left, object_item_ai_pointer->Return_Amount_Of_Item_In_Inventory(item));
 
 		Goal_Set shuttle_item_goal_set = Create_Shuttle_Item_Goalset(item, amount_of_item, ideal_storage_location, requestee);
 		goal_set_vector.push_back(shuttle_item_goal_set);
@@ -567,10 +576,13 @@ bool Scene_Graph::Create_Shuttle_Goalsets_From_Item_Slot(vector<Goal_Set> &goal_
 		quantity_left -= amount_of_item;
 	}
 
-	if (quantity_left = 0) return true;
+
+	if (quantity_left == 0)
+	{
+		return true;
+	}
 	else if (quantity_left > 0)
 	{
-		cout << "could not find enough of item" << endl;
 		return false;
 	}
 	else if (quantity_left < 0)
@@ -588,15 +600,19 @@ Goal_Set Scene_Graph::Create_Shuttle_Item_Goalset(Item item, int amount_of_item,
 	int check_distance[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, OBJECT_TYPE_STRUCTURE, ideal_storage_location->Get_Array_Index(),1 };
 	int take_items[6] = { ACTION_TRANSFER, A_AT_TAKE_ITEM_FROM_OBJECT, OBJECT_TYPE_STRUCTURE, ideal_storage_location->Get_Array_Index(),item.item_template_id,amount_of_item };
 	int check_for_another_goalset[2] = { ACTION_ASSESS_INTERNAL, A_AI_CHECK_JOB_FOR_MORE_GOALSETS };
-	int move_to_requestee[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, OBJECT_TYPE_STRUCTURE, requestee->Get_Array_Index() };
-	int give_items_to_requestee[6] = { ACTION_TRANSFER, A_AT_GIVE_ITEM_TO_OBJECT, OBJECT_TYPE_STRUCTURE, requestee->Get_Array_Index(), item.item_template_id, amount_of_item };
+	int move_to_requestee[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, OBJECT_TYPE_SCAFFOLD, requestee->Get_Array_Index() };
+	int check_distance_2[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, OBJECT_TYPE_SCAFFOLD, requestee->Get_Array_Index(),1 };
+	int give_items_to_requestee[6] = { ACTION_TRANSFER, A_AT_GIVE_ITEM_TO_OBJECT, OBJECT_TYPE_SCAFFOLD, requestee->Get_Array_Index(), item.item_template_id, amount_of_item };
+	int finish_goal_set[2] = { ACTION_CLOSE_OUT_GOAL_SET, new_goalset.goal_set_uniq_id };
 
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Move to storage", move_to_storage, 4);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Check Distance", check_distance, 5);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Take Items", take_items, 6);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Check job", check_for_another_goalset, 2);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Move to requestee", move_to_requestee, 4);
+	new_goalset.Add_Raw_Job_Goal_to_Goalset("Check Distance", check_distance_2, 5);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Give items to requestee", give_items_to_requestee, 6);
+	new_goalset.Add_Raw_Job_Goal_to_Goalset("Finish goal set", finish_goal_set, 2);
 
 	return new_goalset;
 }
@@ -610,25 +626,28 @@ int Scene_Graph::Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(vecto
 
 Job* Scene_Graph::Return_Job_With_Highest_Priority_Correlation(int dummy_variable)
 {
-	for (int i = 0; i < current_num_jobs; i++)
+	if (current_num_jobs > 0)
 	{
-		if (current_job_array[i].Return_Is_Init() == true)
+		for (int i = 0; i < WORLD_MAX_NUM_JOBS; i++)
 		{
-			return &current_job_array[i];
+			if (current_job_array[i].Return_Is_Init() == true && current_job_array[i].Get_Num_Unassigned_Goalsets() > 0)
+			{
+				return &current_job_array[i];
+			}
 		}
 	}
 
 	return NULL;
-
 }
 
 void Scene_Graph::Check_If_Job_Can_Be_Closed(int job_array_num)
 {
-	for (int i = 0; i < current_num_jobs; i++)
+	for(int i = 0; i < WORLD_MAX_NUM_JOBS; i++)
 	{
-		if (current_job_array[i].Return_Job_Array_Num() == job_array_num)
+		if (current_job_array[i].Return_Job_Array_Num() == job_array_num && current_job_array[i].Return_Is_Init() == true)
 		{
 			current_job_array[i].Set_Init(false);
+			current_num_jobs--;
 		}
 	}
 }
@@ -651,6 +670,11 @@ vector<Object*> Scene_Graph::Return_Vector_Of_Storage_Locations_With_Item(Item i
 	}
 
 	return storage_locations_with_item;
+}
+
+int Scene_Graph::Return_Current_Num_Jobs_In_Array()
+{
+	return current_num_jobs;
 }
 
 Object* Scene_Graph::Return_Nearest_Structure_By_Type(Object* local_object, string structure_type)
@@ -823,24 +847,47 @@ int Scene_Graph::Check_Simple_Distance_To_Object(Object* object_a, Object* objec
 
 Coordinate Scene_Graph::Return_Nearest_Accessible_Coordinate(Coordinate origin, Coordinate destination, int requesting_faction)
 {
-	if (origin.x == destination.x && origin.y == destination.y) return origin;
+	if (origin.x == destination.x && origin.y == destination.y)
+	{
+		return origin;
+	}
 	else
 	{
+		Coordinate delta[] = { {-1,-1},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0} };
+
 		int direction_x = (destination.x - origin.x);
 		int direction_y = (destination.y - origin.y);
 
-		if (direction_x > 0) direction_x = 1;
-		else if (direction_x < 0) direction_x = -1;
+		int abs_direction_x;
+		int abs_direction_y;
 
-		if (direction_y > 0) direction_y = 1;
-		else if (direction_y < 0) direction_y = -1;
+		if (direction_x == 0) abs_direction_x = 0;
+		else abs_direction_x = direction_x / abs(direction_x);
 
-		Coordinate d = destination;
+		if (direction_y == 0) abs_direction_y = 0;
+		else abs_direction_y = direction_y / abs(direction_y);
+
+		int origin_index;
+
+		for (int i = 0; i < 9; i++)
+		{
+			if (delta[i].x == abs_direction_x && delta[i].y == abs_direction_y) origin_index = i;
+		}
+
+		int delta_index = origin_index;
+
+		Coordinate d = { destination.x + delta[delta_index].x, destination.y + delta[delta_index].y };
+
 
 		while (Tile_Is_Inaccessible(d, requesting_faction))
 		{
-			d.x -= direction_x;
-			d.y -= direction_y;
+			delta_index += 1;
+			if (delta_index > 7) delta_index = 0;
+			if (delta_index == origin_index)
+			{
+				return origin;
+			}
+			d = { destination.x + delta[delta_index].x, destination.y + delta[delta_index].y };
 		}
 
 		return d;
@@ -893,10 +940,15 @@ bool Scene_Graph::Tile_Is_Wall_Or_Closed_Door(Coordinate tile)
 
 bool Scene_Graph::Tile_Is_Inaccessible(Coordinate tile, int requesting_faction)
 {
+	Object* scaffold_tile = tile_map[tile].Return_Tile_Object(TILE_LAYER_SCAFFOLD);
 	Object* base_tile = tile_map[tile].Return_Tile_Object(TILE_LAYER_BASE);
 	Object* mid_tile = tile_map[tile].Return_Tile_Object(TILE_LAYER_MID);
 	
-	if (base_tile != NULL && base_tile->Is_Structure_Inaccessible(requesting_faction) == true)
+	if (scaffold_tile != NULL && scaffold_tile->Is_Structure_Inaccessible(requesting_faction) == true)
+	{
+		return true;
+	}
+	else if (base_tile != NULL && base_tile->Is_Structure_Inaccessible(requesting_faction) == true)
 	{
 		return true;
 	}

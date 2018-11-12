@@ -9,7 +9,6 @@ class Global_Service_Locator;
 class Object_Service_Locator;
 struct Item_Template;
 
-
 struct Item_Stats
 {
 
@@ -39,6 +38,10 @@ struct Equipment_Slot
 struct Blueprint
 {
 	int Blueprint_ID = 0;
+	string blueprint_string_name;
+	int associated_template_id = 0;
+	int associated_object_type = 0;
+	int associated_blueprint_type = 0;
 	int Num_Items_In_Blueprint = 0;
 	Item_Slot blueprint_items[MAX_ITEMS_PER_BLUEPRINT];
 };
@@ -46,12 +49,14 @@ struct Blueprint
 class AI_Item_Component
 {
 public:
-	AI_Item_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int num_inventory_slots, int equipment_template_id, int blueprint_id, int starter_inventory_id);
+	AI_Item_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int num_inventory_slots);
+
+	void Update();
 
 	int Add_Item_To_Inventory(int item_id, int quantity, bool has_stats, Item_Stats item_stats = {});
 	int Remove_Item_From_Inventory(int item_id, int quantity);
 	void Copy_Inventory_From_Pointer(Item_Slot pointer[], int num_inventory_slots);
-	void Populate_Starter_Inventory(int starter_id);
+	void Populate_Starter_Inventory(int object_type);
 	void Delete_Item_At_Inventory_Array_Num(int array_num);
 	void Clear_All_Inventory();
 
@@ -63,12 +68,16 @@ public:
 
 	// Queries
 	int Return_Amount_Of_Item_In_Inventory(Item item);
+	bool Object_Has_Items_For_Blueprint_In_Inventory(Blueprint* blueprint);
+
 
 private:
 	Global_Service_Locator* service_locator;
 	Object_Service_Locator* object_locator;
 
-
+	bool Check_For_Scaffold_Completion();
+	int scaffold_build_job_sent = 0;
+	int item_change_flag = 1;
 
 	int num_inventory_slots = 0;
 	Item_Slot inventory_array[MAX_NUM_INVENTORY_SLOTS];
@@ -76,6 +85,9 @@ private:
 	int num_equipment_slots = 0;
 	Equipment_Slot equipment_array[MAX_NUM_EQUIPMENT_SLOTS];
 
-	int num_blueprints = 0;
-	Blueprint blueprint_array[MAX_NUM_ITEM_BLUEPRINTS];
+	int num_production_blueprints = 0;
+	Blueprint* production_blueprint_array[MAX_NUM_ITEM_BLUEPRINTS];
+
+	int has_scaffold_blueprint = 0;
+	Blueprint* Scaffold_Blueprint = NULL;
 };

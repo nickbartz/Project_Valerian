@@ -187,13 +187,15 @@ int main(int argc, char *args[])
 
 	scene_graph->Create_New_Structure({ 0,-1 }, 4, 2);
 	scene_graph->Create_New_Structure({ 9,-1 }, 14, 2);
+	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(1, 10, false, {});
+	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(2, 10, false, {});
 
 	scene_graph->Create_New_Structure({ -5, -10 }, 21, 1);
 	scene_graph->Create_New_Structure({ -5, -9 }, 22,1);
 	scene_graph->Create_New_Structure({ -5, -8 }, 23, 1);
 	
 	scene_graph->Create_Entity({ 1,-1 }, *game_library->Fetch_Entity_Template(2), 2);
-	//scene_graph->Create_Entity({ 2,-1 }, *game_library->Fetch_Entity_Template(1), 2);
+	scene_graph->Create_Entity({ 2,-1 }, *game_library->Fetch_Entity_Template(1), 2);
 
 	//Start counting frames per second
 	int countedFrames = 0;
@@ -201,8 +203,9 @@ int main(int argc, char *args[])
 
 	// END TEST VARIABLES
 	int end_now = 0;
+	bool pause = false;
 
-	while (!quit  && end_now <= 100)
+	while (!quit)
 	{	
 		// Update subsystems 
 		while (SDL_PollEvent(&e) != 0)
@@ -211,6 +214,13 @@ int main(int argc, char *args[])
 			if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE))
 			{
 				quit = true;
+			}
+
+			// User requests pause
+			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE)
+			{
+				if (pause == true) pause = false;
+				else if (pause == false) pause = true;
 			}
 
 			if ((e.type >= 768 && e.type <= 772) || (e.type >= 1024 && e.type <= 1027))

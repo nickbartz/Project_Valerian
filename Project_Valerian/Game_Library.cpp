@@ -4,6 +4,7 @@
 #include<iostream>
 #include<fstream>
 #include<istream>
+#include<AI_Item_Component.h>
 
 using namespace std;
 
@@ -16,7 +17,6 @@ Game_Library::Game_Library(Global_Service_Locator* sLocator)
 	Load_Item_Templates("Data/Inventory_Data.csv");
 	Load_Blueprints("Data/Blueprint_Data.csv");
 	Load_Projectiles("Data/Projectile_Data.csv");
-
 	Load_Job_Code_String_To_Enum_Crosswalk();
 	Load_Jobs("Data/Job_Data.csv", "Data/Job_Goal_Data.csv");
 }
@@ -71,6 +71,17 @@ int Game_Library::Fetch_Structure_Type_ID_From_Name(string structure_type)
 	return 0;
 }
 
+int Game_Library::Get_Object_Type_Enum_From_Object_Type_String(string object_type)
+{
+	if (object_type == "OBJECT_TYPE_STRUCTURE") return OBJECT_TYPE_STRUCTURE;
+	else if (object_type == "OBJECT_TYPE_SCAFFOLD") return OBJECT_TYPE_SCAFFOLD;
+	else if (object_type == "OBJECT_TYPE_ENTITY") return OBJECT_TYPE_ENTITY;
+	else if (object_type == "OBJECT_TYPE_ITEM") return OBJECT_TYPE_ITEM;
+	else if (object_type == "OBJECT_TYPE_CONTAINER") return OBJECT_TYPE_CONTAINER;
+	else if (object_type == "OBJECT_TYPE_PROJECTILE") return OBJECT_TYPE_PROJECTILE;
+	else if (object_type == "OBJECT_TYPE_NULL") return OBJECT_TYPE_NULL;
+}
+
 int Game_Library::Get_Job_Code_From_String(string query)
 {
 	try
@@ -116,12 +127,11 @@ void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
 		new_config.icon_clip_x = stoi(vector_loaded_tiles[i + 1][24])*SPRITE_SIZE;
 		new_config.icon_clip_y = stoi(vector_loaded_tiles[i + 1][25])*SPRITE_SIZE;
 		new_config.is_inaccessible = stoi(vector_loaded_tiles[i + 1][26]);
-		new_config.inventory_pack = stoi(vector_loaded_tiles[i + 1][27]);
-		new_config.blueprint_pack = stoi(vector_loaded_tiles[i + 1][28]);
-		new_config.equipment_pack = stoi(vector_loaded_tiles[i + 1][29]);
-		new_config.max_built_level = stoi(vector_loaded_tiles[i + 1][30]);
+		new_config.max_built_level = stoi(vector_loaded_tiles[i + 1][27]);
+		new_config.has_starter_inventory = stoi(vector_loaded_tiles[i + 1][28]);
+		new_config.scaffold_blueprint_id = stoi(vector_loaded_tiles[i + 1][29]);
 		loaded_tiles[i] = new_config;
-		num_loaded_tiles++;
+		num_loaded_tiles++;	
 	}
 }
 
@@ -138,7 +148,7 @@ void Game_Library::Load_Entity_Templates(string entity_template_path, string ent
 		new_entity.num_entity_components = stoi(loaded_templates[i][7]);
 		new_entity.num_entity_animations = stoi(loaded_templates[i][6]);
 		new_entity.entity_id = stoi(loaded_templates[i][1]);
-		new_entity.entity_inventory_pack = stoi(loaded_templates[i][12]);
+		new_entity.entity_has_starter_inventory = stoi(loaded_templates[i][12]);
 
 		for (int q = 0; q < new_entity.num_entity_components; q++)
 		{
@@ -177,28 +187,34 @@ void Game_Library::Load_Item_Templates(string item_template_path)
 	}
 }
 
-void Game_Library::Load_Blueprints(string blueprint_path)
+void Game_Library::Load_Blueprints(string blueprints_path)
 {
-	vector<vector<string>> vector_loaded_blueprints = readCSV(blueprint_path);
+	vector<vector<string>> vector_loaded_blueprints = readCSV(blueprints_path);
 
 	for (int i = 1; i < vector_loaded_blueprints.size(); i++)
 	{
-		Inventory_Template new_blueprint;
-		new_blueprint.inventory_pack[0][0] = stoi(vector_loaded_blueprints[i][2]);
-		new_blueprint.inventory_pack[0][1] = stoi(vector_loaded_blueprints[i][3]);
-		new_blueprint.inventory_pack[1][0] = stoi(vector_loaded_blueprints[i][4]);
-		new_blueprint.inventory_pack[1][1] = stoi(vector_loaded_blueprints[i][5]);
-		new_blueprint.inventory_pack[2][0] = stoi(vector_loaded_blueprints[i][6]);
-		new_blueprint.inventory_pack[2][1] = stoi(vector_loaded_blueprints[i][7]);
-		new_blueprint.inventory_pack[3][0] = stoi(vector_loaded_blueprints[i][8]);
-		new_blueprint.inventory_pack[3][1] = stoi(vector_loaded_blueprints[i][9]);
-		new_blueprint.inventory_pack[4][0] = stoi(vector_loaded_blueprints[i][10]);
-		new_blueprint.inventory_pack[4][1] = stoi(vector_loaded_blueprints[i][11]);
+		Blueprint new_blueprint;
 
-		loaded_blueprints[i - 1] = new_blueprint;
+		new_blueprint.Blueprint_ID = stoi(vector_loaded_blueprints[i][0]);
+		new_blueprint.blueprint_string_name = vector_loaded_blueprints[i][1];
+		new_blueprint.associated_template_id = stoi(vector_loaded_blueprints[i][2]);
+		new_blueprint.associated_object_type = Get_Object_Type_Enum_From_Object_Type_String(vector_loaded_blueprints[i][3]);
+		if (vector_loaded_blueprints[i][4] == "BLUEPRINT_NULL") new_blueprint.associated_blueprint_type = BLUEPRINT_NULL;
+		else if (vector_loaded_blueprints[i][4] == "BLUEPRINT_INVENTORY") new_blueprint.associated_blueprint_type = BLUEPRINT_INVENTORY;
+		else if (vector_loaded_blueprints[i][4] == "BLUEPRINT_SCAFFOLD") new_blueprint.associated_blueprint_type = BLUEPRINT_SCAFFOLD;
+		else if (vector_loaded_blueprints[i][4] == "BLUEPRINT_PRODUCTION") new_blueprint.associated_blueprint_type = BLUEPRINT_PRODUCTION;
+		new_blueprint.Num_Items_In_Blueprint = stoi(vector_loaded_blueprints[i][5]);
+		for (int p = 0; p < new_blueprint.Num_Items_In_Blueprint; p++)
+		{
+			Item_Slot new_item_slot;
+			new_item_slot.slot_item.item_template_id = stoi(vector_loaded_blueprints[i][6 + 2 * p]);
+			new_item_slot.item_quantity = stoi(vector_loaded_blueprints[i][7 + 2 * p]);
+			new_blueprint.blueprint_items[p] = new_item_slot;
+		}
+
+		loaded_blueprints[i-1] = new_blueprint;
 		num_loaded_blueprints++;
 	}
-
 }
 
 void Game_Library::Load_Jobs(string job_template_path, string goal_template_path)
@@ -420,17 +436,25 @@ Item_Template* Game_Library::Fetch_Item_Template(int item_id)
 	}
 }
 
-Inventory_Template* Game_Library::Fetch_Blueprint(int blueprint_id)
+Blueprint* Game_Library::Fetch_Blueprint(int blueprint_id)
 {
-	if (blueprint_id < num_loaded_blueprints)
+	if (blueprint_id < num_loaded_blueprints && blueprint_id != 0) return &loaded_blueprints[blueprint_id];
+	else return NULL;
+}
+
+vector<Blueprint*> Game_Library::Fetch_All_Blueprints_Of_Type_For_Object(int type, int object_type, int object_template_id)
+{
+	vector<Blueprint*> requested_blueprints;
+	
+	for (int i = 0; i < num_loaded_blueprints; i++)
 	{
-		return &loaded_blueprints[blueprint_id];
+		if (loaded_blueprints[i].associated_blueprint_type == type && loaded_blueprints[i].associated_object_type == object_type && loaded_blueprints[i].associated_template_id == object_template_id)
+		{
+			requested_blueprints.push_back(&loaded_blueprints[i]);	
+		}
 	}
-	else
-	{
-		cout << "blueprint id out of range, returning null blueprint" << endl;
-		return &loaded_blueprints[0];
-	}
+	
+	return requested_blueprints;
 }
 
 Job* Game_Library::Fetch_Job_Template(int job_id)

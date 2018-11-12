@@ -18,6 +18,7 @@ private:
 	Object* base_structure = NULL;
 	Object* mid_structure = NULL;
 	Object* roof_structure = NULL;
+	Object* scaffold = NULL;
 
 	Coordinate grid_point;
 };

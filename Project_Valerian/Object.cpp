@@ -46,7 +46,7 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
 	object_service_locator.Register_Pointer(AI_Relationship);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, object_config.blueprint_pack, object_config.inventory_pack);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20);
 	object_service_locator.Register_Pointer(AI_Items);
 }
 
@@ -64,8 +64,11 @@ void Object::Init_Scaffold_From_Template(int structure_template_id, int faction)
 	render_component = new Render_Component(service_locator, &object_service_locator, OBJECT_TYPE_SCAFFOLD, structure_template_id);
 	object_service_locator.Register_Pointer(render_component);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, 0);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20);
 	object_service_locator.Register_Pointer(AI_Items);
+
+	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, OBJECT_TYPE_SCAFFOLD, structure_template_id);
+	object_service_locator.Register_Pointer(AI_Job);
 }
 
 void Object::Init_Entity_From_Template(Entity_Template object_config, int faction)
@@ -85,7 +88,7 @@ void Object::Init_Entity_From_Template(Entity_Template object_config, int factio
 	//AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
 	//object_service_locator.Register_Pointer(AI_Relationship);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, object_config.entity_inventory_pack);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20);
 	object_service_locator.Register_Pointer(AI_Items);
 
 	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, OBJECT_TYPE_ENTITY, object_config.entity_id);
@@ -122,7 +125,7 @@ void Object::Init_Container_From_Inventory(Item_Slot inventory_pointer[], int nu
 	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, OBJECT_TYPE_CONTAINER, 0);
 	object_service_locator.Register_Pointer(AI_Movement);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20, 0, 0, 0);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20);
 	AI_Items->Copy_Inventory_From_Pointer(inventory_pointer, num_inventory_items);
 	object_service_locator.Register_Pointer(AI_Items);
 
@@ -239,6 +242,7 @@ void Object::Update()
 	if (AI_Movement != NULL) AI_Movement->Update();
 	if (AI_Relationship != NULL) AI_Relationship->Update();
 	if (render_component != NULL) render_component->Update();
+	if (AI_Items != NULL) AI_Items->Update();
 }
 
 void Object::Collect_Bus_Messages()

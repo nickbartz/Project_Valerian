@@ -39,11 +39,10 @@ private:
 
 	// NEW FUNCTIONALITY
 	vector<Job_Goal> current_goals;
-	int job_goal_set_id = 0;
 
 	int current_num_job_goals = 0;
 	int next_goal_index = 0;
-	void Add_All_Job_Goals_To_Array();
+	void Query_Job_For_Goals();
 	void Add_Non_Job_Goal_To_Goal_Array(Job_Goal goal);
 	void Clear_Goal_From_Goal_Array(int array_position);
 	void Clear_All_Goals_From_Array();

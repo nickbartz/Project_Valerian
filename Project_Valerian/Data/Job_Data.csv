@@ -5,3 +5,4 @@ Job_ID,Job_Name,Job_String_Name,Job_Standard_Priority,Num_Goals,Goal_1,Goal_2,Go
 3,JOB_MINE_ASTEROID,Mine Asteroid,1,0,0,0,0,0,0,0,0
 4,JOB_PICKUP_CONTAINER,Pickup Container,1,0,0,0,0,0,0,0,0
 5,JOB_BUILD_SCAFFOLD,Build Scaffold,1,0,0,0,0,0,0,0,0
+6,JOB_TRANSPORT_SCAFFOLD_ITEMS,Transport Scaffold Items,1,0,0,0,0,0,0,0,0

@@ -181,6 +181,9 @@
     <ClInclude Include="UI.h" />
     <ClInclude Include="Scene_Graph.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="To-Do.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
