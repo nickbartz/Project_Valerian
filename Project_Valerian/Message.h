@@ -119,3 +119,7 @@ private:
 // Message to Update the SG on a projectiles movement
 //
 // MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT --> OBJECT_TYPE_ALL --> FOCUS_TYPE_ALL --> GRID_X --> GRID_Y  -- > PROJECTILE_FACTION --> PROJECTILE_TEMPLATE_NUM --> ARRAY_INDEX
+//
+// Message to Indicate that the Inventory Manifest Has Been Updated
+//
+// MESSAGE_TYPE_SG_INVENTORY_MANIFEST_UPDATE --> OBJECT_TYPE_ALL --> FOCUS_TYPE_ALL --> slot_pointer_uniq_id --> associated_object_type --> associated_object_array_index

@@ -98,6 +98,7 @@ int Draw_System::Add_New_Spritesheet_To_Multisprite(int spritesheet, SDL_Rendere
 
 void Draw_System::Stamp_Sprite_Onto_Multisprite(int spritesheet_num, int multisprite_num, SDL_Rect clip, SDL_Rect stamp_rect, bool clear_sprite)
 {
+
 	// Set the render target to the SDL_Texture on the multisprite of our choice
 	if (spritesheet_num == SPRITESHEET_BASE) 	base_multisprite[multisprite_num].Set_SDL_Texture_As_Render_Target(service_locator->get_Game_Renderer());
 	else if (spritesheet_num == SPRITESHEET_MID_1) mid_multisprite[multisprite_num].Set_SDL_Texture_As_Render_Target(service_locator->get_Game_Renderer());
@@ -111,6 +112,7 @@ void Draw_System::Stamp_Sprite_Onto_Multisprite(int spritesheet_num, int multisp
 	{
 		SDL_SetRenderDrawColor(service_locator->get_Game_Renderer(), 0, 0, 0, 0);
 		SDL_RenderClear(service_locator->get_Game_Renderer());
+		SDL_SetRenderDrawColor(service_locator->get_Game_Renderer(), 255, 255, 255, 255);
 	}
 
 	// Reset our render target to our screen
@@ -199,7 +201,6 @@ void Draw_System::Clear_Text_Instruction_Array()
 
 	count_num_print_text = 0;
 }
-
 
 void Draw_System::Update()
 {

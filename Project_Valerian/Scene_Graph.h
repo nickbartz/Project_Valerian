@@ -10,6 +10,7 @@ using namespace std;
 #include<Adjacent_Type_Array.h>
 #include<Game_Library.h>
 #include<Job.h>
+#include<functional>
 
 
 class Global_Service_Locator;
@@ -23,6 +24,9 @@ public:
 	Scene_Graph(Global_Service_Locator* service_locator);
 
 	// Functions Accessed Through Main
+	void Iterate_And_Function(Object object_array[], int current_num_members, int max_num_members, int major_function_type);
+	void Process_Main_Function(int major_function_type);
+
 	void Update();
 	void Collect_Bus_Messages();
 	void Draw();
@@ -40,15 +44,28 @@ public:
 	void Create_Laser_Between_Two_Points(Object* firing_object, Object* target_object, int projectile_id);
 	void Create_Container(Coordinate grid_point, Item_Slot inventory_array[], int num_items, int pickup_flag = 0);
 
-	// Job Related Functions
-	void Add_Job_To_Job_Array(Job new_job);
-	void Job_Create_Pickup_Container(Object* container);
-	void Job_Create_Mine_Asteroid(Object* asteroid);
-	void Job_Create_Build_Scaffold(Object* scaffold);
-	bool Job_Create_Transport_Items_For_Blueprint(Object* requestee, Blueprint* blueprint, bool create_job);
+	// Inventory Manifest Commands 
+	void Send_Inventory_Manifest_Update_Message(Item_Slot* slot_pointer, Object* associated_object, int inventory_update_type);
+	void Add_Inventory_Slot_To_Manifest(Item_Slot* slot_pointer, Object* associated_object);
+	void Remove_Inventory_Slot_From_Manifest(Item_Slot* slot_pointer);
+	int Return_Num_Item_Slots_On_Manifest();
 
-	Job* Return_Job_With_Highest_Priority_Correlation(int dummy_variable);
+	// Job Related Functions
+	Job* Return_Job_With_Highest_Priority_Correlation(Object* requesting_object);
+	Job* Add_Raw_Job_To_Job_Array(vector<Goal_Set> goal_sets, int job_id, Object* job_requestor, int public_private);
 	void Check_If_Job_Can_Be_Closed(int job_array_num);
+
+	// Job Create Functions - Low Level
+	Job* Job_Create_Transport_Blueprint_Items_From_Object_To_Requestee(Object* object, Object* Requestee, Blueprint blueprint, int public_private = 1, Object* assigned_object = NULL);
+	Job* Job_Create_Pickup_Container(Object* container, int public_private = 1, Object* assigned_object = NULL);
+	Job* Job_Create_Mine_Asteroid(Object* asteroid, int public_private = 1, Object* assigned_object = NULL);
+	Job* Job_Create_Build_Scaffold(Object* scaffold, int public_private = 1, Object* assigned_object = NULL);
+	Job* Job_Create_Local_Oxygenate(Object* object);
+	Job* Job_Create_Local_Open_Door(Object* object);
+
+	// Job Create Functions - Moderate Complexity
+	bool Job_Create_Find_Blueprint_Items_And_Transport_To_Requestee(Object* requestee, Blueprint* blueprint, bool create_job, int public_private = 1, Object* assigned_object = NULL);
+	Job* Job_Create_Local_Structure_Template_Job(Object* object, int job_id);
 
 	// Delete Objects
 	void Delete_Object(int object_type, int array_num);
@@ -59,23 +76,29 @@ public:
 	// Accessors
 	Adjacent_Structure_Array Return_Neighboring_Tiles(Coordinate grid_point);
 	vector<Object*> Return_Vector_Of_Storage_Locations_With_Item(Item item);
+	vector<Object*> Return_All_Entities_On_Tile(Coordinate tile);
+	vector<Object*> Return_All_Entities_In_Radius(Coordinate tile, int radius);
+
 	int Return_Current_Num_Jobs_In_Array();
+	int Return_Current_Num_Public_Jobs_In_Array();
 	int Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(vector<Object*> storage_locations_with_item, Item item);
 	int Return_Current_Structure_Count();
+
 	Object* Return_Object_At_Coord(int coord_x, int coord_y);
 	Object* Return_Structure_At_Coord_By_Layer(int coord_x, int coord_y, int layer);
 	Object* Return_Nearest_Structure_By_Type(Object* local_object, string structure_type);
 	Object* Return_Object_By_Type_And_Array_Num(int object_type, int array_num);
 	Object* Return_Structure_By_Array_Num(int array_num);
 	Object* Return_Entity_By_Array_Num(int array_num);
+
 	
 	// Queries
-	int Check_Simple_Distance_To_Object(Object* object_a, Object* object_b);
 	Coordinate Return_Nearest_Accessible_Coordinate(Coordinate origin, Coordinate destination, int requesting_faction);
+	int Check_Simple_Distance_To_Object(Object* object_a, Object* object_b);
 	void Return_Tiles_Without_Leaks(Coordinate start_tile, vector<Coordinate> &tiles_to_oxygenate, map<Coordinate, bool> &checked_tiles, bool &is_leak);
-	bool Tile_Has_Leak(Coordinate tile);
-	bool Tile_Is_Wall_Or_Closed_Door(Coordinate tile);
-	bool Tile_Is_Inaccessible(Coordinate tile, int requesting_faction);
+	bool Check_If_Tile_Has_Leak(Coordinate tile);
+	bool Check_If_Tile_Is_Wall_Or_Closed_Door(Coordinate tile);
+	bool Check_If_Tile_Is_Inaccessible(Coordinate tile, int requesting_faction);
 
 	void free();
 private:
@@ -89,8 +112,8 @@ private:
 	bool Check_Container_Placement(Coordinate grid_point);
 
 	// Job-Subroutines
-	bool Create_Shuttle_Goalsets_From_Item_Slot(vector<Goal_Set> &goal_set_vector, Item_Slot item_slot, Object* requestee);
-	Goal_Set Create_Shuttle_Item_Goalset(Item item, int amount_of_item, Object* ideal_storage_location, Object* requestee);
+	bool Create_Goalsets_To_Obtain_Item_Quantity_From_Multiple_Storage_Locations(vector<Goal_Set> &goal_set_vector, Item_Slot item_slot, Object* requestee);
+	Goal_Set Goalset_Create_Move_Item_From_Object_To_Object(Item item, int amount_of_item, Object* start_object, Object* finish_object);
 
 	// Structure for the background
 	struct Background_Object
@@ -106,10 +129,10 @@ private:
 	Object background_planetoid;
 
 	// Structures for Storing Reference
-
-	struct Inventory_Location
+	struct Item_Location
 	{
-
+		Item_Slot* inventory_slot;
+		Object* associated_object;
 	};
 
 	// THE ACTUAL OBJECTS IN THE SCENE
@@ -131,6 +154,10 @@ private:
 	Object scaffold_array[WORLD_MAX_NUM_SCAFFOLDS];
 
 	int current_num_jobs = 0;
+	int current_num_public_jobs = 0;
 	Job current_job_array[WORLD_MAX_NUM_JOBS];
+
+	int curent_num_item_slots_on_manifest = 0;
+	vector<Item_Location> inventory_manifest;
 };
 

@@ -253,6 +253,7 @@ void Object::Collect_Bus_Messages()
 	if (AI_Job != NULL) AI_Job->Check_For_Messages();
 	if (AI_Movement != NULL) AI_Movement->Check_For_Messages();
 	if (AI_Relationship != NULL) AI_Relationship->Check_For_Messages();
+	if (AI_Items != NULL) AI_Items->Check_For_Messages();
 }
 
 void Object::Set_Assigned_Flag(int aFlag)

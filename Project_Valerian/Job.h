@@ -38,22 +38,34 @@ public:
 	// Functions to Alter the Job
 	void Add_Goal_Set(Goal_Set new_goal_set);
 
+	// Functions Related to Entities Doing the Job
+	void Attach_Entity_To_Job(Object* entity);
+	void DeAttach_Entity_To_Job(Object* entity);
+
 	// Functions to Access the Job's Contents
-	Goal_Set* Get_Job_Goals(Object* object);
+	void Set_Public_Private_Access(int access_type);
+	void Set_Job_Requester(Object* requestor);
+	Object* Return_Job_Requestor();
+	int Return_Job_Public_Private();
+	int Return_Job_Priority();
+	void Set_Job_Priority(int job_priority);
+	Goal_Set* Return_Job_Goals(Object* object);
 	string Return_Job_String_Name();
 	void Print_Job_String_Name();
-	int Get_Job_Type();
-	int Get_Job_Uniq_ID();
-	int Get_Num_Goal_Sets();
-	int Get_Num_Unassigned_Goalsets();
+	int Return_Job_Type();
+	int Return_Job_Uniq_ID();
+	int Return_Num_Goal_Sets();
+	int Return_Num_Unassigned_Goalsets();
 
 	// Functions relating to how the job is stored on the scene graph
+	void Set_Job_Location(int job_location);
 	void Set_Job_Array_Num(int job_array_num);
 	int Return_Job_Array_Num();
 	bool Return_Is_Init();
 	void Set_Init(bool new_init);
+	void Abort_Job();
 
-	void Close_Out_Goal_Set(int goal_set_uniq_id);
+	void Close_Out_Goal_Set(int goal_set_uniq_id, Object* object);
 
 private:
 
@@ -63,13 +75,15 @@ private:
 	bool init = false;
 	string job_name;
 	int uniq_id;
-	
+	int job_priority = 1;
 	int job_type;
-	
+
+	// 1 means job is public to all, 0 means job is local to a specific entity
+	int public_job = 0;
+	Object* job_requestor;
+		
 	vector<Goal_Set> smart_goal_set;
 	int current_num_goal_sets;
 
-	Object* job_requestor;
-	Object* attached_entities[MAX_ENTITIES_PER_JOB];
-
+	vector<Object*> attached_entities;
 };

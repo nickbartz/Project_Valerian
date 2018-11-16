@@ -314,11 +314,13 @@ bool AI_Stats_Component::Check_For_Death()
 			if (object_locator->Return_AI_Item_Pointer()->Return_Num_Occupied_Inventory_Slots() > 0)
 			{
 				service_locator->get_Scene_Graph()->Create_Container(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), object_locator->Return_AI_Item_Pointer()->Return_Inventory_Slot_As_Pointer(0), object_locator->Return_AI_Item_Pointer()->Return_Num_Inventory_Slots(), 1);
+				
+				// Have to clear all inventory here so it is officially removed from the manifest
+				object_locator->Return_AI_Item_Pointer()->Clear_All_Inventory();
 			}
 
 			service_locator->get_Scene_Graph()->Delete_Structure_Update_Tile_Map_Send_Message(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id)->tile_layer);
 			service_locator->get_Scene_Graph()->Create_Projectile(object_locator->Return_Object_Pointer(), object_locator->Return_Object_Pointer(), 3, 0);
-
 			return true;
 		}
 		break;
@@ -334,13 +336,16 @@ bool AI_Stats_Component::Check_For_Death()
 	case OBJECT_TYPE_CONTAINER:
 		if (object_locator->Return_AI_Item_Pointer()->Return_Num_Occupied_Inventory_Slots() == 0)
 		{
+			// Do not have to clear inventory here, since theoretically the Container is only destroyed if it's inventory is already clear
 			service_locator->get_Scene_Graph()->Delete_Object(OBJECT_TYPE_CONTAINER, object_locator->Return_Object_Pointer()->Get_Array_Index());
 			return true;
 		}
 		break;
 	case OBJECT_TYPE_SCAFFOLD:
 		if (object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->max_built_level)
-		{
+		{	
+			// Have to clear all inventory here so it is officially removed from the manifest
+			object_locator->Return_AI_Item_Pointer()->Clear_All_Inventory();
 			service_locator->get_Scene_Graph()->Create_New_Structure(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), object_template_id, object_stats.object_faction, true);
 			service_locator->get_Scene_Graph()->Delete_Object(OBJECT_TYPE_SCAFFOLD, object_array_locator);
 		}

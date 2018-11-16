@@ -167,7 +167,7 @@ bool Path_Field::check_if_tile_is_inaccessible(int xdx, int ydy, int finish_x, i
 	bool inaccessible = false;
 	if (!(xdx == finish_x && ydy == finish_y))
 	{
-		inaccessible = service_locator->get_Scene_Graph()->Tile_Is_Inaccessible({ xdx + offset_x,ydy + offset_y }, requesting_faction);
+		inaccessible = service_locator->get_Scene_Graph()->Check_If_Tile_Is_Inaccessible({ xdx + offset_x,ydy + offset_y }, requesting_faction);
 	}
 	return inaccessible;
 }

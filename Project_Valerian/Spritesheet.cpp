@@ -66,6 +66,12 @@ bool Spritesheet::is_init()
 
 void Spritesheet::Draw_Directly(SDL_Renderer* game_renderer, SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip)
 {
+	// Reset Global Color, Blend, and Alpha Variables 
+	SDL_SetTextureBlendMode(spritesheet_texture, SDL_BLENDMODE_BLEND);
+	SDL_SetTextureColorMod(spritesheet_texture, 255, 255, 255);
+	SDL_SetTextureAlphaMod(spritesheet_texture, 255);
+
+	// Stamp to texture
 	SDL_RenderCopyEx(game_renderer, spritesheet_texture, &clip_rect, &position_rect, angle, center, render_flip);
 }
 
@@ -128,6 +134,12 @@ void Spritesheet::Draw_Prebaked_Texture(SDL_Renderer* game_renderer)
 	SDL_Rect screen_rect = { 0,0,SCREEN_WIDTH,SCREEN_HEIGHT};
 	SDL_Rect texture_clip = { 0,0,SCREEN_WIDTH,SCREEN_HEIGHT };
 	
+	// Reset Global Color, Blend, and Alpha Variables 
+	SDL_SetTextureBlendMode(spritesheet_texture, SDL_BLENDMODE_BLEND);
+	SDL_SetTextureColorMod(spritesheet_texture, 255, 255, 255);
+	SDL_SetTextureAlphaMod(spritesheet_texture, 255);
+
+	// Draw pre-baked texture
 	SDL_RenderCopyEx(game_renderer, prebaked_layer_texture, &texture_clip, &screen_rect, 0.0, NULL, SDL_FLIP_NONE);
 
 }

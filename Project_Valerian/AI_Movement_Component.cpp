@@ -52,127 +52,142 @@ void AI_Movement_Component::Check_For_Messages()
 
 void AI_Movement_Component::Update()
 {
-	int delta_x = 0;
-	int delta_y = 0;
-	
 	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
 	{
 	case OBJECT_TYPE_ENTITY:
-		// CALCULATE DELTAS
-		delta_x = target_pos.x - world_pos.x;
-		delta_y = target_pos.y - world_pos.y;
+		Update_Entity();
+		break;
+	case OBJECT_TYPE_PROJECTILE:
+		Update_Projectile();
+		break;
+	case OBJECT_TYPE_CONTAINER:
+		Update_Container();
+		break;
+	}
+}
+void AI_Movement_Component::Update_Entity()
+{
+	int delta_x = 0;
+	int delta_y = 0;
 
-		if (delta_x != 0 || delta_y != 0)
+	// CALCULATE DELTAS
+	delta_x = target_pos.x - world_pos.x;
+	delta_y = target_pos.y - world_pos.y;
+
+	Coordinate previous_world_coord = { world_coord.x, world_coord.y };
+
+	if (delta_x != 0 || delta_y != 0)
+	{
+
+		// ACTUALLY MOVE ENTITY
+		if (delta_x > 0) world_pos.x += min(object_base_speed, delta_x);
+		else if (delta_x < 0) world_pos.x += max(-object_base_speed, delta_x);
+
+		if (delta_y > 0) world_pos.y += min(object_base_speed, delta_y);
+		else if (delta_y < 0) world_pos.y += max(-object_base_speed, delta_y);
+
+		// CHANGE ANIMATIONS FOR ENTITY BASED ON MOVEMENT
+		if (abs(delta_x) >= abs(delta_y))
 		{
-
-			// ACTUALLY MOVE ENTITY
-			if (delta_x > 0) world_pos.x += min(object_base_speed, delta_x);
-			else if (delta_x < 0) world_pos.x += max(-object_base_speed, delta_x);
-
-			if (delta_y > 0) world_pos.y += min(object_base_speed, delta_y);
-			else if (delta_y < 0) world_pos.y += max(-object_base_speed, delta_y);
-
-			// CHANGE ANIMATIONS FOR ENTITY BASED ON MOVEMENT
-			if (abs(delta_x) >= abs(delta_y))
-			{
-				if (delta_x >= 0) object_locator->Return_Render_Pointer()->Change_Entity_Current_Animation(ANIM_WALK_RIGHT);
-				else object_locator->Return_Render_Pointer()->Change_Entity_Current_Animation(ANIM_WALK_LEFT);
-			}
-			else
-			{
-				if (delta_y >= 0) object_locator->Return_Render_Pointer()->Change_Entity_Current_Animation(ANIM_WALK_DOWN);
-				else object_locator->Return_Render_Pointer()->Change_Entity_Current_Animation(ANIM_WALK_UP);
-			}
-
-			object_locator->Return_Render_Pointer()->Increment_Entity_Animation();
+			if (delta_x >= 0) object_locator->Return_Render_Pointer()->Change_Entity_Current_Animation(ANIM_WALK_RIGHT);
+			else object_locator->Return_Render_Pointer()->Change_Entity_Current_Animation(ANIM_WALK_LEFT);
 		}
-		// If there is no difference between the target position and the current position, it must mean that the entity has moved to the next coordinate in the path already
-		// consequently the path has to be updated to reflect this and a new target assigned
-		else if (delta_x == 0 && delta_y == 0 && current_path.size() != 0)
+		else
 		{
-			Coordinate previous_world_coord = { world_coord.x, world_coord.y };
-			Coordinate next_step = { current_path.back().x_tile,current_path.back().y_tile };
-			
-			// Change L-Shaped Paths to Diagonal Where Possible
-			if (current_path.size() > 1)
-			{
-				Coordinate step_beyond = { current_path.end()[-2].x_tile, current_path.end()[-2].y_tile };
-				if (abs(step_beyond.x - previous_world_coord.x) == 1 && abs(step_beyond.y - previous_world_coord.y) == 1)
-				{
-					int inac_y = (step_beyond.y - next_step.y);
-					int inac_x = (step_beyond.x - next_step.x);
+			if (delta_y >= 0) object_locator->Return_Render_Pointer()->Change_Entity_Current_Animation(ANIM_WALK_DOWN);
+			else object_locator->Return_Render_Pointer()->Change_Entity_Current_Animation(ANIM_WALK_UP);
+		}
 
-					// NEED TO FIX THIS, IT IS NOT WORKING // 
-					if (!service_locator->get_Scene_Graph()->Tile_Is_Inaccessible({ inac_x, inac_y }, object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION)))
-					{
-						next_step = step_beyond;
-						current_path.pop_back();
-					}
+		object_locator->Return_Render_Pointer()->Increment_Entity_Animation();
+	}
+	// If there is no difference between the target position and the current position, it must mean that the entity has moved to the next coordinate in the path already
+	// consequently the path has to be updated to reflect this and a new target assigned
+	else if (delta_x == 0 && delta_y == 0 && current_path.size() != 0)
+	{
+		Coordinate next_step = { current_path.back().x_tile,current_path.back().y_tile };
+
+		// Change L-Shaped Paths to Diagonal Where Possible
+		if (current_path.size() > 1)
+		{
+			Coordinate step_beyond = { current_path.end()[-2].x_tile, current_path.end()[-2].y_tile };
+			if (abs(step_beyond.x - previous_world_coord.x) == 1 && abs(step_beyond.y - previous_world_coord.y) == 1)
+			{
+				int inac_y = (step_beyond.y - next_step.y);
+				int inac_x = (step_beyond.x - next_step.x);
+
+				// NEED TO FIX THIS, IT IS NOT WORKING // 
+				if (!service_locator->get_Scene_Graph()->Check_If_Tile_Is_Inaccessible({ inac_x, inac_y }, object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION)))
+				{
+					next_step = step_beyond;
+					current_path.pop_back();
 				}
 			}
-			
-			Set_Target_Pos(next_step.x * TILE_SIZE, next_step.y * TILE_SIZE);
-			current_path.pop_back();
+		}
 
+		Set_Target_Pos(next_step.x * TILE_SIZE, next_step.y * TILE_SIZE);
+		current_path.pop_back();
+	}
+
+	if (delta_x != 0 || delta_y != 0)
+	{
+		if (Update_World_Coord(world_pos))
+		{
 			// We need to send a message to the message bus that the entity has shifted target tiles
 			int faction = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION);
 			int uniq_id = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_UNIQ_ID);
 			int custom_message[9] = { MESSAGE_TYPE_SG_ENTITY_MOVEMENT,OBJECT_TYPE_ANY, FOCUS_ALL,faction, previous_world_coord.x, previous_world_coord.y, world_coord.x, world_coord.y,uniq_id };
 			service_locator->get_MB_Pointer()->Add_Custom_Message(9, custom_message);
-		}
-		break;
-	case OBJECT_TYPE_PROJECTILE:
+		};
+	}
+}
+void AI_Movement_Component::Update_Container()
+{
+	if (bounce_delay == 0)
+	{
+		world_pos.y += bounce_direction;
+		current_bounce += 1;
+		if (current_bounce > bounce_max)
 		{
-		world_pos.x += obj_x_vel;
-		cumulative_remainder_x += vel_remainder_x;
-
-		//Add in any remainder from conversion to int when it reaches >= 1
-		if (abs(cumulative_remainder_x) >= 1)
-		{
-			world_pos.x += cumulative_remainder_x;
-			cumulative_remainder_x = remainder(cumulative_remainder_x, 1.0);
-
+			bounce_direction *= -1;
+			current_bounce = 0;
 		}
-
-		world_pos.y += obj_y_vel;
-		cumulative_remainder_y += vel_remainder_y;
-
-		//Add in any remainder from conversion to int when it reaches >= 1
-		if (abs(cumulative_remainder_y) >= 1)
-		{
-			world_pos.y += cumulative_remainder_y;
-			cumulative_remainder_y = remainder(cumulative_remainder_y, 1.0);
-		}
-
-		// If the projectile has moved from one coordinate to another, send out an update message
-		if (Update_World_Coord(world_pos))
-		{
-			int projectile_template_num = object_locator->Return_AI_Stats_Pointer()->Return_Template_ID();
-			int faction = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION);
-			int array_index = object_locator->Return_Object_Pointer()->Get_Array_Index();
-			int custom_message[8] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT,OBJECT_TYPE_ANY, FOCUS_ALL, world_coord.x, world_coord.y,faction, projectile_template_num, array_index };
-			service_locator->get_MB_Pointer()->Add_Custom_Message(8, custom_message);
-		}
-		}
-		break;
-	case OBJECT_TYPE_CONTAINER:
-		if (bounce_delay == 0)
-		{
-			world_pos.y += bounce_direction;
-			current_bounce += 1;
-			if (current_bounce > bounce_max)
-			{
-				bounce_direction *= -1;
-				current_bounce = 0;
-			}
-		}
-		
-		bounce_delay += 1;
-		if (bounce_delay > max_bounce_delay) bounce_delay = 0;
-		break;
 	}
 
-	if (delta_x != 0 || delta_y != 0) Update_World_Coord(world_pos);
+	bounce_delay += 1;
+	if (bounce_delay > max_bounce_delay) bounce_delay = 0;
+}
+void AI_Movement_Component::Update_Projectile()
+{
+	world_pos.x += obj_x_vel;
+	cumulative_remainder_x += vel_remainder_x;
+
+	//Add in any remainder from conversion to int when it reaches >= 1
+	if (abs(cumulative_remainder_x) >= 1)
+	{
+		world_pos.x += cumulative_remainder_x;
+		cumulative_remainder_x = remainder(cumulative_remainder_x, 1.0);
+
+	}
+
+	world_pos.y += obj_y_vel;
+	cumulative_remainder_y += vel_remainder_y;
+
+	//Add in any remainder from conversion to int when it reaches >= 1
+	if (abs(cumulative_remainder_y) >= 1)
+	{
+		world_pos.y += cumulative_remainder_y;
+		cumulative_remainder_y = remainder(cumulative_remainder_y, 1.0);
+	}
+
+	// If the projectile has moved from one coordinate to another, send out an update message
+	if (Update_World_Coord(world_pos))
+	{
+		int projectile_template_num = object_locator->Return_AI_Stats_Pointer()->Return_Template_ID();
+		int faction = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION);
+		int array_index = object_locator->Return_Object_Pointer()->Get_Array_Index();
+		int custom_message[8] = { MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT,OBJECT_TYPE_ANY, FOCUS_ALL, world_coord.x, world_coord.y,faction, projectile_template_num, array_index };
+		service_locator->get_MB_Pointer()->Add_Custom_Message(8, custom_message);
+	}
 }
 
 bool AI_Movement_Component::Update_World_Coord(SDL_Rect new_world_rect)
@@ -253,7 +268,7 @@ void AI_Movement_Component::Set_Projectile_Velocity(SDL_Point target)
 
 void AI_Movement_Component::Set_Target_Coord(Coordinate grid_coord)
 {
-	if (!service_locator->get_Scene_Graph()->Tile_Is_Inaccessible(grid_coord, object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION)))
+	if (!service_locator->get_Scene_Graph()->Check_If_Tile_Is_Inaccessible(grid_coord, object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION)))
 	{
 		target_coord = grid_coord;
 		current_path = service_locator->get_Pathfinder()->pathFind(world_coord, target_coord, 1000, object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION));

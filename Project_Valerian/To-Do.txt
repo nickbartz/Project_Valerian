@@ -3,3 +3,5 @@ Project Valerian To-Do List
 
 * Scaffolds where there weren't enough items to create job originally need to periodically check to see if there are enough items now
 * Create UI for production jobs
+* Fix the UI for tracking job goals so it updates whenever a new job is chosen
+* Scan_For_Storable_Items needs to handle more than just ore, need a flag in the item flat file that flags an item as storeable

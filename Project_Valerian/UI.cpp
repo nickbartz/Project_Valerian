@@ -30,7 +30,7 @@ void UI::Collect_Bus_Messages()
 		return;
 	}
 
-	for (int i = 0; i < bus_pointer->count_input_messages; i++) Push_Message_To_Console(bus_pointer->Input_Message_Array[i].Get_Message_String());
+	//for (int i = 0; i < bus_pointer->count_input_messages; i++) Push_Message_To_Console(bus_pointer->Input_Message_Array[i].Get_Message_String());
 	for (int i = 0; i < bus_pointer->count_chatter_message; i++) Push_Message_To_Console(bus_pointer->Chatter_Array[i].Get_Message_String());
 }
 
@@ -131,10 +131,15 @@ void UI::Update()
 	if (entity_diagnostic_array[0].is_open()) entity_diagnostic_array[0].Draw(service_pointer->get_Draw_System_Pointer());
 	if (entity_diagnostic_array[1].is_open()) entity_diagnostic_array[1].Draw(service_pointer->get_Draw_System_Pointer());
 
-	int num_active_jobs = service_pointer->get_Scene_Graph()->Return_Current_Num_Jobs_In_Array();
-	string job_counter = "Num Jobs: ";
+	int num_active_jobs = service_pointer->get_Scene_Graph()->Return_Current_Num_Public_Jobs_In_Array();
+	string job_counter = "Num Public Jobs: ";
 	job_counter += to_string(num_active_jobs);
-	service_pointer->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1, {0,32,128,32},FONT_SMALL, job_counter, {255,255,255,255} });
+	service_pointer->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1, {0,16,128,32},FONT_SMALL, job_counter, {255,255,255,255} });
+
+	int num_items_on_manifest = service_pointer->get_Scene_Graph()->Return_Num_Item_Slots_On_Manifest();
+	string item_counter = "Num Item_Slots on Manifest: ";
+	item_counter += to_string(num_items_on_manifest);
+	service_pointer->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1,{ 0,32,256,32 },FONT_SMALL, item_counter,{ 255,255,255,255 } });
 }
 
 void UI::Parse_Loaded_Actions()

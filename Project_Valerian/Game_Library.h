@@ -78,7 +78,7 @@ struct Item_Template
 	int object_type = OBJECT_TYPE_ITEM;
 
 	int inventory_item_id = 0;
-	int inventory_item_type = 0;
+	string inventory_item_type;
 
 	SDL_Rect sprite_specs = { 0,0,SPRITE_SIZE,SPRITE_SIZE };
 };

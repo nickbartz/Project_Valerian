@@ -14,6 +14,9 @@ public:
 
 	void Check_For_Messages();
 	void Update();
+	void Update_Entity();
+	void Update_Container();
+	void Update_Projectile();
 
 	void Set_Target_Coord(Coordinate grid_point);
 	void Set_Target_Pos(int pos_x, int pos_y);

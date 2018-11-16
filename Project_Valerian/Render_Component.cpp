@@ -17,6 +17,7 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 {
 	service_locator = sLocator;
 	object_locator = oLocator;
+	override_color = { 255,255,255,255 };
 
 	switch (object_type)
 	{
@@ -88,6 +89,7 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 {
 	service_locator = sLocator;
 	object_locator = oLocator;
+	override_color = { 255,255,255,255 };
 
 	render_component = object_config.render_component_type;
 	multiclip_type = object_config.multiclip_type;
@@ -266,6 +268,7 @@ void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 		Handle_Progress_Overlays(pos_rect, { 255,0,100,255 }, 5, current_health, max_health);
 	}
 
+	// Draw Built Level
 	if (built_level < max_built_level)
 	{
 		Handle_Progress_Overlays(pos_rect, { 100,100,255,255 }, 11, built_level, max_built_level);
@@ -416,6 +419,7 @@ void Render_Component::Build_Wall_Multisprite()
 	Handle_Bottom_Left_Wall_Quad(sprite_clip.x, sprite_clip.y);
 
 	Handle_Bottom_Right_Wall_Quad(sprite_clip.x, sprite_clip.y);
+
 }
 
 void Render_Component::Handle_Upper_Left_Wall_Quad(int sprite_offset_x, int sprite_offset_y)

@@ -165,6 +165,7 @@ void UI_Panel_Object_Jobs::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 {
 	background_component.Draw(draw_system, base_rect);
 
+
 	if (linked_job_component->Return_Current_Job_Pointer() != NULL)
 	{
 		if (reset == true)
@@ -172,8 +173,10 @@ void UI_Panel_Object_Jobs::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 			object_job.Change_Component_Title(linked_job_component->Return_Current_Job_Pointer()->Return_Job_String_Name(), { 5,3,25,25 }, { 255,255,255,255 });
 			goal_list.Clear_All_Messages_From_Stream();
 
+			cout << linked_job_component->Return_Current_Num_Goals() << endl;
 			if (linked_job_component->Return_Current_Num_Goals() > 0)
 			{
+
 				for (int i = 0; i < linked_job_component->Return_Current_Num_Goals(); i++)
 				{
 					goal_list.Set_Message_At_Array_Num(linked_job_component->Return_Goal_At_Array_Num(i)->goal_string_name, i);

@@ -27,7 +27,11 @@ AI_Job_Component::AI_Job_Component(Global_Service_Locator* sLocator, Object_Serv
 		{int job_id = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(template_id)->job_type;
 			if (job_id != 0)
 			{
-				current_job = service_locator->get_Game_Library()->Fetch_Job_Template(job_id);
+				active_job = service_locator->get_Scene_Graph()->Job_Create_Local_Structure_Template_Job(object_locator->Return_Object_Pointer(), job_id);
+				if (current_num_job_goals == 0)
+				{
+					Query_Job_For_Goals();
+				}
 			}
 		}
 		break;
@@ -38,11 +42,15 @@ AI_Job_Component::AI_Job_Component(Global_Service_Locator* sLocator, Object_Serv
 	}
 }
 
+void AI_Job_Component::free()
+{
+}
+
 // ACCESSORS
 
 Job* AI_Job_Component::Return_Current_Job_Pointer()
 {
-	if (current_job != NULL) return current_job;
+	if (active_job != NULL) return active_job;
 	else return NULL;
 }
 
@@ -90,49 +98,34 @@ void AI_Job_Component::Update_Entity()
 
 void AI_Job_Component::Update_Entity_Manage_Jobs()
 {
-	if (current_num_job_goals > 0)
+	if (Is_Current_Job_Still_Relevant() == true)
 	{
-		if (current_job != NULL) Process_Next_Goal();
-		else if (current_job == NULL)
+		if (current_num_job_goals > 0 && next_goal_index < current_num_job_goals)
 		{
-			Clear_Job();
-			Update_Entity_Choose_Job();
-			if (current_job != NULL) Query_Job_For_Goals();
+			Process_Next_Goal();
+		}
+		else if (active_job->Return_Num_Unassigned_Goalsets() > 0)
+		{
+			Query_Job_For_Goals();
 		}
 	}
-	else if (current_num_job_goals == 0)
+	else
 	{
-		if (current_job != NULL) Query_Job_For_Goals();
-		else
-		{
-			Update_Entity_Choose_Job();
-			if (current_job != NULL) Query_Job_For_Goals();
-		}
+		Update_Entity_Choose_New_Job();
 	}
 }
 
-void AI_Job_Component::Update_Entity_Choose_Job()
+void AI_Job_Component::Update_Entity_Choose_New_Job()
 {
-	//** Interplay with Personal Jobs will go here **//
+	Clear_Job();
 	
-	current_job = service_locator->get_Scene_Graph()->Return_Job_With_Highest_Priority_Correlation(0);
-}
-
-void AI_Job_Component::Container_Send_Out_Pickup_Request()
-{
-	//int message[12] = {
-	//	MESSAGE_TYPE_ENTITY_JOB_REQUEST,
-	//	JOB_TYPE_CONTAINER_PICKUP, JOB_INST_START, 1,  // NUMBER OF GOALS IN JOB
-	//	JOB_INST_NEW_GOAL, 5,  ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, OBJECT_TYPE_CONTAINER, object_locator->Return_Object_Pointer()->Get_Array_Index(), JOB_INST_END_GOAL,
-	//	JOB_INST_END };
-
-	//service_locator->get_MB_Pointer()->Add_Custom_Message(12, message);
+	active_job = service_locator->get_Scene_Graph()->Return_Job_With_Highest_Priority_Correlation(object_locator->Return_Object_Pointer());
 }
 
 void AI_Job_Component::Clear_Job()
 {
 	Clear_All_Goals_From_Array();
-	current_job = NULL;
+	active_job = NULL;
 	current_num_job_goals = 0;
 	next_goal_index = 0;
 }
@@ -158,7 +151,7 @@ void AI_Job_Component::Check_For_Messages_Structure()
 	Coordinate current_coord;
 	int job_type = 0;
 
-	if (current_job != NULL) job_type = current_job->Get_Job_Type();
+	if (active_job != NULL) job_type = active_job->Return_Job_Type();
 
 	switch (job_type)
 	{
@@ -166,11 +159,7 @@ void AI_Job_Component::Check_For_Messages_Structure()
 		for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
 		{
 			new_message = &service_locator->get_MB_Pointer()->Custom_Message_Array[i];
-			if (new_message->Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION)
-			{
-				if (current_num_job_goals == 0) Query_Job_For_Goals();
-				next_goal_index = 0;
-			}
+			if (new_message->Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION)	next_goal_index = 0;
 		}
 		break;
 	case 2: // Door Job From job csv data
@@ -183,7 +172,6 @@ void AI_Job_Component::Check_For_Messages_Structure()
 				current_coord = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
 				if (abs(new_message->Read_Message(6) - current_coord.x) <= 1 && abs(new_message->Read_Message(7) - current_coord.y) <= 1 && new_message->Read_Message(3) == object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION))
 				{
-					if (current_num_job_goals == 0) Query_Job_For_Goals();
 					next_goal_index = 0;
 				}
 				break;
@@ -215,13 +203,19 @@ void AI_Job_Component::Check_For_Messages_Entity()
 	}
 }
 
-// LOWER LEVEL JOB MANAGEMENT FUNCTIONS 
 
 // Goal Addition and Subtraction 
 
-void AI_Job_Component::Query_Job_For_Goals()
+bool AI_Job_Component::Is_Current_Job_Still_Relevant()
 {
-	Goal_Set* goals_received_from_job = current_job->Get_Job_Goals(object_locator->Return_Object_Pointer());
+	if (active_job != NULL && active_job->Return_Is_Init() == true) return true;
+	else return false;
+}
+
+
+bool AI_Job_Component::Query_Job_For_Goals()
+{
+	Goal_Set* goals_received_from_job = active_job->Return_Job_Goals(object_locator->Return_Object_Pointer());
 
 	if (goals_received_from_job != NULL && goals_received_from_job->mini_goal_array.size() > 0)
 	{
@@ -229,21 +223,18 @@ void AI_Job_Component::Query_Job_For_Goals()
 		for (int i = 0; i < goals_received_from_job->mini_goal_array.size(); i++)
 		{
 			current_goals.insert(current_goals.begin() + insertion_index, goals_received_from_job->mini_goal_array[i]);
-			//current_goals.push_back(goals_received_from_job->mini_goal_array[i]);
 			current_num_job_goals++;
 			insertion_index++;
 		}
+		return true;
 	}
 	else
 	{
 		cout << "current job returned NULL goal set, should not happen" << endl;
 	}
 
-	// Comment out to get list of current goals
-	//for (int i = 0; i < current_goals.size(); i++)
-	//{
-	//	cout << i << " : " << current_goals[i].goal_string_name << endl;
-	//}
+	return false;
+
 }
 
 void AI_Job_Component::Add_Non_Job_Goal_To_Goal_Array(Job_Goal goal)
@@ -270,7 +261,7 @@ void AI_Job_Component::Process_Next_Goal()
 
 	if (next_goal_index < current_num_job_goals && current_goals[next_goal_index].goal_instruction_array[0] != ACTION_NONE)
 	{
-		//cout << "processing: " << current_goals[next_goal_index].goal_string_name << endl;
+		//if (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type() == OBJECT_TYPE_ENTITY) cout << current_goals[next_goal_index].goal_string_name << endl;
 		Action_Triage(&current_goals[next_goal_index]);
 	}
 }
@@ -324,6 +315,8 @@ void AI_Job_Component::Action_Edit_Internal(Job_Goal* goal)
 {
 	switch (goal->goal_instruction_array[1])
 	{
+	case A_EI_PAUSE_FOR_FURTHER_INSTRUCTIONS:
+		break;
 	case A_EI_OPEN_DOOR:
 		object_locator->Return_Render_Pointer()->Change_Simple_Animation(SIMPLE_ANIMATION_INCREMENT_UNTIL_COMPLETE);
 		wait_timer = goal->goal_instruction_array[2];
@@ -380,7 +373,7 @@ void AI_Job_Component::Action_Assess_Internal(Job_Goal* goal)
 	case A_AI_CHECK_JOB_FOR_MORE_GOALSETS:
 		// We're going to move onto the next goal first, so that if we do add more goalsets, we're not repeating the "check job" goal later on
 		next_goal_index++;
-		if (current_job != NULL && current_job->Get_Num_Unassigned_Goalsets() > 0)
+		if (active_job != NULL && active_job->Return_Num_Unassigned_Goalsets() > 0)
 		{
 			Query_Job_For_Goals();
 		}
@@ -395,34 +388,34 @@ void AI_Job_Component::Action_Assess_External(Job_Goal* goal)
 	{
 	case A_AE_OXYGENATE:
 		{
-		vector<Coordinate> oxygenation_vector;
-		map<Coordinate, bool> check_map;
-		bool leak_check = false;
-		service_locator->get_Scene_Graph()->Return_Tiles_Without_Leaks(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), oxygenation_vector, check_map, leak_check);
-		if (leak_check == false && oxygenation_vector.size() > 0)
-		{
-			for (int i = 0; i < oxygenation_vector.size(); i++)
+			vector<Coordinate> oxygenation_vector;
+			map<Coordinate, bool> check_map;
+			bool leak_check = false;
+			service_locator->get_Scene_Graph()->Return_Tiles_Without_Leaks(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), oxygenation_vector, check_map, leak_check);
+			if (leak_check == false && oxygenation_vector.size() > 0)
 			{
-				int message_content[8] = { MESSAGE_TYPE_STAT_UPDATE_REQUEST, OBJECT_TYPE_STRUCTURE, FOCUS_SPECIFC_OBJECT, STAT_ADJUST, oxygenation_vector[i].x,oxygenation_vector[i].y,STAT_STRUCTURE_OXYGEN_LEVEL,100 / oxygenation_vector.size() };
-				service_locator->get_MB_Pointer()->Add_Custom_Message(8, message_content);
+				for (int i = 0; i < oxygenation_vector.size(); i++)
+				{
+					int message_content[8] = { MESSAGE_TYPE_STAT_UPDATE_REQUEST, OBJECT_TYPE_STRUCTURE, FOCUS_SPECIFC_OBJECT, STAT_ADJUST, oxygenation_vector[i].x,oxygenation_vector[i].y,STAT_STRUCTURE_OXYGEN_LEVEL,100 / oxygenation_vector.size() };
+					service_locator->get_MB_Pointer()->Add_Custom_Message(8, message_content);
+				}
+				object_locator->Return_Render_Pointer()->Change_Simple_Animation(SIMPLE_ANIMATION_INCREMENT_AND_REPEAT);
 			}
-			object_locator->Return_Render_Pointer()->Change_Simple_Animation(SIMPLE_ANIMATION_INCREMENT_AND_REPEAT);
-		}
-		else
-		{
-			object_locator->Return_Render_Pointer()->Change_Simple_Animation(SIMPLE_ANIMATION_PAUSE);
-		}
-		next_goal_index++;
-		}
-		break;
-	case A_AE_CHECK_SIMPLE_DISTANCE:
-		if (service_locator->get_Scene_Graph()->Check_Simple_Distance_To_Object(object_locator->Return_Object_Pointer(), service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[2], goal->goal_instruction_array[3])) <= goal->goal_instruction_array[4])
-		{
+			else
+			{
+				object_locator->Return_Render_Pointer()->Change_Simple_Animation(SIMPLE_ANIMATION_PAUSE);
+			}
 			next_goal_index++;
+			}
+			break;
+		case A_AE_CHECK_SIMPLE_DISTANCE:
+			if (service_locator->get_Scene_Graph()->Check_Simple_Distance_To_Object(object_locator->Return_Object_Pointer(), service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[2], goal->goal_instruction_array[3])) <= goal->goal_instruction_array[4])
+			{
+				next_goal_index++;
 		}
 		break;
 	case A_AE_CHECK_OBJECT_STAT:
-		AI_Stats_Component * stats_pointer = service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[3], goal->goal_instruction_array[4])->Return_Stats_Component();
+		{AI_Stats_Component * stats_pointer = service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[3], goal->goal_instruction_array[4])->Return_Stats_Component();
 		switch (goal->goal_instruction_array[2])
 		{
 		case LOWER_THAN_OR_EQUAL_TO:
@@ -437,6 +430,40 @@ void AI_Job_Component::Action_Assess_External(Job_Goal* goal)
 				else next_goal_index++;
 			}
 			break;
+		}}
+		break;
+	case A_AE_CHECK_FOR_ENTITIES_IN_RADIUS:
+		{
+			bool entities_in_radius = false;
+			Coordinate base_coordinate = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
+			int radius = goal->goal_instruction_array[2];
+		
+			if (service_locator->get_Scene_Graph()->Return_All_Entities_In_Radius(base_coordinate, goal->goal_instruction_array[2]).size() > 0)
+			{
+				entities_in_radius = true;
+			}
+
+			if (entities_in_radius == true)
+			{
+				next_goal_index += goal->goal_instruction_array[3];
+			}
+			else
+			{
+				next_goal_index++;
+			}
+		}
+		break;
+	case A_AE_CHECK_IF_OBJECT_HAS_ITEM:
+		AI_Item_Component * object_inventory = service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[2], goal->goal_instruction_array[3])->Return_AI_Item_Component();
+		Item item;
+		item.item_template_id = goal->goal_instruction_array[4];
+		if (object_inventory->Return_Amount_Of_Item_In_Inventory(item) < goal->goal_instruction_array[5])
+		{
+			Abort_Current_Job();
+		}
+		else
+		{
+			next_goal_index++;
 		}
 		break;
 	}
@@ -470,45 +497,18 @@ void AI_Job_Component::Action_Transfer(Job_Goal* goal)
 
 void AI_Job_Component::Action_Goal_Traversal(Job_Goal* goal)
 {
-	switch (goal->goal_instruction_array[1])
-	{
-	case TRAVERSAL_GOAL_INCREMENT:
-		Increment_Goal(goal->goal_instruction_array[2]);
-		break;
-	case TRAVERSAL_GOAL_DECREMENT:
-		Decrement_Goal(goal->goal_instruction_array[2]);
-		break;
-	}
+	next_goal_index += goal->goal_instruction_array[1];
 }
 
 void AI_Job_Component::Action_Manage_Goal_Set_End(Job_Goal* goal)
 {
-	current_job->Close_Out_Goal_Set(goal->goal_instruction_array[1]);
+	active_job->Close_Out_Goal_Set(goal->goal_instruction_array[1], object_locator->Return_Object_Pointer());
 	next_goal_index++;
-
-	if (next_goal_index >= current_num_job_goals)
-	{
-		if (current_job->Return_Is_Init() == false || current_job->Get_Num_Unassigned_Goalsets() <= 0)
-		{
-
-			Clear_Job();
-		}
-		else
-		{
-			Query_Job_For_Goals();
-		}
-	}
-
 }
 
-void AI_Job_Component::Increment_Goal(int goal_increment)
+void AI_Job_Component::Abort_Current_Job()
 {
-	next_goal_index += goal_increment;
-}
-
-void AI_Job_Component::Decrement_Goal(int goal_increment)
-{
-	next_goal_index -= goal_increment;
-
-	if (next_goal_index < 0) next_goal_index = 0;
+	cout << "aborting job" << endl;
+	active_job->Abort_Job();
+	Clear_Job();
 }
