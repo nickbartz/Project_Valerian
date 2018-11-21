@@ -4,6 +4,8 @@
 #include<Object.h>
 #include<AI_Item_Component.h>
 #include<AI_Job_Component.h>
+#include<Cursor.h>
+#include<UI.h>
 
 UI_Panel_Generic::UI_Panel_Generic(Global_Service_Locator* sLocator, int wName, SDL_Rect rect)
 {
@@ -12,14 +14,17 @@ UI_Panel_Generic::UI_Panel_Generic(Global_Service_Locator* sLocator, int wName, 
 	offset_rect = rect;
 }
 
-void UI_Panel_Generic::Init()
+void UI_Panel_Generic::Change_Rect(SDL_Rect new_rect)
 {
-
+	offset_rect = new_rect;
 }
 
-int UI_Panel_Generic::Get_Panel_Name()
+bool UI_Panel_Generic::Check_If_Click_In_Panel_Rect(SDL_Rect base_rect, SDL_Point mouse_location)
 {
-	return panel_name;
+	SDL_Rect panel_location = { base_rect.x + offset_rect.x, base_rect.y + offset_rect.y, offset_rect.w, offset_rect.h };
+
+	if (SDL_PointInRect(&mouse_location, &panel_location)) return true;
+	else return false;
 }
 
 void UI_Panel_Generic::Draw(Draw_System* draw_system, SDL_Rect base_rect)
@@ -27,30 +32,131 @@ void UI_Panel_Generic::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 
 }
 
-void UI_Panel_Generic::Change_Rect(SDL_Rect new_rect)
-{
-	offset_rect = new_rect;
-}
-
 void UI_Panel_Console::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 {
-	background_component.Draw(draw_system, base_rect);
-	message_stream.Draw(draw_system, base_rect);
+	background_component.Draw(base_rect);
+	message_stream.Draw(base_rect);
 }
 
-void UI_Panel_Console::Push_Message_Into_Stream(string new_message)
+void UI_Panel_Object_Inventory::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 {
-	message_stream.Push_Message_Into_Stream(new_message);
+	background_component.Draw(base_rect);
+
+	for (int i = 0; i < panel_buttons; i++)
+	{
+		graphic_button_array[i].Draw(base_rect);
+	}
+}
+
+void UI_Panel_Object_Stats::Draw(Draw_System* draw_system, SDL_Rect base_rect)
+{
+	background_component.Draw(base_rect);
+
+	for (int i = 0; i < num_stats; i++)
+	{
+		graphic_button_array[i].Draw(base_rect);
+	}
+}
+
+void UI_Panel_Object_Jobs::Draw(Draw_System* draw_system, SDL_Rect base_rect)
+{
+	background_component.Draw(base_rect);
+
+
+	if (linked_job_component->Return_Current_Job_Pointer() != NULL)
+	{
+		if (reset == true)
+		{
+			object_job.Change_Component_Title(linked_job_component->Return_Current_Job_Pointer()->Return_Job_String_Name(), { 5,3,25,25 }, { 255,255,255,255 });
+			goal_list.Clear_All_Messages_From_Stream();
+
+			cout << linked_job_component->Return_Current_Num_Goals() << endl;
+			if (linked_job_component->Return_Current_Num_Goals() > 0)
+			{
+
+				for (int i = 0; i < linked_job_component->Return_Current_Num_Goals(); i++)
+				{
+					goal_list.Set_Message_At_Array_Num(linked_job_component->Return_Goal_At_Array_Num(i)->goal_string_name, i);
+				}
+				goal_list.Set_Bold_Line(linked_job_component->Return_Current_Goal_Index());
+			}
+
+			reset = false;
+		}
+
+		goal_list.Set_Bold_Line(linked_job_component->Return_Current_Goal_Index());
+		goal_list.Draw(base_rect);
+	}
+	else
+	{
+		if (reset == false)
+		{
+			object_job.Change_Component_Title("No Current Job", { 5,3,25,25 }, { 255,255,255,255 });
+			reset = true;
+		}
+	}
+
+	object_job.Draw(base_rect);
+
+}
+
+void UI_Panel_Object_Production::Draw(Draw_System* draw_system, SDL_Rect base_rect)
+{
+	background_component.Draw(base_rect);
+	build_button.Draw(base_rect);
+	blueprint_list.Draw(base_rect);
+	blueprint_details.Draw(base_rect);
+	production_amount.Draw(base_rect);
+
 }
 
 void UI_Panel_Structure_Create_Type::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 {
-	background_component.Draw(draw_system, base_rect);
+	background_component.Draw(base_rect);
 
 	for (int i = 0; i < panel_buttons; i++)
 	{
-		graphic_button_array[i].Draw(draw_system, base_rect);
+		graphic_button_array[i].Draw(base_rect);
 	}
+}
+
+int UI_Panel_Generic::Get_Panel_Name()
+{
+	return panel_name;
+}
+
+void UI_Panel_Structure_Create_Type::Handle_Mouse_Click()
+{
+	for (int i = 0; i < panel_buttons; i++)
+	{
+		if (graphic_button_array[i].Check_If_Click_In_Component_Rect(service_locator->get_Cursor_Pointer()->Get_Mouse_Position())) graphic_button_array[i].Handle_Button_Click();
+	}
+}
+
+void UI_Panel_Object_Inventory::Handle_Mouse_Click()
+{
+
+}
+
+void UI_Panel_Object_Stats::Handle_Mouse_Click()
+{
+
+}
+
+void UI_Panel_Object_Production::Handle_Mouse_Click()
+{
+	if (blueprint_list.Check_If_Click_In_Component_Rect(service_locator->get_Cursor_Pointer()->Get_Mouse_Position())) blueprint_list.Handle_Click_On_Component();
+}
+
+void UI_Panel_Object_Jobs::Handle_Mouse_Click()
+{
+
+}
+
+
+void UI_Panel_Generic::Init()
+{
+
 }
 
 void UI_Panel_Structure_Create_Type::Init(int ui_structure_type)
@@ -79,24 +185,6 @@ void UI_Panel_Structure_Create_Type::Init(int ui_structure_type)
 		}
 	}
 
-}
-
-void UI_Panel_Structure_Create_Type::Check_For_Clicks()
-{
-	for (int i = 0; i < panel_buttons; i++)
-	{
-		graphic_button_array[i].Check_For_Click();
-	}
-}
-
-void UI_Panel_Object_Inventory::Draw(Draw_System* draw_system, SDL_Rect base_rect)
-{
-	background_component.Draw(draw_system, base_rect);
-
-	for (int i = 0; i < panel_buttons; i++)
-	{
-		graphic_button_array[i].Draw(base_rect);
-	}
 }
 
 void UI_Panel_Object_Inventory::Init(Object* object)
@@ -132,21 +220,6 @@ void UI_Panel_Object_Inventory::Init(Object* object)
 	}
 }
 
-void UI_Panel_Object_Inventory::Check_For_Clicks()
-{
-
-}
-
-void UI_Panel_Object_Stats::Draw(Draw_System* draw_system, SDL_Rect base_rect)
-{
-	background_component.Draw(draw_system, base_rect);
-
-	for (int i = 0; i < num_stats; i++)
-	{
-		graphic_button_array[i].Draw(draw_system, base_rect);
-	}
-}
-
 void UI_Panel_Object_Stats::Init(Object* object)
 {
 	background_component = UI_Component_Generic(service_locator, offset_rect, true);
@@ -154,53 +227,6 @@ void UI_Panel_Object_Stats::Init(Object* object)
 	graphic_button_array.push_back(UI_Component_Stat_Button(service_locator, { offset_rect.x, offset_rect.y, offset_rect.w ,25 }));
 	graphic_button_array[0].Init(object, STAT_OBJECT_HEALTH, "Health");
 	num_stats++;
-}
-
-void UI_Panel_Object_Stats::Check_For_Clicks()
-{
-
-}
-
-void UI_Panel_Object_Jobs::Draw(Draw_System* draw_system, SDL_Rect base_rect)
-{
-	background_component.Draw(draw_system, base_rect);
-
-
-	if (linked_job_component->Return_Current_Job_Pointer() != NULL)
-	{
-		if (reset == true)
-		{
-			object_job.Change_Component_Title(linked_job_component->Return_Current_Job_Pointer()->Return_Job_String_Name(), { 5,3,25,25 }, { 255,255,255,255 });
-			goal_list.Clear_All_Messages_From_Stream();
-
-			cout << linked_job_component->Return_Current_Num_Goals() << endl;
-			if (linked_job_component->Return_Current_Num_Goals() > 0)
-			{
-
-				for (int i = 0; i < linked_job_component->Return_Current_Num_Goals(); i++)
-				{
-					goal_list.Set_Message_At_Array_Num(linked_job_component->Return_Goal_At_Array_Num(i)->goal_string_name, i);
-				}
-				goal_list.Set_Bold_Line(linked_job_component->Return_Current_Goal_Index());
-			}
-
-			reset = false;
-		}
-
-		goal_list.Set_Bold_Line(linked_job_component->Return_Current_Goal_Index());
-		goal_list.Draw(draw_system, base_rect);
-	}
-	else
-	{
-		if (reset == false)
-		{
-			object_job.Change_Component_Title("No Current Job", { 5,3,25,25 }, { 255,255,255,255 });
-			reset = true;
-		}
-	}
-
-	object_job.Draw(draw_system, base_rect);
-
 }
 
 void UI_Panel_Object_Jobs::Init(Object* object)
@@ -216,10 +242,38 @@ void UI_Panel_Object_Jobs::Init(Object* object)
 	object_job.Change_Component_Title("No Current_Job", { 5,4,25,25 }, { 255,255,255,255 });
 
 	SDL_Rect message_stream_rect = { offset_rect.x, offset_rect.y + 25, offset_rect.w, offset_rect.h - 25 };
-	goal_list = UI_Component_Message_Stream(service_locator, message_stream_rect,15);
+	goal_list = UI_Component_Message_Stream(service_locator, message_stream_rect);
 }
 
-void UI_Panel_Object_Jobs::Check_For_Clicks()
+void UI_Panel_Object_Production::Init(Object* object)
 {
+	// These are percentages so if the overarching window changes, then the figures will change automatically
+
+	linked_object = object;
+
+	blueprint_list.Init();
+	blueprint_details.Init();
+	
+	UI_Component_Generic new_button = UI_Component_Generic(service_locator, { blueprint_list.Return_Rect().x,0,blueprint_list.Return_Rect().w,0 }, true);
+	
+	AI_Item_Component* object_inventory = object->Return_AI_Item_Component();
+	int num_production_blueprints = object_inventory->Return_Num_Production_Blueprints();
+
+	for (int i = 0; i < num_production_blueprints; i++)
+	{
+		Blueprint* production_blueprint = object_inventory->Return_Blueprint_At_Slot(i);
+		string name = production_blueprint->blueprint_string_name;
+		new_button.Change_Component_Title(name, { 5,5,0,0 });
+		new_button.Set_Background_Color({ 150,150,150,50 });
+
+		blueprint_list.Add_Button_To_Button_List(new_button);
+	}
 
 }
+
+
+void UI_Panel_Console::Push_Message_Into_Stream(string new_message)
+{
+	message_stream.Push_Message_Into_Stream(new_message);
+}
+

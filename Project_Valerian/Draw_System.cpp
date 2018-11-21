@@ -223,15 +223,12 @@ void Draw_System::Draw(SDL_Renderer* render_target)
 	Draw_Sprites(render_target, SPRITESHEET_PROJECTILE);
 	Draw_Sprites(render_target, SPRITESHEET_MID_2);
 
-	Draw_Primitives(render_target);
+	Draw_Primitives(render_target, 1);
 	Draw_Text_Strings(render_target);
 	Draw_Sprites(render_target, SPRITESHEET_ICON);
 	Draw_Primitives(render_target, 2);
 	Draw_Text_Strings(render_target, 2);
 
-
-	//prebaked_background_multisprite.Draw_Directly(render_target, { 0,0,SCREEN_WIDTH,SCREEN_HEIGHT }, { 0,0,SCREEN_WIDTH,SCREEN_HEIGHT });
-	
 }
 
 // Functions for drawing primitives

@@ -11,6 +11,83 @@ Cursor::Cursor(Global_Service_Locator* sPointer)
 	camera = { 0, 0,32, 0 };
 }
 
+void Cursor::Age_Mouse()
+{
+	if (left_button == true && left_button_previous == false) left_button_previous = true;
+	if (right_button == true && right_button_previous == false) right_button_previous = true;
+
+	if (left_button == false && left_button_previous == true) left_button_previous = false;
+	if (right_button == false && right_button_previous == true) right_button_previous = false;
+
+	last_mouse_x = current_mouse_x;
+	last_mouse_y = current_mouse_y;
+}
+
+void Cursor::Collect_Bus_Messages()
+{
+	for (int i = 0; i < service_pointer->get_MB_Pointer()->count_input_messages; i++)
+	{
+		Parse_Input_Message(service_pointer->get_MB_Pointer()->Input_Message_Array[i].Return_Event());
+	}
+}
+
+SDL_Point Cursor::Convert_Coord_To_Screen_Pos(Coordinate point, bool center_of_tile)
+{
+	//SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+
+
+	int x_pos = (point.x*camera.w) + SCREEN_WIDTH / 2 + camera.x;
+	int y_pos = (point.y*camera.w) + SCREEN_HEIGHT / 2 + camera.y;
+
+	if (center_of_tile)
+	{
+		return { x_pos + camera.w / 2, y_pos + camera.w / 2 };
+	}
+	else
+	{
+		return { x_pos, y_pos };
+	}
+}
+
+SDL_Rect Cursor::Convert_World_Rect_To_Screen_Rect(SDL_Rect world_rect)
+{
+	SDL_Rect draw_rect = { (world_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (world_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, world_rect.w*camera.w / TILE_SIZE, world_rect.h*camera.w / TILE_SIZE };
+	return draw_rect;
+}
+
+void Cursor::Change_Cursor_Icon(int icon_clip_x, int icon_clip_y)
+{
+	mouse_icon_clip_x = icon_clip_x;
+	mouse_icon_clip_y = icon_clip_y;
+}
+
+void Cursor::Draw()
+{
+	if (left_button == 1 && currently_clicked_component == NULL)
+	{
+		int x = min(current_mouse_x, held_mouse_x);
+		int y = min(current_mouse_y, held_mouse_y);
+		int w = abs(current_mouse_x - held_mouse_x);
+		int h = abs(current_mouse_y - held_mouse_y);
+		drag_rect = { x,y,w,h };
+
+		service_pointer->get_Draw_System_Pointer()->Draw_Primitive_Directly(service_pointer->get_Game_Renderer(), drag_rect, { 100,100,255,100 }, true);
+		service_pointer->get_Draw_System_Pointer()->Draw_Primitive_Directly(service_pointer->get_Game_Renderer(), drag_rect, { 255,255,255,255 }, false);
+	}
+	else if (currently_clicked_component == NULL)
+	{
+		SDL_Point world_pos = Convert_Coord_To_Screen_Pos(Get_Mouse_Grid_Coord(), false);
+		SDL_Rect world_grid_rect = { world_pos.x, world_pos.y, camera.w, camera.w };
+
+		service_pointer->get_Draw_System_Pointer()->Draw_Primitive_Directly(service_pointer->get_Game_Renderer(), world_grid_rect, { 255,100,255,100 }, true);
+		service_pointer->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(service_pointer->get_Game_Renderer(), SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
+	}
+	else
+	{
+		service_pointer->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(service_pointer->get_Game_Renderer(), SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
+	}
+}
+
 SDL_Rect Cursor::Get_Camera()
 {
 	return camera;
@@ -44,41 +121,27 @@ SDL_Point Cursor::Get_Mouse_World_Pos()
 	return SDL_Point{ mouse_grid_x,mouse_grid_y };
 }
 
-SDL_Point Cursor::Convert_Coord_To_Screen_Pos(Coordinate point, bool center_of_tile)
+Coordinate Cursor::Get_Mouse_Grid_Coord()
 {
-	//SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+	int mouse_grid_x = 0;
+	int mouse_grid_y = 0;
 
+	int mouse_pos_x = (current_mouse_x - (SCREEN_WIDTH / 2) - camera.x);
+	int mouse_pos_y = (current_mouse_y - (SCREEN_HEIGHT / 2) - camera.y);
 
-	int x_pos = (point.x*camera.w) + SCREEN_WIDTH / 2 + camera.x;
-	int y_pos = (point.y*camera.w) + SCREEN_HEIGHT / 2 + camera.y;
-
-	if (center_of_tile)
+	if (mouse_pos_x >= 0)
 	{
-		return { x_pos + camera.w/2, y_pos+camera.w/2 };
+		mouse_grid_x = mouse_pos_x / camera.w;
 	}
-	else
+	else mouse_grid_x = mouse_pos_x / camera.w - 1;
+
+	if (mouse_pos_y >= 0)
 	{
-		return { x_pos, y_pos};
+		mouse_grid_y = mouse_pos_y / camera.w;
 	}
-}
+	else mouse_grid_y = mouse_pos_y / camera.w - 1;
 
-SDL_Rect Cursor::Convert_World_Rect_To_Screen_Rect(SDL_Rect world_rect)
-{
-	SDL_Rect draw_rect = { (world_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (world_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, world_rect.w*camera.w/TILE_SIZE, world_rect.h*camera.w/TILE_SIZE };
-	return draw_rect;
-}
-
-void Cursor::Change_Cursor_Icon(int icon_clip_x, int icon_clip_y)
-{
-	mouse_icon_clip_x = icon_clip_x;
-	mouse_icon_clip_y = icon_clip_y;
-}
-
-void Cursor::Update_Grid_Position()
-{
-	Coordinate grid_point = Get_Mouse_Grid_Coord();
-
-	grid_pos = { ((grid_point.x*TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((grid_point.y*TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+	return Coordinate{ mouse_grid_x,mouse_grid_y };
 }
 
 int Cursor::Get_Recent_Mouse_Action()
@@ -111,101 +174,19 @@ int Cursor::Get_Recent_Mouse_Action()
 	return INPUT_NULL;
 }
 
-Coordinate Cursor::Get_Mouse_Grid_Coord()
-{
-	int mouse_grid_x = 0;
-	int mouse_grid_y = 0;
-	
-	int mouse_pos_x = (current_mouse_x - (SCREEN_WIDTH / 2) - camera.x);
-	int mouse_pos_y = (current_mouse_y - (SCREEN_HEIGHT / 2) - camera.y);
-	
-	if (mouse_pos_x >= 0)
-	{
-		mouse_grid_x = mouse_pos_x / camera.w;
-	}
-	else mouse_grid_x = mouse_pos_x / camera.w - 1;
-
-	if (mouse_pos_y >= 0)
-	{
-		mouse_grid_y = mouse_pos_y / camera.w;
-	}
-	else mouse_grid_y = mouse_pos_y / camera.w - 1;
-
-	return Coordinate{ mouse_grid_x,mouse_grid_y };
-}
-
-void Cursor::Collect_Bus_Messages()
-{
-	for (int i = 0; i < service_pointer->get_MB_Pointer()->count_input_messages; i++)
-	{
-		Parse_Input_Message(service_pointer->get_MB_Pointer()->Input_Message_Array[i].Return_Event());
-	}
-}
-
-void Cursor::Update()
-{
-	Age_Mouse();
-
-	if (left_button == false && currently_clicked_component != NULL)
-	{
-		currently_clicked_component->Currently_Clicked(false);
-		currently_clicked_component = NULL;
-	}
-}
-
-void Cursor::Draw()
-{
-	if (left_button == 1 && currently_clicked_component == NULL)
-	{
-		int x = min(current_mouse_x, held_mouse_x);
-		int y = min(current_mouse_y, held_mouse_y);
-		int w = abs(current_mouse_x - held_mouse_x);
-		int h = abs(current_mouse_y - held_mouse_y);
-		drag_rect = { x,y,w,h };
-
-		service_pointer->get_Draw_System_Pointer()->Draw_Primitive_Directly(service_pointer->get_Game_Renderer(), drag_rect, { 100,100,255,100 }, true);
-		service_pointer->get_Draw_System_Pointer()->Draw_Primitive_Directly(service_pointer->get_Game_Renderer(), drag_rect, { 255,255,255,255 }, false);
-	}
-	else if (currently_clicked_component == NULL)
-	{
-		// For some reason this function to draw the grid highlight eats like 50fps on its own
-		//service_pointer->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, grid_pos, true, { 100,100,255,100 });
-		///
-
-		service_pointer->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(service_pointer->get_Game_Renderer(), SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
-
-	}
-	else
-	{
-		service_pointer->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(service_pointer->get_Game_Renderer(), SPRITESHEET_ICON, { current_mouse_x,current_mouse_y,SPRITE_SIZE,SPRITE_SIZE }, { mouse_icon_clip_x, mouse_icon_clip_y, SPRITE_SIZE, SPRITE_SIZE });
-	}
-}
-
-void Cursor::Age_Mouse()
-{
-	if (left_button == true && left_button_previous == false) left_button_previous = true;
-	if (right_button == true && right_button_previous == false) right_button_previous = true;
-
-	if (left_button == false && left_button_previous == true) left_button_previous = false;
-	if (right_button == false && right_button_previous == true) right_button_previous = false;
-
-	last_mouse_x = current_mouse_x;
-	last_mouse_y = current_mouse_y;
-}
-
 void Cursor::Parse_Input_Message(SDL_Event event)
 {
 	if (event.type == SDL_MOUSEMOTION)
-	{	
+	{
 		last_mouse_x = current_mouse_x;
-		last_mouse_y = current_mouse_y;		
+		last_mouse_y = current_mouse_y;
 		current_mouse_x = event.motion.x;
 		current_mouse_y = event.motion.y;
 		Update_Grid_Position();
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
 	{
-		
+
 		if (event.button.button == SDL_BUTTON_LEFT)
 		{
 			left_button = true;
@@ -255,3 +236,23 @@ void Cursor::Set_Currently_Clicked_Component(UI_Component_Generic* component)
 {
 	currently_clicked_component = component;
 }
+
+void Cursor::Update_Grid_Position()
+{
+	Coordinate grid_point = Get_Mouse_Grid_Coord();
+
+	grid_pos = { ((grid_point.x*TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((grid_point.y*TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+}
+
+void Cursor::Update()
+{
+	Age_Mouse();
+
+	if (left_button == false && currently_clicked_component != NULL)
+	{
+		currently_clicked_component->Currently_Clicked(false);
+		currently_clicked_component = NULL;
+	}
+}
+
+

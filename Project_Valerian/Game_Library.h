@@ -13,6 +13,12 @@ using namespace std;
 
 class Blueprint;
 
+struct Blueprint_Pack
+{
+	int blueprint_pack_id = 0;
+	vector<int> blueprint_id_array;
+};
+
 struct Structure_Template
 {
 	int object_type = OBJECT_TYPE_NULL;;
@@ -45,6 +51,7 @@ struct Structure_Template
 	// Item_Pack
 	int has_starter_inventory = 0;
 	int scaffold_blueprint_id = 0;
+	int blueprint_pack_id = 0;
 };
 
 struct Entity_Template
@@ -104,6 +111,7 @@ public:
 	Entity_Template* Fetch_Entity_Template(int entity_id);
 	Item_Template* Fetch_Item_Template(int item_id);
 	Blueprint* Fetch_Blueprint(int inventory_id);
+	Blueprint_Pack* Fetch_Blueprint_Pack(int blueprint_pack);
 	vector<Blueprint*> Fetch_All_Blueprints_Of_Type_For_Object(int type, int object_type, int object_template_id);
 	Job* Fetch_Job_Template(int job_id);
 	Projectile_Template* Fetch_Projectile_Template(int projectile_id);
@@ -119,11 +127,13 @@ public:
 	void Load_Entity_Templates(string entity_template_path, string entity_animation_path);
 	void Load_Item_Templates(string item_template_path);
 	void Load_Blueprints(string blueprints_path);
+	void Load_Blueprint_Packs(string blueprint_packs_path);
 	void Load_Jobs(string jobs_path, string goals_path);
 	void Load_Projectiles(string projectiles_path);
 
+
 	vector<vector<int>> Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename);
-		
+
 	bool is_wall(int tile_type);
 	bool is_null(int tile_type);
 	bool is_floor(int tile_type);
@@ -144,10 +154,10 @@ private:
 	Blueprint loaded_blueprints[MAX_NUM_TEMPLATES];
 	int num_loaded_blueprints = 0;
 
-	unordered_map<string, int> job_codes;
+	Blueprint_Pack loaded_blueprint_packs[MAX_NUM_TEMPLATES];
+	int num_loaded_blueprint_packs = 0;
 
-	Job_Goal loaded_goals[MAX_NUM_TEMPLATES];
-	int num_loaded_goals = 0;
+	unordered_map<string, int> job_codes;
 
 	Job loaded_jobs[MAX_NUM_TEMPLATES];
 	int num_loaded_jobs = 0;

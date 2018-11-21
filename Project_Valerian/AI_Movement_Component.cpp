@@ -106,24 +106,6 @@ void AI_Movement_Component::Update_Entity()
 	{
 		Coordinate next_step = { current_path.back().x_tile,current_path.back().y_tile };
 
-		// Change L-Shaped Paths to Diagonal Where Possible
-		if (current_path.size() > 1)
-		{
-			Coordinate step_beyond = { current_path.end()[-2].x_tile, current_path.end()[-2].y_tile };
-			if (abs(step_beyond.x - previous_world_coord.x) == 1 && abs(step_beyond.y - previous_world_coord.y) == 1)
-			{
-				int inac_y = (step_beyond.y - next_step.y);
-				int inac_x = (step_beyond.x - next_step.x);
-
-				// NEED TO FIX THIS, IT IS NOT WORKING // 
-				if (!service_locator->get_Scene_Graph()->Check_If_Tile_Is_Inaccessible({ inac_x, inac_y }, object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION)))
-				{
-					next_step = step_beyond;
-					current_path.pop_back();
-				}
-			}
-		}
-
 		Set_Target_Pos(next_step.x * TILE_SIZE, next_step.y * TILE_SIZE);
 		current_path.pop_back();
 	}

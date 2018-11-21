@@ -16,6 +16,7 @@ Game_Library::Game_Library(Global_Service_Locator* sLocator)
 	Load_Entity_Templates("Data/Entity_Templates.csv", "Data/Entity_Animations.csv");
 	Load_Item_Templates("Data/Inventory_Data.csv");
 	Load_Blueprints("Data/Blueprint_Data.csv");
+	Load_Blueprint_Packs("Data/Blueprint_Packs.csv");
 	Load_Projectiles("Data/Projectile_Data.csv");
 	Load_Job_Code_String_To_Enum_Crosswalk();
 	Load_Jobs("Data/Job_Data.csv", "Data/Job_Goal_Data.csv");
@@ -131,6 +132,7 @@ void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
 		new_config.max_built_level = stoi(vector_loaded_tiles[i + 1][27]);
 		new_config.has_starter_inventory = stoi(vector_loaded_tiles[i + 1][28]);
 		new_config.scaffold_blueprint_id = stoi(vector_loaded_tiles[i + 1][29]);
+		new_config.blueprint_pack_id = stoi(vector_loaded_tiles[i + 1][30]);
 		loaded_tiles[i] = new_config;
 		num_loaded_tiles++;	
 	}
@@ -215,6 +217,32 @@ void Game_Library::Load_Blueprints(string blueprints_path)
 
 		loaded_blueprints[i-1] = new_blueprint;
 		num_loaded_blueprints++;
+	}
+}
+
+void Game_Library::Load_Blueprint_Packs(string blueprint_packs_path)
+{
+	vector<vector<string>> vector_loaded_blueprints = readCSV(blueprint_packs_path);
+
+	for (int i = 1; i < vector_loaded_blueprints.size(); i++)
+	{
+		Blueprint_Pack new_blueprint_pack;
+
+		new_blueprint_pack.blueprint_pack_id = stoi(vector_loaded_blueprints[i][0]);
+
+		int error = 0;
+
+		for (int p = 3; p < 3 + stoi(vector_loaded_blueprints[i][2]); p++)
+		{
+			if (stoi(vector_loaded_blueprints[i][p]) != 0)
+			{
+				new_blueprint_pack.blueprint_id_array.push_back(stoi(vector_loaded_blueprints[i][p]));
+			}
+			else break;
+		}
+
+		loaded_blueprint_packs[num_loaded_blueprint_packs] = new_blueprint_pack;
+		num_loaded_blueprint_packs++;
 	}
 }
 
@@ -414,6 +442,11 @@ Blueprint* Game_Library::Fetch_Blueprint(int blueprint_id)
 {
 	if (blueprint_id < num_loaded_blueprints && blueprint_id != 0) return &loaded_blueprints[blueprint_id];
 	else return NULL;
+}
+
+Blueprint_Pack* Game_Library::Fetch_Blueprint_Pack(int blueprint_pack)
+{
+	return &loaded_blueprint_packs[blueprint_pack];
 }
 
 vector<Blueprint*> Game_Library::Fetch_All_Blueprints_Of_Type_For_Object(int type, int object_type, int object_template_id)

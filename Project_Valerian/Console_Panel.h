@@ -14,6 +14,7 @@ class UI_Panel_Generic
 public:
 	UI_Panel_Generic(Global_Service_Locator* service_locator, int window_name, SDL_Rect rect = { 0,0,100,100 });
 	int Get_Panel_Name();
+	bool Check_If_Click_In_Panel_Rect(SDL_Rect base_rect, SDL_Point mouse_location);
 	void Change_Rect(SDL_Rect new_rect);
 	bool active = false;
 	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
@@ -32,8 +33,7 @@ public:
 	UI_Panel_Console(Global_Service_Locator* service_locator = NULL, int window_name = WINDOW_PLAYER_DIAGNOSTIC, int pName = PANEL_MESSAGE_STREAM, SDL_Rect offset_rect = { 0,0,100,100 }) : UI_Panel_Generic(service_locator,window_name, offset_rect)
 	{
 		panel_name = pName;
-		
-		message_stream = UI_Component_Message_Stream(service_locator, { offset_rect.x,offset_rect.y,offset_rect.w,offset_rect.h }, min(UI_MAX_CONSOLE_MESSAGES, offset_rect.h / 20));
+		message_stream = UI_Component_Message_Stream(service_locator, { offset_rect.x,offset_rect.y,offset_rect.w,offset_rect.h });
 		message_stream.Set_Font_Type(FONT_SMALL);
 		background_component = UI_Component_Generic(service_locator, offset_rect, true);
 	}
@@ -59,7 +59,7 @@ public:
 
 	void Init(int ui_structure_type);
 	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
-	void Check_For_Clicks();
+	void Handle_Mouse_Click();
 
 private:
 	int panel_buttons = 0;
@@ -81,7 +81,7 @@ public:
 
 	void Init(Object* object);
 	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
-	void Check_For_Clicks();
+	void Handle_Mouse_Click();
 
 private:
 	int panel_buttons = 0;
@@ -101,7 +101,7 @@ public:
 
 	void Init(Object* object);
 	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
-	void Check_For_Clicks();
+	void Handle_Mouse_Click();
 
 private:
 	Object * linked_object;
@@ -122,7 +122,7 @@ public:
 
 	void Init(Object* object);
 	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
-	void Check_For_Clicks();
+	void Handle_Mouse_Click();
 
 private:
 	Object * linked_object;
@@ -134,5 +134,53 @@ private:
 	UI_Component_Generic object_job;
 	UI_Component_Message_Stream goal_list;
 	UI_Component_Generic background_component;
+
+};
+
+class UI_Panel_Object_Production : public UI_Panel_Generic
+{
+public:
+	UI_Panel_Object_Production(Global_Service_Locator* service_locator = NULL, int window_name = WINDOW_OBJECT_DIAGNOSTIC, SDL_Rect offset_rect = { 0,0,100,100 }) : UI_Panel_Generic(service_locator, window_name, offset_rect)
+	{
+		panel_name = PANEL_OBJECT_PRODUCTION;
+
+		int center_vertical_divide = 50;
+		int middle = center_vertical_divide;
+
+		int center_right_vertical_divide = 50;
+		int middle_right = middle + center_right_vertical_divide;
+
+		int bottom_horizontal_divide = 90;
+		int bottom_vertical_divide = 70;
+
+		SDL_Rect blueprint_list_rect = { offset_rect.x, offset_rect.y, offset_rect.w * center_vertical_divide / 100, offset_rect.h };
+		SDL_Rect blueprint_details_rect = { offset_rect.x + offset_rect.w * center_vertical_divide / 100, offset_rect.y, offset_rect.w * (100 - center_vertical_divide) / 100, offset_rect.h * bottom_horizontal_divide / 100 };
+		SDL_Rect build_button_rect = { blueprint_details_rect.x, offset_rect.y + offset_rect.h * bottom_horizontal_divide / 100, blueprint_details_rect.w * bottom_vertical_divide / 100, offset_rect.h * (100 - bottom_horizontal_divide) / 100 };
+		SDL_Rect production_amount_rect = { blueprint_details_rect.x + build_button_rect.w, build_button_rect.y, blueprint_details_rect.w * (100 - bottom_vertical_divide) / 100, build_button_rect.h };
+
+		background_component = UI_Component_Generic(service_locator, offset_rect, true);
+		build_button = UI_Component_Generic(service_locator, build_button_rect, true);
+		blueprint_list = UI_Component_Button_List(service_locator, blueprint_list_rect);
+		blueprint_details = UI_Component_Details_Display(service_locator, blueprint_details_rect);
+		production_amount = UI_Component_User_Input_Box(service_locator, production_amount_rect);
+
+		build_button.Change_Component_Title("Build", { build_button_rect.w * 2 / 5, build_button_rect.h / 4, build_button_rect.w * 2 / 3, build_button_rect.h * 2 / 4 });
+		build_button.Set_Font_Type(FONT_LARGE_BOLD);
+
+	}
+
+	void Init(Object* object);
+	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
+	void Handle_Mouse_Click();
+
+private:
+	Object * linked_object;
+	bool reset = true;
+
+	UI_Component_Generic background_component;
+	UI_Component_Generic build_button;
+	UI_Component_Button_List blueprint_list;
+	UI_Component_Details_Display blueprint_details;
+	UI_Component_User_Input_Box production_amount;
 
 };

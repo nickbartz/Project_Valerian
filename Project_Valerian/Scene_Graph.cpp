@@ -260,7 +260,7 @@ void Scene_Graph::Create_New_Scaffold(Coordinate grid_point, int structure_templ
 			// we place the object in the first array index with an "OBJECT_UNASSIGNED" type so we can overwrite objects no longer being used
 			if (scaffold_array[i].Get_Assigned_Flag() == OBJECT_UNASSIGNED)
 			{
-				scaffold_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, structure_template->tile_specs.w*TILE_SIZE, structure_template->tile_specs.h*TILE_SIZE }, service_locator);
+				scaffold_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, TILE_SIZE, TILE_SIZE }, service_locator);
 
 				scaffold_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
 

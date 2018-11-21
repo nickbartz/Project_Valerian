@@ -40,6 +40,7 @@ public:
 	SDL_Point Convert_Coord_To_Screen_Pos(Coordinate coordinate, bool center_of_tile = true);
 	SDL_Rect Convert_World_Rect_To_Screen_Rect(SDL_Rect world_rect);
 
+	void Parse_Input_Message(SDL_Event e);
 	void Collect_Bus_Messages();
 	void Update();
 
@@ -48,7 +49,7 @@ private:
 	int mouse_icon_clip_y = 0;
 
 	void Update_Grid_Position();
-	void Parse_Input_Message(SDL_Event e);
+
 	void Age_Mouse();
 
 	// Camera is instantiated as a simple rect where the "w" variables is equal to the zoom;

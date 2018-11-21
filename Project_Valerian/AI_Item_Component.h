@@ -3,6 +3,8 @@
 #include<iostream>
 #include<string>
 #include<Global_Constants.h>
+#include<vector>
+
 using namespace std;
 
 class Global_Service_Locator;
@@ -68,6 +70,7 @@ public:
 	
 	// These broader functions utilize the above two functions to make changes
 	void Copy_Inventory_From_Pointer(Item_Slot pointer[], int num_inventory_slots);
+	void Populate_Production_Blueprints(int blueprint_id);
 	void Populate_Starter_Inventory(int object_type);
 	void Delete_Item_At_Inventory_Array_Num(int array_num);
 	void Clear_All_Inventory();
@@ -77,6 +80,8 @@ public:
 	int Return_Num_Occupied_Inventory_Slots();
 	Item_Slot* Return_Entire_Inventory_As_Pointer();
 	Item_Slot* Return_Inventory_Slot_As_Pointer(int slot_num);
+	int Return_Num_Production_Blueprints();
+	Blueprint* Return_Blueprint_At_Slot(int blueprint_slot);
 
 	// Job Related Functions
 	void Scan_Inventory_For_Storable_Items(int threshold_quantity);
@@ -105,8 +110,7 @@ private:
 	int num_equipment_slots = 0;
 	Equipment_Slot equipment_array[MAX_NUM_EQUIPMENT_SLOTS];
 
-	int num_production_blueprints = 0;
-	Blueprint* production_blueprint_array[MAX_NUM_ITEM_BLUEPRINTS];
+	vector<Blueprint*> production_blueprints;
 
 	int has_scaffold_blueprint = 0;
 	Blueprint* Scaffold_Blueprint = NULL;

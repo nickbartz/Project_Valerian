@@ -3,6 +3,7 @@
 #include<vector>
 #include<algorithm>
 #include<Global_Constants.h>
+#include<SDL.h>
 
 class Global_Service_Locator;
 class Coordinate;
@@ -25,6 +26,19 @@ public:
 
 private:
 	Global_Service_Locator * service_locator;
+
+	void Swap(int &a, int &b);
+
+	float ipart(float x);
+	float round(float x);
+	float fpart(float x);
+	float rfpart(float x);
+
+
+	vector<Tile_Queue> Smooth_Vector_Path(vector<Tile_Queue>& tile_vector, int faction);
+	vector<Coordinate> BresenhamLine(int x0, int y0, int x1, int y1);
+	vector<Coordinate> XiolinWu_Line(int x0, int y0, int x1, int y1);
+	bool Path_Is_Accessible(vector<Coordinate> bresenthamline, int faction);
 
 	const int dx[4] = { 1, 0, -1, 0 };
 	const int dy[4] = { 0, 1, 0, -1 };

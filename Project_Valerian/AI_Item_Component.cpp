@@ -17,6 +17,7 @@ AI_Item_Component::AI_Item_Component(Global_Service_Locator* sLocator, Object_Se
 	{
 	case OBJECT_TYPE_STRUCTURE:
 		if (service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->has_starter_inventory >= 1) Populate_Starter_Inventory(OBJECT_TYPE_STRUCTURE);
+		Populate_Production_Blueprints(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->blueprint_pack_id);
 		break;
 	case OBJECT_TYPE_ENTITY:
 		if (service_locator->get_Game_Library()->Fetch_Entity_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->entity_has_starter_inventory >= 1)
@@ -161,6 +162,28 @@ bool AI_Item_Component::Object_Has_Items_For_Blueprint_In_Inventory(Blueprint* b
 	return check;
 }
 
+void AI_Item_Component::Populate_Production_Blueprints(int blueprint_id)
+{
+	if (blueprint_id != 0)
+	{
+		Blueprint_Pack* blueprint_pack = service_locator->get_Game_Library()->Fetch_Blueprint_Pack(blueprint_id);
+
+		if (blueprint_pack != NULL)
+		{
+			for (int i = 0; i < blueprint_pack->blueprint_id_array.size(); i++)
+			{
+				production_blueprints.push_back(service_locator->get_Game_Library()->Fetch_Blueprint(blueprint_pack->blueprint_id_array[i]));
+			}
+		}
+		else
+		{
+			cout << "trying to populate with NULL blueprint pack" << endl;
+		}
+
+
+	}
+}
+
 void AI_Item_Component::Populate_Starter_Inventory(int object_type)
 {
 	vector<Blueprint*> inventory_starter_blueprints = service_locator->get_Game_Library()->Fetch_All_Blueprints_Of_Type_For_Object(BLUEPRINT_INVENTORY, object_type, object_locator->Return_AI_Stats_Pointer()->Return_Template_ID());
@@ -200,6 +223,25 @@ Item_Slot* AI_Item_Component::Return_Entire_Inventory_As_Pointer()
 Item_Slot* AI_Item_Component::Return_Inventory_Slot_As_Pointer(int item_id)
 {
 	return &inventory_array[item_id];
+}
+
+int AI_Item_Component::Return_Num_Production_Blueprints()
+{
+	return production_blueprints.size();
+}
+
+Blueprint* AI_Item_Component::Return_Blueprint_At_Slot(int blueprint_slot)
+{
+	if (blueprint_slot < production_blueprints.size())
+	{
+		return production_blueprints[blueprint_slot];
+	}
+	else
+	{
+		cout << "blueprint slot called out of range" << endl;
+		return NULL;
+	}
+
 }
 
 int AI_Item_Component::Return_Amount_Of_Item_In_Inventory(Item item)

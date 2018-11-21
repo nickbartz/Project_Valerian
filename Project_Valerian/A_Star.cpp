@@ -4,6 +4,226 @@
 #include<Service_Locator.h>
 #include<Scene_Graph.h>
 #include<Coordinate.h>
+#include<math.h>
+
+void Path_Field::Swap(int &a, int &b) {
+	int c = a;
+	a = b;
+	b = c;
+}
+
+// integer part of x
+float Path_Field::ipart(float x)
+{
+	return floor(x);
+}
+
+float Path_Field::round(float x)
+{
+	return ipart(x + 0.5);
+}
+
+// fractional part of x
+float Path_Field::fpart(float x)
+{
+	return (x - floor(x));
+}
+
+
+float Path_Field::rfpart(float x)
+{
+	return (1 - fpart(x));
+}
+
+
+vector<Coordinate> Path_Field::BresenhamLine(int x0, int y0, int x1, int y1)
+{
+	vector<Coordinate> result;
+
+	bool steep = abs(y1 - y0) > abs(x1 - x0);
+	if (steep) {
+		Swap(x0, y0);
+		Swap(x1, y1);
+	}
+	if (x0 > x1) {
+		Swap(x0, x1);
+		Swap(y0, y1);
+	}
+
+	int deltax = x1 - x0;
+	int deltay = abs(y1 - y0);
+	int error = 0;
+	int ystep;
+	int y = y0;
+	if (y0 < y1) ystep = 1; else ystep = -1;
+	for (int x = x0; x <= x1; x++) {
+		if (steep) result.push_back({ y, x });
+		else result.push_back({ x, y });
+		error += deltay;
+		if (2 * error >= deltax) {
+			y += ystep;
+			error -= deltax;
+		}
+	}
+
+	return result;
+}
+
+vector<Coordinate> Path_Field::XiolinWu_Line(int xa, int ya, int xb, int yb)
+{
+	vector<Coordinate> new_line;
+
+	int world_adjust_x = min(0, min(xa, xb));
+	int world_adjust_y = min(0, min(ya, yb));
+
+	float x0 = xa - world_adjust_x;
+	float y0 = ya - world_adjust_y;
+	float x1 = xb - world_adjust_x;
+	float y1 = yb - world_adjust_y;
+
+	//cout << "start line is :" << x0 << ", " << y0 << ", " << x1 << ", " << y1 << endl;
+
+	bool steep = false;
+
+	if (abs(y1 - y0) > abs(x1 - x0)) steep = true;
+
+	if (steep)
+	{
+		swap(x0, y0);
+		swap(x1, y1);
+	}
+	
+	if (x0 > x1)
+	{
+		swap(x0, x1);
+		swap(y0, y1);
+	}
+	
+
+	//cout << "new line is :" << x0 << ", " << y0 << ", " << x1 << ", " << y1 << endl;
+
+	float dx = x1 - x0;
+	float dy = y1 - y0;
+
+	float gradient = dy / dx;
+
+	if (dx == 0.0)
+	{
+		gradient = 1.0;
+	}
+
+	// handle first endpoint
+	float xend = round(x0);
+	float yend = y0 + gradient * (xend - x0);
+	float xpxl1 = xend; // this will be used in the main loop
+	float ypxl1 = ipart(yend);
+	float intery = yend + gradient; // first y-intersection for the main loop
+
+	// handle second endpoint
+	xend = round(x1);
+	yend = y1 + gradient * (xend - x1);
+	float xpxl2 = xend; //this will be used in the main loop
+	float ypxl2 = ipart(yend);
+
+	// Plot the initial point anti-aliased
+	if (steep)
+	{
+		new_line.push_back({ int(ypxl1), int(xpxl1) });
+		new_line.push_back({ int(ypxl1), int(xpxl1+1) });
+	}
+	else
+	{
+		new_line.push_back({ int(xpxl1), int(ypxl1)});
+		new_line.push_back({ int(xpxl1+1), int(ypxl1) });
+	}
+
+	// main loop
+	if (steep)
+	{
+		for( float x = xpxl1 + 1; x < xpxl2; x++)
+		{
+			new_line.push_back({ int(ipart(intery)), int(x) });
+			new_line.push_back({ int(ipart(intery) + 1), int(x) });
+			intery = intery + gradient;
+		}
+	}
+	else
+	{
+		for (float x = xpxl1 + 1; x < xpxl2; x++)
+		{
+			new_line.push_back({ int(x), int(ipart(intery)) });
+			new_line.push_back({ int(x), int(ipart(intery) + 1)});
+			intery = intery + gradient;
+		}
+	}
+
+	// Plot the final point anti-aliased
+	if (steep)
+	{
+		new_line.push_back({ int(ypxl2), int(xpxl2 - 1 ) });
+		new_line.push_back({ int(ypxl2), int(xpxl2) });
+	}
+	else
+	{
+		new_line.push_back({ int(xpxl2 - 1), int(ypxl2) });
+		new_line.push_back({ int(xpxl2), int(ypxl2) });
+	}
+
+	for (int i = 0; i < new_line.size(); i++)
+	{
+		new_line[i].x += world_adjust_x;
+		new_line[i].y += world_adjust_y;
+	}
+
+	return new_line;
+}
+
+bool Path_Field::Path_Is_Accessible(vector<Coordinate> bresenthamline, int faction)
+{
+	bool accessible = true;
+
+	for (int i = 0; i < bresenthamline.size(); i++)
+	{
+		if (service_locator->get_Scene_Graph()->Check_If_Tile_Is_Inaccessible(bresenthamline[i], faction) == true)
+		{
+			accessible = false;
+			return accessible;
+		}
+	}
+
+	return accessible;
+}
+
+vector<Tile_Queue> Path_Field::Smooth_Vector_Path(vector<Tile_Queue> &vector_path, int faction)
+{
+	int start_pos = 0;
+	int end_pos = 2;
+
+	while (start_pos < end_pos && end_pos < vector_path.size())
+	{
+		vector<Coordinate> line_points = XiolinWu_Line(vector_path[start_pos].x_tile, vector_path[start_pos].y_tile, vector_path[end_pos].x_tile, vector_path[end_pos].y_tile);
+
+		if (Path_Is_Accessible(line_points, faction))
+		{
+			vector_path.erase(vector_path.begin() + end_pos - 1);
+		}
+		else
+		{
+			start_pos = end_pos - 1;
+			end_pos++;
+		}
+	}
+
+	//vector<Coordinate> new_line = XiolinWu_Line(0, 1, 1, 0);
+	//for (int i = 0; i < new_line.size(); i++)
+	//{
+	//	cout << new_line[i].x << ", " << new_line[i].y << " : ";
+	//}
+
+	//cout << endl;
+
+	return vector_path;
+}
 
 Path_Field::Path_Field(Global_Service_Locator* sLocator)
 {
@@ -100,6 +320,9 @@ vector<Tile_Queue> Path_Field::pathFind(Coordinate start, Coordinate end, int ma
 			delete n0;
 			// empty the leftover nodes
 			while (!pq[pqi].empty()) pq[pqi].pop();
+
+			Smooth_Vector_Path(vector_path, requesting_faction);
+
 			return vector_path;
 
 		}
@@ -192,3 +415,4 @@ bool operator<(const node & a, const node & b)
 {
 	return a.getPriority() > b.getPriority();
 }
+

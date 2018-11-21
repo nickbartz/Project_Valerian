@@ -24,17 +24,20 @@ public:
 	void Init();
 
 	// Load and Clear Action Messages
+	void Set_Currently_Clicked_Component(UI_Component_Generic* component);
+	void Set_Current_Focus_Component(UI_Component_Generic* component);
+
+	void Set_Currently_Clicked_To_Null();
+	void Set_Current_Focus_To_Null();
+
 	void Load_Action_To_UI(int message_size, int mArray[]);
 	void Clear_Action_Support();
 	void Clear_Action();
 
 private:
-	// Old Action Functionality // TO BE DEPRECATED
-	int last_clicked_window = WINDOW_NULL;
-	int last_clicked_panel = PANEL_NULL;
-	int last_clicked_button_action = BUTTON_ACTION_DO_NOTHING;
+	UI_Component_Generic * currently_clicked_component;
+	UI_Component_Generic * current_focus_component;
 
-	// New Action Functionality
 	int action_support[MAX_LENGTH_CUSTOM_MESSAGE];
 	bool action_support_loaded = false;
 	int length_action_support = 0;

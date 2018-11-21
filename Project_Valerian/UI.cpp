@@ -30,7 +30,7 @@ void UI::Collect_Bus_Messages()
 		return;
 	}
 
-	//for (int i = 0; i < bus_pointer->count_input_messages; i++) Push_Message_To_Console(bus_pointer->Input_Message_Array[i].Get_Message_String());
+	for (int i = 0; i < bus_pointer->count_input_messages; i++) Push_Message_To_Console(bus_pointer->Input_Message_Array[i].Get_Message_String());
 	for (int i = 0; i < bus_pointer->count_chatter_message; i++) Push_Message_To_Console(bus_pointer->Chatter_Array[i].Get_Message_String());
 }
 
@@ -131,6 +131,7 @@ void UI::Update()
 	if (entity_diagnostic_array[0].is_open()) entity_diagnostic_array[0].Draw(service_pointer->get_Draw_System_Pointer());
 	if (entity_diagnostic_array[1].is_open()) entity_diagnostic_array[1].Draw(service_pointer->get_Draw_System_Pointer());
 
+	// Console Diagnostics - Temp, probably will delete eventually
 	int num_active_jobs = service_pointer->get_Scene_Graph()->Return_Current_Num_Public_Jobs_In_Array();
 	string job_counter = "Num Public Jobs: ";
 	job_counter += to_string(num_active_jobs);
@@ -213,16 +214,37 @@ void UI::Parse_Loaded_Actions()
 
 // UI Mouse_Click Management
 
+void UI::Set_Currently_Clicked_Component(UI_Component_Generic* component)
+{
+	currently_clicked_component = component;
+}
+
+void UI::Set_Current_Focus_Component(UI_Component_Generic* component)
+{
+	current_focus_component = component;
+}
+
+void UI::Set_Currently_Clicked_To_Null()
+{
+	currently_clicked_component = NULL;
+}
+
+void UI::Set_Current_Focus_To_Null()
+{
+	current_focus_component = NULL;
+}
+
+
 void UI::Update_UI_With_Mouse_Action(Cursor* cursor_pointer)
 {
 	SDL_Point new_point = cursor_pointer->Get_Mouse_Position();
 
 	// Check to see if the mouse action affected any of the open windows
-	if (player_console.is_open() && (player_console.is_currently_clicked() || SDL_PointInRect(&new_point, &player_console.Return_Rect()))) player_console.Respond_To_Mouse(cursor_pointer);
-	else if (create_window.is_open() && (create_window.is_currently_clicked() || SDL_PointInRect(&new_point, &create_window.Return_Rect()))) create_window.Respond_To_Mouse(cursor_pointer);
-	else if (SDL_PointInRect(&new_point, &static_buttons.Return_Rect())) static_buttons.Respond_To_Mouse();
-	else if (entity_diagnostic_array[0].is_open() && (entity_diagnostic_array[0].is_currently_clicked() || SDL_PointInRect(&new_point, &entity_diagnostic_array[0].Return_Rect()))) entity_diagnostic_array[0].Respond_To_Mouse(cursor_pointer);
-	else if (entity_diagnostic_array[1].is_open() && (entity_diagnostic_array[1].is_currently_clicked() || SDL_PointInRect(&new_point, &entity_diagnostic_array[1].Return_Rect()))) entity_diagnostic_array[1].Respond_To_Mouse(cursor_pointer);
+	if (player_console.is_open() && (player_console.is_currently_clicked() || SDL_PointInRect(&new_point, &player_console.Return_Rect()))) player_console.Handle_Mouse_Click(cursor_pointer);
+	else if (create_window.is_open() && (create_window.is_currently_clicked() || SDL_PointInRect(&new_point, &create_window.Return_Rect()))) create_window.Handle_Mouse_Click(cursor_pointer);
+	else if (SDL_PointInRect(&new_point, &static_buttons.Return_Rect())) static_buttons.Handle_Mouse_Click();
+	else if (entity_diagnostic_array[0].is_open() && (entity_diagnostic_array[0].is_currently_clicked() || SDL_PointInRect(&new_point, &entity_diagnostic_array[0].Return_Rect()))) entity_diagnostic_array[0].Handle_Mouse_Click(cursor_pointer);
+	else if (entity_diagnostic_array[1].is_open() && (entity_diagnostic_array[1].is_currently_clicked() || SDL_PointInRect(&new_point, &entity_diagnostic_array[1].Return_Rect()))) entity_diagnostic_array[1].Handle_Mouse_Click(cursor_pointer);
 
 	// If the mouse click didn't, then check to see if the mouse interacted with the world 
 	else Handle_Click_In_World(); 
@@ -230,7 +252,6 @@ void UI::Update_UI_With_Mouse_Action(Cursor* cursor_pointer)
 	// Basic idea is we check the console windows and the world to see if there the mouseclick generated an action 
 	// If it did, we load the action from that button into either the supporting action array or the main action array
 	// Then we parse the actions currently loaded into either array
-
 	Parse_Loaded_Actions();
 }
 

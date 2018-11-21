@@ -185,17 +185,19 @@ int main(int argc, char *args[])
 	vector<vector<int>> new_room = game_library->Create_Room_From_Data_File(0, 0, "Data/test_room.csv");
 	scene_graph->Stamp_Room_From_Array(new_room, -2, -2, 2);
 
-	scene_graph->Create_New_Structure({ 0,-1 }, 4, 2);
+	scene_graph->Create_New_Structure({ 8,-1 }, 4, 2);
 	scene_graph->Create_New_Structure({ 9,-1 }, 14, 2);
 	scene_graph->Create_New_Structure({ 10, -1 }, 15, 2);
-	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(1, 10, false, {});
-	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(2, 10, false, {});
+	scene_graph->Create_New_Structure({ 12, -1 }, 24, 2);
+	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(1, 100, false, {});
+	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(2, 100, false, {});
+	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(3, 100, false, {});
 
 	scene_graph->Create_New_Structure({ -5, -10 }, 21, 1);
 	scene_graph->Create_New_Structure({ -5, -9 }, 22,1);
 	scene_graph->Create_New_Structure({ -5, -8 }, 23, 1);
 	
-	scene_graph->Create_Entity({ 1,-1 }, *game_library->Fetch_Entity_Template(2), 2);
+	//scene_graph->Create_Entity({ 1,-1 }, *game_library->Fetch_Entity_Template(2), 2);
 	scene_graph->Create_Entity({ 2,-1 }, *game_library->Fetch_Entity_Template(1), 2);
 
 	//Start counting frames per second
