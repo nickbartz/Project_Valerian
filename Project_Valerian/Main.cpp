@@ -204,7 +204,7 @@ int main(int argc, char *args[])
 	scene_graph->Create_New_Structure({ -5, -8 }, 23, 1);
 	
 	scene_graph->Create_Entity({ 5,0 }, *game_library->Fetch_Entity_Template(2), 2);
-	//scene_graph->Create_Entity({ 2,-1 }, *game_library->Fetch_Entity_Template(1), 2);
+	scene_graph->Create_Entity({ 2,-1 }, *game_library->Fetch_Entity_Template(1), 2);
 
 	//Start counting frames per second
 	int countedFrames = 0;

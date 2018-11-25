@@ -24,7 +24,7 @@ AI_Job_Component::AI_Job_Component(Global_Service_Locator* sLocator, Object_Serv
 	switch (object_type)
 	{
 	case OBJECT_TYPE_STRUCTURE:
-		{int job_id = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(template_id)->job_type;
+		{int job_id = service_locator->get_Game_Library()->Fetch_Structure_Template(template_id)->job_type;
 			if (job_id != 0)
 			{
 				active_job = service_locator->get_Scene_Graph()->Job_Create_Local_Structure_Template_Job(object_locator->Return_Object_Pointer(), job_id);
@@ -109,7 +109,7 @@ void AI_Job_Component::Update_Entity_Manage_Jobs()
 			Query_Job_For_Goals();
 		}
 	}
-	else
+	else if (service_locator->get_Scene_Graph()->Return_Current_Num_Jobs_In_Array() > 0)
 	{
 		Update_Entity_Choose_New_Job();
 	}

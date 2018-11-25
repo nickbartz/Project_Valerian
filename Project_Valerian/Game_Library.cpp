@@ -12,7 +12,7 @@ Game_Library::Game_Library(Global_Service_Locator* sLocator)
 {
 	service_locator = sLocator;
 	
-	Load_Tiles_From_Data_File("Data/Tile_Data.csv");
+	Load_Structures_From_Data_File("Data/Tile_Data.csv");
 	Load_Entity_Templates("Data/Entity_Templates.csv", "Data/Entity_Animations.csv");
 	Load_Item_Templates("Data/Inventory_Data.csv");
 	Load_Blueprints("Data/Blueprint_Data.csv");
@@ -60,19 +60,6 @@ void Game_Library::Load_Job_Code_String_To_Enum_Crosswalk()
 	job_codes.insert(pair<string, int>("LOWER_THAN_OR_EQUAL_TO", LOWER_THAN_OR_EQUAL_TO));
 }
 
-int Game_Library::Fetch_Structure_Type_ID_From_Name(string structure_type)
-{
-	for (int i = 0; i < num_loaded_tiles; i++)
-	{
-		if (structure_type == loaded_tiles[i].structure_type_string)
-		{
-			return loaded_tiles[i].structure_type;
-		}
-	}
-	
-	return 0;
-}
-
 int Game_Library::Get_Object_Type_Enum_From_Object_Type_String(string object_type)
 {
 	if (object_type == "OBJECT_TYPE_STRUCTURE") return OBJECT_TYPE_STRUCTURE;
@@ -107,7 +94,20 @@ int Game_Library::Get_Item_Type_Code_From_Item_Type_String(string item_type_stri
 	}
 }
 
-void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
+int Game_Library::Get_Structure_Type_Code_From_Structure_Type_String(string structure_type)
+{
+	for (int i = 0; i < num_loaded_tiles; i++)
+	{
+		if (structure_type == loaded_tiles[i].structure_type_string)
+		{
+			return loaded_tiles[i].structure_type;
+		}
+	}
+
+	return 0;
+}
+
+void Game_Library::Load_Structures_From_Data_File(string tiles_path)
 {
 	vector<vector<string>> vector_loaded_tiles = readCSV(tiles_path);
 
@@ -144,6 +144,19 @@ void Game_Library::Load_Tiles_From_Data_File(string tiles_path)
 		new_config.has_starter_inventory = stoi(vector_loaded_tiles[i + 1][28]);
 		new_config.scaffold_blueprint_id = stoi(vector_loaded_tiles[i + 1][29]);
 		new_config.blueprint_pack_id = stoi(vector_loaded_tiles[i + 1][30]);
+
+		if (structure_type_codes.count(new_config.structure_type_string) > 0)
+		{
+			if (new_config.structure_type != structure_type_codes[new_config.structure_type_string])
+			{
+				cout << "Warning: Duplicate structure type string for single structure type id: " << new_config.structure_type << " : " << new_config.structure_type_string << endl;
+			}
+		}
+		else
+		{
+			structure_type_codes[new_config.structure_type_string] = new_config.structure_type;
+		}
+
 		loaded_tiles[i] = new_config;
 		num_loaded_tiles++;	
 	}
@@ -466,7 +479,7 @@ int Game_Library::Query_Vector_Table( vector<vector<string>> table, int num_colu
 	}
 }
 
-Structure_Template* Game_Library::Fetch_Tile_Object_Config(int tile_id)
+Structure_Template* Game_Library::Fetch_Structure_Template(int tile_id)
 {
 	if (tile_id < num_loaded_tiles)
 	{

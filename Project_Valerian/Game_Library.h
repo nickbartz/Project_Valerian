@@ -126,7 +126,7 @@ public:
 	Game_Library(Global_Service_Locator* service_locator);
 
 	// Acessors of Templates
-	Structure_Template* Fetch_Tile_Object_Config(int tile_id);
+	Structure_Template* Fetch_Structure_Template(int tile_id);
 	Entity_Template* Fetch_Entity_Template(int entity_id);
 	Item_Template* Fetch_Item_Template(int item_id);
 	Blueprint* Fetch_Blueprint(int inventory_id);
@@ -138,13 +138,13 @@ public:
 
 	// Accessors of Template Info
 	int Get_Num_Structure_Template();
-	int Fetch_Structure_Type_ID_From_Name(string name);
+	int Get_Structure_Type_Code_From_Structure_Type_String(string name);
 	void Load_Job_Code_String_To_Enum_Crosswalk();
 	int Get_Job_Code_From_String(string query);
 	int Get_Object_Type_Enum_From_Object_Type_String(string query);
 	int Get_Item_Type_Code_From_Item_Type_String(string item_type_string);
 
-	void Load_Tiles_From_Data_File(string tiles_path);
+	void Load_Structures_From_Data_File(string tiles_path);
 	void Load_Entity_Templates(string entity_template_path, string entity_animation_path);
 	void Load_Item_Templates(string item_template_path);
 	void Load_Blueprints(string blueprints_path);
@@ -165,6 +165,7 @@ private:
 	Global_Service_Locator * service_locator;
 
 	Structure_Template loaded_tiles[MAX_NUM_TEMPLATES];
+	unordered_map<string, int> structure_type_codes;
 	int num_loaded_tiles = 0;
 
 	Entity_Template loaded_Entities[MAX_NUM_TEMPLATES];

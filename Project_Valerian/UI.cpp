@@ -176,7 +176,7 @@ void UI::Parse_Loaded_Actions()
 					break;
 				case UI_ACTION_SUPPORTING_TYPE_SET_ASTEROID_MINE:
 					{Object* asteroid = service_pointer->get_Scene_Graph()->Return_Structure_At_Coord_By_Layer(click_coord.x, click_coord.y, TILE_LAYER_MID);
-					if (asteroid != NULL) service_pointer->get_Scene_Graph()->Job_Create_Mine_Asteroid(asteroid);}
+					if (asteroid != NULL && asteroid->Return_Stats_Component()->Get_Structure_Type() == service_pointer->get_Game_Library()->Get_Structure_Type_Code_From_Structure_Type_String("STRUCTURE_TYPE_ASTEROID")) service_pointer->get_Scene_Graph()->Job_Create_Mine_Asteroid(asteroid);}
 					break;
 				}
 				break;
@@ -195,8 +195,8 @@ void UI::Parse_Loaded_Actions()
 		switch (action_support[1])
 		{
 		case UI_ACTION_SUPPORTING_TYPE_SET_STRUCTURE_BUILD:
-			icon_clip_x = service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2])->icon_clip_x;
-			icon_clip_y = service_pointer->get_Game_Library()->Fetch_Tile_Object_Config(action_support[2])->icon_clip_y;
+			icon_clip_x = service_pointer->get_Game_Library()->Fetch_Structure_Template(action_support[2])->icon_clip_x;
+			icon_clip_y = service_pointer->get_Game_Library()->Fetch_Structure_Template(action_support[2])->icon_clip_y;
 			service_pointer->get_Cursor_Pointer()->Change_Cursor_Icon(icon_clip_x, icon_clip_y);
 			break;
 		case UI_ACTION_SUPPORTING_TYPE_DELETE_STRUCTURE:

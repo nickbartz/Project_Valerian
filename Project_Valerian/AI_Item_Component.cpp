@@ -17,8 +17,8 @@ AI_Item_Component::AI_Item_Component(Global_Service_Locator* sLocator, Object_Se
 	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
 	{
 	case OBJECT_TYPE_STRUCTURE:
-		if (service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->has_starter_inventory >= 1) Populate_Starter_Inventory(OBJECT_TYPE_STRUCTURE);
-		Populate_Production_Blueprints(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->blueprint_pack_id);
+		if (service_locator->get_Game_Library()->Fetch_Structure_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->has_starter_inventory >= 1) Populate_Starter_Inventory(OBJECT_TYPE_STRUCTURE);
+		Populate_Production_Blueprints(service_locator->get_Game_Library()->Fetch_Structure_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->blueprint_pack_id);
 		break;
 	case OBJECT_TYPE_ENTITY:
 		if (service_locator->get_Game_Library()->Fetch_Entity_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->entity_has_starter_inventory >= 1)
@@ -27,7 +27,7 @@ AI_Item_Component::AI_Item_Component(Global_Service_Locator* sLocator, Object_Se
 		}
 		break;
 	case OBJECT_TYPE_SCAFFOLD:
-		Blueprint* scaffold_blueprint = service_locator->get_Game_Library()->Fetch_Blueprint(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->scaffold_blueprint_id);
+		Blueprint* scaffold_blueprint = service_locator->get_Game_Library()->Fetch_Blueprint(service_locator->get_Game_Library()->Fetch_Structure_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->scaffold_blueprint_id);
 		if (scaffold_blueprint != NULL)
 		{
 			Add_Build_Order_To_Queue(scaffold_blueprint, OBJECT_TYPE_STRUCTURE, object_locator->Return_AI_Stats_Pointer()->Return_Template_ID(), BLUEPRINT_STATE_PARTS_NEEDED_NO_JOB_SENT);
@@ -112,9 +112,9 @@ int AI_Item_Component::Add_Item_To_Inventory(int item_id, int item_quantity, boo
 
 bool AI_Item_Component::Build_Is_Complete()
 {
-	if (object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) > 0 && object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_MAX_BUILT_LEVEL) > 0)
+	if (object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) > 0 && object_locator->Return_AI_Stats_Pointer()->Return_Max_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) > 0)
 	{
-		if ((object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_MAX_BUILT_LEVEL))) return true;
+		if ((object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= object_locator->Return_AI_Stats_Pointer()->Return_Max_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL))) return true;
 	}
 
 	else return false;
@@ -166,7 +166,7 @@ bool AI_Item_Component::Create_Build_Job()
 	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
 	{
 	case OBJECT_TYPE_SCAFFOLD:
-		max_built_level = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(active_build_orders.front().object_template)->max_built_level;
+		max_built_level = service_locator->get_Game_Library()->Fetch_Structure_Template(active_build_orders.front().object_template)->max_built_level;
 		service_locator->get_Scene_Graph()->Job_Create_Entity_Go_Change_Object_Stat(object_locator->Return_Object_Pointer(), 1, NULL, OBJECT_TYPE_SCAFFOLD, STAT_STRUCTURE_BUILT_LEVEL, HIGHER_THAN_OR_EQUAL_TO, 1, max_built_level);
 		break;
 	case OBJECT_TYPE_STRUCTURE:
@@ -176,7 +176,7 @@ bool AI_Item_Component::Create_Build_Job()
 	}
 
 	object_locator->Return_AI_Stats_Pointer()->Update_Stat(STAT_STRUCTURE_BUILT_LEVEL, 0);
-	object_locator->Return_AI_Stats_Pointer()->Update_Stat(STAT_STRUCTURE_MAX_BUILT_LEVEL, max_built_level);
+	object_locator->Return_AI_Stats_Pointer()->Update_Max_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL, max_built_level);
 	active_build_orders.front().build_stage = BLUEPRINT_BUILD_JOB_SENT;
 
 	return true;

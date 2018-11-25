@@ -76,10 +76,12 @@ public:
 	{
 		panel_name = PANEL_OBJECT_INVENTORY;
 
-		int horizontal_divide = 30;
+		int horizontal_divide_a = 30;
+		int horizonzal_divide_b = 70;
 
-		item_array = UI_Component_Item_Slot_Array(service_locator, { offset_rect.x, offset_rect.y, offset_rect.w* horizontal_divide / 100, offset_rect.h });
-		inventory_details = UI_Component_Object_Details_Display(service_locator, { offset_rect.x + offset_rect.w * horizontal_divide / 100, offset_rect.y, offset_rect.w*(100-horizontal_divide) / 100, offset_rect.h });
+		item_array = UI_Component_Item_Slot_Array(service_locator, { offset_rect.x, offset_rect.y, offset_rect.w* horizontal_divide_a / 100, offset_rect.h });
+		equipment_array = UI_Component_Equipment_Slot_Array(service_locator, { offset_rect.x + offset_rect.w * horizontal_divide_a / 100, offset_rect.y, offset_rect.w*(100 - horizonzal_divide_b - horizontal_divide_a) / 100, offset_rect.h });
+		inventory_details = UI_Component_Object_Details_Display(service_locator, { offset_rect.x + offset_rect.w * horizonzal_divide_b / 100, offset_rect.y, offset_rect.w*(100- horizonzal_divide_b) / 100, offset_rect.h });
 	}
 
 	void Init(Object* object);
@@ -91,6 +93,7 @@ private:
 
 	int panel_buttons = 0;
 	UI_Component_Item_Slot_Array item_array;
+	UI_Component_Equipment_Slot_Array equipment_array;
 	UI_Component_Object_Details_Display inventory_details;
 	UI_Component_Generic background_component;
 };
@@ -101,6 +104,15 @@ public:
 	UI_Panel_Object_Stats(Global_Service_Locator* service_locator = NULL, int window_name = WINDOW_OBJECT_DIAGNOSTIC, SDL_Rect offset_rect = { 0,0,100,100 }) : UI_Panel_Generic(service_locator, window_name, offset_rect)
 	{
 		panel_name = PANEL_OBJECT_STATS;
+		background_component = UI_Component_Generic(service_locator, offset_rect, true);
+
+		int horizontal_split = 50;
+
+		SDL_Rect base_static_stats_rect = { offset_rect.x, offset_rect.y, offset_rect.w * horizontal_split / 100, offset_rect.h };
+		SDL_Rect dynamic_stats_rect = { offset_rect.x + (horizontal_split * offset_rect.w / 100) , offset_rect.y, offset_rect.w * (100 - horizontal_split) / 100, offset_rect.h };
+
+		base_static_stats = UI_Component_Stat_Array(service_locator, base_static_stats_rect);
+		dynamic_stats = UI_Component_Stat_Array(service_locator, dynamic_stats_rect);
 	}
 
 	void Init(Object* object);
@@ -109,10 +121,9 @@ public:
 
 private:
 	Object * linked_object;
-
-	int num_stats = 0;
-	vector <UI_Component_Stat_Button> stat_button_array;
 	UI_Component_Generic background_component;
+	UI_Component_Stat_Array base_static_stats;
+	UI_Component_Stat_Array dynamic_stats;
 
 };
 

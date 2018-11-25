@@ -61,6 +61,7 @@ void UI_Panel_Object_Inventory::Draw(Draw_System* draw_system, SDL_Rect base_rec
 {
 	background_component.Draw(base_rect);
 	item_array.Draw(base_rect);
+	equipment_array.Draw(base_rect);
 	inventory_details.Draw(base_rect);
 }
 void UI_Panel_Object_Inventory::Init(Object* object)
@@ -211,36 +212,28 @@ void UI_Panel_Object_Stats::Handle_Mouse_Click()
 }
 void UI_Panel_Object_Stats::Init(Object* object)
 {
-	background_component = UI_Component_Generic(service_locator, offset_rect, true);
+	base_static_stats.Init(object);
+	base_static_stats.Add_Stat_Button(STAT_CURRENT_X_TILE,"Curent X Tile");
+	base_static_stats.Add_Stat_Button(STAT_CURRENT_Y_TILE, "Curent Y Tile");
+	base_static_stats.Add_Stat_Button(STAT_ENTITY_SPEED, "Entity speed");
+	base_static_stats.Add_Stat_Button(STAT_OBJECT_FACTION, "Object Faction");
+	base_static_stats.Add_Stat_Button(STAT_OBJECT_HEALTH, "Object Health");
+	base_static_stats.Add_Stat_Button(STAT_STRUCTURE_IMPASSABLE, "Impassable");
+	base_static_stats.Add_Stat_Button(STAT_STRUCTURE_OXYGEN_LEVEL, "Oxygen Level");
+	base_static_stats.Add_Stat_Button(STAT_STRUCTURE_BUILT_LEVEL, "Built Level");
 
-	stat_button_array.push_back(UI_Component_Stat_Button(service_locator, { offset_rect.x, offset_rect.y, offset_rect.w ,25 }));
-	stat_button_array[0].Init(object, STAT_OBJECT_HEALTH, "Health");
-	num_stats++;
-
-	stat_button_array.push_back(UI_Component_Stat_Button(service_locator, { offset_rect.x, offset_rect.y + 25, offset_rect.w ,25 }));
-	stat_button_array[1].Init(object, STAT_STRUCTURE_BUILT_LEVEL, "Production Level");
-	num_stats++;
-
-	stat_button_array.push_back(UI_Component_Stat_Button(service_locator, { offset_rect.x, offset_rect.y + 50, offset_rect.w ,25 }));
-	stat_button_array[2].Init(object, STAT_CURRENT_X_TILE, "X Tile");
-	num_stats++;
-
-	stat_button_array.push_back(UI_Component_Stat_Button(service_locator, { offset_rect.x, offset_rect.y + 75, offset_rect.w ,25 }));
-	stat_button_array[3].Init(object, STAT_CURRENT_Y_TILE, "Y Tile");
-	num_stats++;
-
-	stat_button_array.push_back(UI_Component_Stat_Button(service_locator, { offset_rect.x, offset_rect.y + 100, offset_rect.w ,25 }));
-	stat_button_array[4].Init(object, STAT_ENTITY_HUNGER, "Hunger");
-	num_stats++;
+	dynamic_stats.Init(object);
+	dynamic_stats.Add_Stat_Button(STAT_ENTITY_HUNGER, "Hunger", true);
+	dynamic_stats.Add_Stat_Button(STAT_ENTITY_OXYGEN, "Oxygen Deprivation", true);
+	dynamic_stats.Add_Stat_Button(STAT_ENTITY_TIREDNESS, "Exhaustion", true);
+	dynamic_stats.Add_Stat_Button(STAT_ENTITY_FEAR, "Fear", true);
+	dynamic_stats.Add_Stat_Button(STAT_ENTITY_ENNUI, "Boredom", true);
 }
 void UI_Panel_Object_Stats::Draw(Draw_System* draw_system, SDL_Rect base_rect)
 {
 	background_component.Draw(base_rect);
-
-	for (int i = 0; i < num_stats; i++)
-	{
-		stat_button_array[i].Draw(base_rect);
-	}
+	base_static_stats.Draw(base_rect);
+	dynamic_stats.Draw(base_rect);
 }
 
 void UI_Panel_Structure_Create_Type::Draw(Draw_System* draw_system, SDL_Rect base_rect)
@@ -272,7 +265,7 @@ void UI_Panel_Structure_Create_Type::Init(int ui_structure_type)
 
 	for (int i = 0; i < num_structure_templates; i++)
 	{
-		if (service_locator->get_Game_Library()->Fetch_Tile_Object_Config(i)->ui_type == ui_structure_type)
+		if (service_locator->get_Game_Library()->Fetch_Structure_Template(i)->ui_type == ui_structure_type)
 		{
 			graphic_button_array.push_back(UI_Component_Graphic_Button(service_locator, { offset_rect.x + current_column * SPRITE_SIZE, offset_rect.y + current_row * SPRITE_SIZE, SPRITE_SIZE ,SPRITE_SIZE }));
 			graphic_button_array.back().Init(OBJECT_TYPE_STRUCTURE, i);

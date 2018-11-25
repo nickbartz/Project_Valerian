@@ -4,6 +4,6 @@ Job_ID,Job_Name,Job_String_Name,Job_Standard_Priority
 2,JOB_DOOR_STANDARD,Open and Close Door,1
 3,JOB_MINE_ASTEROID,Mine Asteroid,1
 4,JOB_PICKUP_CONTAINER,Pickup Container,1
-5,JOB_BUILD_SCAFFOLD,Build Scaffold,1
+5,JOB_BUILD_SCAFFOLD,Changing Object Stat,1
 6,JOB_TRANSPORT_SCAFFOLD_ITEMS,Transport Blueprint Items,1
 7,JOB_TRANSPORT_ITEMS,Transporting Items,1

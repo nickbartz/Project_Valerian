@@ -22,7 +22,7 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 	{
 	case OBJECT_TYPE_STRUCTURE:
 		object_template_id = object_template_num;
-		object_stats.structure_stats.impassable = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_num)->is_inaccessible;
+		object_stats.structure_stats.impassable = service_locator->get_Game_Library()->Fetch_Structure_Template(object_template_num)->is_inaccessible;
 		break;
 	case OBJECT_TYPE_ENTITY:
 		object_template_id = object_template_num;
@@ -43,21 +43,10 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 		break;
 	case OBJECT_TYPE_SCAFFOLD:
 		object_template_id = object_template_num;
-		object_stats.structure_stats.impassable = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_num)->is_inaccessible;
+		object_stats.structure_stats.impassable = service_locator->get_Game_Library()->Fetch_Structure_Template(object_template_num)->is_inaccessible;
 		break;
 	}
 
-	Assign_Uniq_IDs(object_array_index);
-}
-
-AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int sTemplate, Structure_Stats sStats)
-{
-	service_locator = sLocator;
-	object_locator = oLocator;
-	object_type = OBJECT_TYPE_STRUCTURE;
-	object_template_id = sTemplate;
-
-	object_stats.structure_stats = sStats;
 	Assign_Uniq_IDs(object_array_index);
 }
 
@@ -75,13 +64,19 @@ string AI_Stats_Component::Generate_Entity_Name()
 	switch (object_stats.entity_stats.entity_sex)
 	{
 	case ENTITY_MALE:
-		name = gl->Fetch_Random_Name_Syllable(ENTITY_MALE, 0) + gl->Fetch_Random_Name_Syllable(ENTITY_MALE, 1) + gl->Fetch_Random_Name_Syllable(ENTITY_MALE, 2);
+		name = gl->Fetch_Random_Name_Syllable(ENTITY_MALE, 0);
+		if (rand()% 1 == 1) name += gl->Fetch_Random_Name_Syllable(ENTITY_MALE, 1);
+		name += gl->Fetch_Random_Name_Syllable(ENTITY_MALE, 2);
 		break;
 	case ENTITY_FEMALE:
-		name = gl->Fetch_Random_Name_Syllable(ENTITY_FEMALE, 0) + gl->Fetch_Random_Name_Syllable(ENTITY_FEMALE, 1) + gl->Fetch_Random_Name_Syllable(ENTITY_FEMALE, 2);
+		name = gl->Fetch_Random_Name_Syllable(ENTITY_FEMALE, 0);
+		if (rand() % 1 == 1) name += gl->Fetch_Random_Name_Syllable(ENTITY_FEMALE, 1);
+		name += gl->Fetch_Random_Name_Syllable(ENTITY_FEMALE, 2);
 		break;
 	case ENTITY_NEUTRAL:
-		name = gl->Fetch_Random_Name_Syllable(ENTITY_NEUTRAL, 0) + gl->Fetch_Random_Name_Syllable(ENTITY_NEUTRAL, 1) + gl->Fetch_Random_Name_Syllable(ENTITY_NEUTRAL, 2);
+		name = gl->Fetch_Random_Name_Syllable(ENTITY_NEUTRAL, 0);
+		if (rand() % 1 == 1) name += gl->Fetch_Random_Name_Syllable(ENTITY_NEUTRAL, 1);
+		name += gl->Fetch_Random_Name_Syllable(ENTITY_NEUTRAL, 2);
 		break;
 	}
 
@@ -90,17 +85,17 @@ string AI_Stats_Component::Generate_Entity_Name()
 
 string AI_Stats_Component::Get_Structure_Common_Name()
 {
-	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id)->structure_name;
+	return service_locator->get_Game_Library()->Fetch_Structure_Template(object_template_id)->structure_name;
 }
 
 int AI_Stats_Component::Get_Structure_Name()
 {
-	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id)->structure_id;
+	return service_locator->get_Game_Library()->Fetch_Structure_Template(object_template_id)->structure_id;
 }
 
 int AI_Stats_Component::Get_Structure_Type()
 {
-	return service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id)->structure_type;
+	return service_locator->get_Game_Library()->Fetch_Structure_Template(object_template_id)->structure_type;
 }
 
 string AI_Stats_Component::Get_Entity_Name()
@@ -146,14 +141,8 @@ void AI_Stats_Component::Update_Stat(int stat_name, int new_value)
 	case STAT_STRUCTURE_BUILT_LEVEL:
 		object_stats.structure_stats.built_level = new_value;
 		break;
-	case STAT_STRUCTURE_MAX_BUILT_LEVEL:
-		object_stats.structure_stats.max_build_level = new_value;
-		break;
 	case STAT_OBJECT_HEALTH:
 		object_stats.object_health = new_value;
-		break;
-	case STAT_OBJECT_MAX_HEALTH:
-		object_stats.object_max_health = new_value;
 		break;
 	case STAT_STRUCTURE_OXYGEN_LEVEL:
 		object_stats.structure_stats.oxygen_level = new_value;
@@ -258,14 +247,8 @@ void AI_Stats_Component::Adjust_Stat(int stat_name, int new_value)
 	case STAT_STRUCTURE_BUILT_LEVEL:
 		object_stats.structure_stats.built_level += new_value;
 		break;
-	case STAT_STRUCTURE_MAX_BUILT_LEVEL:
-		object_stats.structure_stats.max_build_level += new_value;
-		break;
 	case STAT_OBJECT_HEALTH:
 		object_stats.object_health += new_value;
-		break;
-	case STAT_OBJECT_MAX_HEALTH:
-		object_stats.object_max_health += new_value;
 		break;
 	case STAT_STRUCTURE_OXYGEN_LEVEL:
 		object_stats.structure_stats.oxygen_level += new_value;
@@ -310,14 +293,8 @@ int AI_Stats_Component::Return_Stat_Value(int stat_name)
 	case STAT_STRUCTURE_BUILT_LEVEL:
 		return object_stats.structure_stats.built_level;
 		break;
-	case STAT_STRUCTURE_MAX_BUILT_LEVEL:
-		return object_stats.structure_stats.max_build_level;
-		break;
 	case STAT_OBJECT_HEALTH:
 		return object_stats.object_health;
-		break;
-	case STAT_OBJECT_MAX_HEALTH:
-		return object_stats.object_max_health;
 		break;
 	case STAT_STRUCTURE_OXYGEN_LEVEL:
 		return object_stats.structure_stats.oxygen_level;
@@ -354,6 +331,62 @@ int AI_Stats_Component::Return_Stat_Value(int stat_name)
 		break;
 	case STAT_CURRENT_Y_TILE:
 		return object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord().y;
+		break;
+	}
+}
+
+int AI_Stats_Component::Return_Max_Stat_Value(int stat_name)
+{
+	switch (stat_name)
+	{
+	case STAT_STRUCTURE_BUILT_LEVEL:
+		return object_stats.structure_stats.max_build_level;
+		break;
+	case STAT_OBJECT_HEALTH:
+		return object_stats.object_max_health;
+		break;
+	case STAT_ENTITY_HUNGER:
+		return object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_HUNGER)->stat_limit;
+		break;
+	case STAT_ENTITY_TIREDNESS:
+		return object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_TIREDNESS)->stat_limit;
+		break;
+	case STAT_ENTITY_OXYGEN:
+		return object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_OXYGEN)->stat_limit;
+		break;
+	case STAT_ENTITY_FEAR:
+		return object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_FEAR)->stat_limit;
+		break;
+	case STAT_ENTITY_ENNUI:
+		return object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_ENNUI)->stat_limit;
+		break;
+	}
+}
+
+void AI_Stats_Component::Update_Max_Stat_Value(int stat_name, int new_value)
+{
+	switch (stat_name)
+	{
+	case STAT_STRUCTURE_BUILT_LEVEL:
+		object_stats.structure_stats.max_build_level = new_value;
+		break;
+	case STAT_OBJECT_HEALTH:
+		object_stats.object_max_health = new_value;
+		break;
+	case STAT_ENTITY_HUNGER:
+		object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_HUNGER)->stat_limit = new_value;
+		break;
+	case STAT_ENTITY_TIREDNESS:
+		object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_TIREDNESS)->stat_limit = new_value;
+		break;
+	case STAT_ENTITY_OXYGEN:
+		object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_OXYGEN)->stat_limit = new_value;
+		break;
+	case STAT_ENTITY_FEAR:
+		object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_FEAR)->stat_limit = new_value;
+		break;
+	case STAT_ENTITY_ENNUI:
+		object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_ENNUI)->stat_limit = new_value;
 		break;
 	}
 }
@@ -418,7 +451,7 @@ bool AI_Stats_Component::Check_For_Death()
 				object_locator->Return_AI_Item_Pointer()->Clear_All_Inventory();
 			}
 
-			service_locator->get_Scene_Graph()->Delete_Structure_Update_Tile_Map_Send_Message(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id)->tile_layer);
+			service_locator->get_Scene_Graph()->Delete_Structure_Update_Tile_Map_Send_Message(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), service_locator->get_Game_Library()->Fetch_Structure_Template(object_template_id)->tile_layer);
 			service_locator->get_Scene_Graph()->Create_Projectile(object_locator->Return_Object_Pointer(), object_locator->Return_Object_Pointer(), 3, 0);
 			return true;
 		}
@@ -441,7 +474,7 @@ bool AI_Stats_Component::Check_For_Death()
 		}
 		break;
 	case OBJECT_TYPE_SCAFFOLD:
-		if (object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->max_built_level)
+		if (object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= service_locator->get_Game_Library()->Fetch_Structure_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->max_built_level)
 		{	
 			// Have to clear all inventory here so it is officially removed from the manifest
 			object_locator->Return_AI_Item_Pointer()->Clear_All_Inventory();

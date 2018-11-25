@@ -99,7 +99,7 @@ bool Scene_Graph::Check_If_Tile_Is_Inaccessible(Coordinate tile, int requesting_
 	}
 	else if (mid_tile != NULL && mid_tile->Is_Structure_Inaccessible(requesting_faction) == true)
 	{
-		if (mid_tile->Return_Stats_Component()->Get_Structure_Type() == service_locator->get_Game_Library()->Fetch_Structure_Type_ID_From_Name("STRUCTURE_TYPE_DOOR")) cout << "found inaccessible door" << endl;
+		if (mid_tile->Return_Stats_Component()->Get_Structure_Type() == service_locator->get_Game_Library()->Get_Structure_Type_Code_From_Structure_Type_String("STRUCTURE_TYPE_DOOR")) cout << "found inaccessible door" << endl;
 		return true;
 	}
 	else return false;
@@ -119,7 +119,7 @@ bool Scene_Graph::Check_Tile_Placement(Coordinate grid_point, Structure_Template
 
 bool Scene_Graph::Check_Scaffold_Placement(Coordinate grid_point, int structure_id)
 {
-	if (Check_Tile_Placement(grid_point, *service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_id))) return true;
+	if (Check_Tile_Placement(grid_point, *service_locator->get_Game_Library()->Fetch_Structure_Template(structure_id))) return true;
 	else return false;
 }
 
@@ -141,7 +141,7 @@ bool Scene_Graph::Create_Goalsets_To_Obtain_Item_Quantity_From_Multiple_Storage_
 	Item item = item_slot.slot_item;
 	int quantity_left = item_slot.item_quantity;
 
-	vector<Item_Location*> storage_locations_with_item = Return_Vector_Of_Item_Locations("",item.item_template_id,service_locator->get_Game_Library()->Fetch_Structure_Type_ID_From_Name("STRUCTURE_TYPE_STORAGE"),0);
+	vector<Item_Location*> storage_locations_with_item = Return_Vector_Of_Item_Locations("",item.item_template_id,service_locator->get_Game_Library()->Get_Structure_Type_Code_From_Structure_Type_String("STRUCTURE_TYPE_STORAGE"),0);
 
 	while (storage_locations_with_item.size() > 0 && quantity_left > 0)
 	{
@@ -192,13 +192,13 @@ void Scene_Graph::Create_Background()
 	Adjacent_Structure_Array neighbors = {};
 
 	background_star_1 = Object(0, { 0,0,0,0 }, service_locator);
-	background_star_1.Init_Structure_From_Template(*service_locator->get_Game_Library()->Fetch_Tile_Object_Config(1), neighbors, 0);
+	background_star_1.Init_Structure_From_Template(*service_locator->get_Game_Library()->Fetch_Structure_Template(1), neighbors, 0);
 
 	background_star_2 = Object(0, { 0,0,0,0 }, service_locator);
-	background_star_2.Init_Structure_From_Template(*service_locator->get_Game_Library()->Fetch_Tile_Object_Config(2), neighbors, 0);
+	background_star_2.Init_Structure_From_Template(*service_locator->get_Game_Library()->Fetch_Structure_Template(2), neighbors, 0);
 
 	background_planetoid = Object(0, { 0,0,0,0 }, service_locator);
-	background_planetoid.Init_Structure_From_Template(*service_locator->get_Game_Library()->Fetch_Tile_Object_Config(3), neighbors, 0);
+	background_planetoid.Init_Structure_From_Template(*service_locator->get_Game_Library()->Fetch_Structure_Template(3), neighbors, 0);
 
 	for (int i = 0; i < WORLD_MAX_NUM_BACKGROUND_OBJECTS; i++)
 	{
@@ -212,7 +212,7 @@ void Scene_Graph::Create_Background()
 
 void Scene_Graph::Create_New_Structure(Coordinate grid_point, int structure_template_id, int faction, bool update_message)
 {
-	Structure_Template* structure_config = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_id);
+	Structure_Template* structure_config = service_locator->get_Game_Library()->Fetch_Structure_Template(structure_template_id);
 
 	if (Check_Tile_Placement(grid_point, *structure_config))
 	{
@@ -289,7 +289,7 @@ void Scene_Graph::Create_New_Scaffold(Coordinate grid_point, int structure_templ
 {
 	if (Check_Scaffold_Placement(grid_point, structure_template_id))
 	{
-		Structure_Template* structure_template = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_template_id);
+		Structure_Template* structure_template = service_locator->get_Game_Library()->Fetch_Structure_Template(structure_template_id);
 
 		// First we put an object in the scaffold array to represent our new scaffold and increment the number of scaffold in the world
 		int array_index = 0;
@@ -484,7 +484,7 @@ void Scene_Graph::Delete_Object(int object_type, int array_num)
 	switch (object_type)
 	{
 	case OBJECT_TYPE_STRUCTURE:
-		Delete_Structure_Update_Tile_Map_Send_Message(structure_array[array_num].get_coordinate(), service_locator->get_Game_Library()->Fetch_Tile_Object_Config(structure_array[array_num].Return_Stats_Component()->Return_Template_ID())->tile_layer);
+		Delete_Structure_Update_Tile_Map_Send_Message(structure_array[array_num].get_coordinate(), service_locator->get_Game_Library()->Fetch_Structure_Template(structure_array[array_num].Return_Stats_Component()->Return_Template_ID())->tile_layer);
 		break;
 	case OBJECT_TYPE_ENTITY:
 		entity_array[array_num].Set_Assigned_Flag(OBJECT_UNASSIGNED);
@@ -892,7 +892,7 @@ Object* Scene_Graph::Return_Nearest_Structure_By_Type(Object* local_object, stri
 	{
 		AI_Stats_Component* object_stats = structure_array[i].Return_Stats_Component();
 
-		if (object_stats->Get_Structure_Type() == service_locator->get_Game_Library()->Fetch_Structure_Type_ID_From_Name(structure_type))
+		if (object_stats->Get_Structure_Type() == service_locator->get_Game_Library()->Get_Structure_Type_Code_From_Structure_Type_String(structure_type))
 		{
 			if (temp_object == NULL)
 			{

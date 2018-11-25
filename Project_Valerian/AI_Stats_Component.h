@@ -74,7 +74,6 @@ class AI_Stats_Component
 {
 public:
 	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int object_type, int object_template_num); // initialize a new object
-	AI_Stats_Component(int object_array_index, Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int structure_template_num, Structure_Stats structure_stats); // initialize a saved structure
 
 	int Get_Structure_Name();
 	int Get_Structure_Type();
@@ -82,10 +81,13 @@ public:
 	string Get_Entity_Name();
 
 	void Update_Stat(int stat_name, int new_value );
+	void Update_Max_Stat_Value(int stat_name, int new_value);
 	void Adjust_Stat(int stat_name, int new_value);
 
 	int Return_Template_ID();
 	int Return_Stat_Value(int stat_name);
+	int Return_Max_Stat_Value(int stat_name);
+
 	int Return_Object_Type();
 
 	void Update();
@@ -110,7 +112,6 @@ private:
 	void Update_Entity();
 	void Increment_Dynamic_Stats();
 	void Handle_Stat_Above_Threshold(int stat_name);
-
 	void Handle_Stat_Message(Custom_Message* array_message);
 
 	bool Check_For_Death();

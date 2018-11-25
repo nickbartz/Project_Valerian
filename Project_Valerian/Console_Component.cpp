@@ -404,21 +404,8 @@ void UI_Component_Message_Stream::Draw(SDL_Rect base_rect)
 	UI_Component_Generic::Draw(base_rect);
 
 	SDL_Rect draw_rect = { base_rect.x + offset_rect.x + 5, base_rect.y + offset_rect.y, offset_rect.w, offset_rect.h };
-	string console_string;
 
-	for (int i = 0; i < min(num_messages_in_stream, max_message_lines); i++)
-	{
-		if (i == bold_line)
-		{
-			console_string += " --> ";
-		}
-		console_string += '-';
-		console_string += message_array[i];
-		console_string += ' ';
-		console_string += '\n';
-	}
-
-	service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle(1, draw_rect, console_string, font_type);
+	service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle(1, draw_rect, console_draw_string, font_type);
 }
 void UI_Component_Message_Stream::Push_Message_Into_Stream(string new_message)
 {
@@ -430,12 +417,29 @@ void UI_Component_Message_Stream::Push_Message_Into_Stream(string new_message)
 	}
 
 	message_array[0] = new_message;
-
 	num_messages_in_stream++;
+
+	Create_String_From_Message_Array();
+}
+void UI_Component_Message_Stream::Create_String_From_Message_Array()
+{
+	console_draw_string = "";
+	for (int i = 0; i < min(num_messages_in_stream, max_message_lines); i++)
+	{
+		if (i == bold_line)
+		{
+			console_draw_string += " --> ";
+		}
+		console_draw_string += '-';
+		console_draw_string += message_array[i];
+		console_draw_string += ' ';
+		console_draw_string += '\n';
+	}
 }
 void UI_Component_Message_Stream::Set_Bold_Line(int bLine)
 {
 	bold_line = bLine;
+	Create_String_From_Message_Array();
 }
 void UI_Component_Message_Stream::Set_Message_At_Array_Num(string new_message, int array_num)
 {
@@ -476,18 +480,43 @@ Item_Slot* UI_Component_Item_Slot_Button::Return_Slot_Pointer()
 void UI_Component_Stat_Button::Draw(SDL_Rect base_rect)
 {
 	UI_Component_Generic::Draw(base_rect);
-	AI_Stats_Component* ai_stats = reference_object->Return_Stats_Component();
-	int stat_value = ai_stats->Return_Stat_Value(stat_name);
-	SDL_Rect text_rect = { base_rect.x + offset_rect.x + 3, base_rect.y + offset_rect.y + 5, offset_rect.w, offset_rect.h };
-	SDL_Rect stat_rect = { base_rect.x + offset_rect.x + 3 + string_width_offset, base_rect.y + offset_rect.y + 5, offset_rect.w, offset_rect.h };
-	service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle( 1,text_rect, stat_string_name,FONT_DEFAULT,{ 255,255,255,255 } );
-	service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle( 1,stat_rect, to_string(stat_value),FONT_DEFAULT,{ 255,255,255,255 });
+	
+	current_stat_value = ai_stats->Return_Stat_Value(stat_name);
+
+	text_rect = { base_rect.x + offset_rect.x + 3, base_rect.y + offset_rect.y + 5, offset_rect.w, offset_rect.h };
+	service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle(1, text_rect, stat_string_name, FONT_DEFAULT, { 255,255,255,255 });
+
+	if (is_bar == false)
+	{
+		stat_rect = { base_rect.x + offset_rect.x + 3 + string_width_offset, base_rect.y + offset_rect.y + 5, offset_rect.w, offset_rect.h };
+		service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle(1, stat_rect, to_string(current_stat_value), FONT_DEFAULT, { 255,255,255,255 });
+	}
+	else
+	{
+		int max_width = (offset_rect.w - 3 - string_width_offset);
+		int actual_width = current_stat_value * max_width / max_stat_value;
+
+		stat_rect = { base_rect.x + offset_rect.x + 3 + string_width_offset, base_rect.y + offset_rect.y + 5, actual_width , offset_rect.h - 10 };
+		
+		SDL_Color bar_color = { actual_width * 255 / max_width,255,0,255 };
+		service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, stat_rect, true, bar_color, PRIMITIVE_TYPE_RECT);
+	}
+
 }
 void UI_Component_Stat_Button::Init(Object* ref_object, int s_name, string stat_s_name)
 {
 	reference_object = ref_object;
+	ai_stats = reference_object->Return_Stats_Component();
+	max_stat_value  = ai_stats->Return_Max_Stat_Value(s_name);
 	stat_name = s_name;
 	stat_string_name = stat_s_name;
+}
+void UI_Component_Stat_Button::Make_Bar()
+{
+	if (max_stat_value > 0)
+	{
+		is_bar = true;
+	}
 }
 
 void UI_Component_Object_Details_Display::Draw(SDL_Rect base_rect)
@@ -561,7 +590,7 @@ void UI_Component_Graphic_Button::Fetch_Sprite_Details_From_Object_ID()
 	{
 	case OBJECT_TYPE_STRUCTURE:
 	{
-		Structure_Template* new_structure = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(template_id);
+		Structure_Template* new_structure = service_locator->get_Game_Library()->Fetch_Structure_Template(template_id);
 		sprite_clip = { new_structure->icon_clip_x,new_structure->icon_clip_y, SPRITE_SIZE, SPRITE_SIZE };
 	}
 	break;
@@ -693,4 +722,51 @@ void UI_Component_Item_Slot_Array::Init(Item_Slot array_pointer[], int num_item_
 		if (current_column >= num_columns) current_row++, current_column = 0;
 	}
 }
-	
+
+void UI_Component_Equipment_Slot_Array::Draw(SDL_Rect base_rect)
+{
+	UI_Component_Generic::Draw(base_rect);
+}
+Item_Slot* UI_Component_Equipment_Slot_Array::Handle_Click_On_Component()
+{
+	return NULL;
+}
+void UI_Component_Equipment_Slot_Array::Init(Item_Slot item_slot_array[], int num_item_slots)
+{
+
+}
+
+void UI_Component_Stat_Array::Draw(SDL_Rect base_rect)
+{
+	UI_Component_Generic::Draw(base_rect);
+
+	for (int i = 0; i < num_stat_buttons; i++)
+	{
+		stat_buttons[i].Draw(base_rect);
+	}
+}
+Item_Slot* UI_Component_Stat_Array::Handle_Click_On_Component()
+{
+	return NULL;
+}
+void UI_Component_Stat_Array::Init(Object* lObject)
+{
+	linked_object = lObject;
+}
+void UI_Component_Stat_Array::Add_Stat_Button(int stat_name, string stat_string_name, bool is_bar)
+{
+	stat_buttons.push_back(UI_Component_Stat_Button(service_locator, { offset_rect.x, offset_rect.y, offset_rect.w ,5 }));
+	stat_buttons.back().Init(linked_object, stat_name, stat_string_name);
+	if (is_bar) stat_buttons.back().Make_Bar();
+	num_stat_buttons++;
+	Adjust_Stat_Button_Positioning();
+}
+void UI_Component_Stat_Array::Adjust_Stat_Button_Positioning()
+{
+	int stat_height = offset_rect.h / num_stat_buttons;
+	for (int i = 0; i < num_stat_buttons; i++)
+	{
+		stat_buttons[i].Change_Offset_Rect(2, offset_rect.y + i*stat_height);
+		stat_buttons[i].Change_Offset_Rect(4, stat_height);
+	}
+}

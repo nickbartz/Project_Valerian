@@ -24,15 +24,14 @@ Object::Object(int index, SDL_Rect location, Global_Service_Locator* sLocator)
 
 void Object::Init_Structure_From_Template(Structure_Template object_config, Adjacent_Structure_Array neighbors, int faction)
 {
-	Structure_Stats structure_stats;
-	structure_stats.impassable = object_config.is_inaccessible;
-
 	object_service_locator.Register_Pointer(this);
 	
-	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, object_config.structure_id, structure_stats);
+	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, OBJECT_TYPE_STRUCTURE, object_config.structure_id);
 	object_service_locator.Register_Pointer(AI_Stats);
+	
 	AI_Stats->Update_Stat(STAT_OBJECT_FACTION, faction);
 	AI_Stats->Update_Stat(STAT_STRUCTURE_BUILT_LEVEL, 0);
+	AI_Stats->Update_Stat(STAT_STRUCTURE_IMPASSABLE, object_config.is_inaccessible);
 
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config, neighbors);
 	object_service_locator.Register_Pointer(render_component);

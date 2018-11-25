@@ -22,7 +22,7 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	switch (object_type)
 	{
 	case OBJECT_TYPE_SCAFFOLD:
-		{Structure_Template * object_config = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_template_id);
+		{Structure_Template * object_config = service_locator->get_Game_Library()->Fetch_Structure_Template(object_template_id);
 		render_component = object_config->render_component_type;
 		multiclip_type = object_config->multiclip_type;
 		spritesheet = object_config->spritesheet;
@@ -251,10 +251,10 @@ void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 {
 	AI_Stats_Component* stats_pointer = object_locator->Return_AI_Stats_Pointer();
 	int current_health = stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH);
-	int max_health = stats_pointer->Return_Stat_Value(STAT_OBJECT_MAX_HEALTH);
+	int max_health = stats_pointer->Return_Max_Stat_Value(STAT_OBJECT_HEALTH);
 
 	int built_level = stats_pointer->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL);
-	int max_built_level = stats_pointer->Return_Stat_Value(STAT_STRUCTURE_MAX_BUILT_LEVEL);
+	int max_built_level = stats_pointer->Return_Max_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL);
 
 	// Draw Oxygenation Level
 	if (stats_pointer->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)
@@ -274,18 +274,6 @@ void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 	{
 		Handle_Progress_Overlays(pos_rect, { 100,100,255,255 }, 11, built_level, max_built_level);
 	}
-
-
-	//Coordinate object_location = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
-	//string x_coord = to_string(object_location.x);
-	//string y_coord = to_string(object_location.y);
-	//x_coord.push_back(',');
-	//for (int i = 0; i < y_coord.size(); i++)
-	//{
-	//	x_coord.push_back(y_coord[i]);
-	//}
-	//service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, service_locator->get_Cursor_Pointer()->Convert_World_Rect_To_Screen_Rect(object_locator->Return_AI_Movement_Pointer()->Return_World_Pos()), false, { 255,255,255,255 }, PRIMITIVE_TYPE_RECT);
-	//service_locator->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1, service_locator->get_Cursor_Pointer()->Convert_World_Rect_To_Screen_Rect(object_locator->Return_AI_Movement_Pointer()->Return_World_Pos()), FONT_SMALL_BOLD,x_coord, {0,255,255,255} });
 }
 
 void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level)

@@ -110,6 +110,7 @@ public:
 	void Set_Message_At_Array_Num(string new_message, int array_num);
 	void Set_Bold_Line(int bold_line);
 	void Push_Message_Into_Stream(string new_message);
+
 	void Clear_All_Messages_From_Stream();
 	void Draw(SDL_Rect base_rect);
 
@@ -119,6 +120,9 @@ private:
 
 	int num_messages_in_stream = 0;
 	string message_array[UI_MAX_CONSOLE_MESSAGES];
+	string console_draw_string;
+
+	void Create_String_From_Message_Array();
 
 };
 
@@ -168,12 +172,20 @@ public:
 	}
 	void Draw(SDL_Rect base_rect);
 	void Init(Object* reference_object, int stat_name, string stat_s_name);
+	void Make_Bar();
 
 private:
 	Object * reference_object;
+	AI_Stats_Component* ai_stats = NULL;
 	int stat_name;
 	string stat_string_name;
 	int string_width_offset = 150;
+	int current_stat_value = 0;
+	int max_stat_value = 0;
+	SDL_Rect text_rect;
+	SDL_Rect stat_rect;
+
+	bool is_bar = false;
 };
 
 // Complex Modular Components //
@@ -238,9 +250,13 @@ class UI_Component_Object_Details_Display : public UI_Component_Generic
 public:
 	UI_Component_Object_Details_Display(Global_Service_Locator* service_locator = NULL, SDL_Rect placement_rect = { 0,0,0,0 }) :UI_Component_Generic(service_locator, placement_rect, false)
 	{
-		int title_vertical_offset = 15;
 		int title_horizontal_offset = 15;
-
+		int title_vertical_offset = 15;
+		if (placement_rect.h > 0)
+		{
+			title_vertical_offset = (placement_rect.w*title_horizontal_offset / placement_rect.h);
+		}
+		
 		int requirements_horizontal_offset = 15;
 		int requirements_vertical_offset = 85;
 
@@ -320,6 +336,42 @@ private:
 	int num_rows = 8;
 	int num_panel_buttons = 0;
 	vector <UI_Component_Item_Slot_Button> item_slot_array;
+};
+
+class UI_Component_Equipment_Slot_Array :public UI_Component_Generic
+{
+public:
+	UI_Component_Equipment_Slot_Array(Global_Service_Locator* service_locator = NULL, SDL_Rect placement_rect = { 0,0,0,0 }) :UI_Component_Generic(service_locator, placement_rect, false)
+	{
+
+	}
+	void Draw(SDL_Rect base_rect);
+	Item_Slot* Handle_Click_On_Component();
+	void Init(Item_Slot item_slot_array[], int num_item_slots);
+
+private:
+};
+
+class UI_Component_Stat_Array :public UI_Component_Generic
+{
+public:
+	UI_Component_Stat_Array(Global_Service_Locator* service_locator = NULL, SDL_Rect placement_rect = { 0,0,0,0 }) :UI_Component_Generic(service_locator, placement_rect, false)
+	{
+
+	}
+
+	void Draw(SDL_Rect base_rect);
+	Item_Slot* Handle_Click_On_Component();
+	void Init(Object* linked_object);
+
+	void Add_Stat_Button(int stat_name, string stat_string_name, bool is_bar = false);
+
+private:
+	Object * linked_object;
+	int num_stat_buttons = 0;
+	vector<UI_Component_Stat_Button> stat_buttons;
+	
+	void Adjust_Stat_Button_Positioning();
 };
 
 
