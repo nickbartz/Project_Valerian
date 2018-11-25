@@ -252,8 +252,9 @@ void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 	AI_Stats_Component* stats_pointer = object_locator->Return_AI_Stats_Pointer();
 	int current_health = stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH);
 	int max_health = stats_pointer->Return_Stat_Value(STAT_OBJECT_MAX_HEALTH);
+
 	int built_level = stats_pointer->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL);
-	int max_built_level = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(stats_pointer->Return_Template_ID())->max_built_level;
+	int max_built_level = stats_pointer->Return_Stat_Value(STAT_STRUCTURE_MAX_BUILT_LEVEL);
 
 	// Draw Oxygenation Level
 	if (stats_pointer->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)

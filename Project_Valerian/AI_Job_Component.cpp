@@ -406,31 +406,33 @@ void AI_Job_Component::Action_Assess_External(Job_Goal* goal)
 				object_locator->Return_Render_Pointer()->Change_Simple_Animation(SIMPLE_ANIMATION_PAUSE);
 			}
 			next_goal_index++;
-			}
+		}
 			break;
-		case A_AE_CHECK_SIMPLE_DISTANCE:
-			if (service_locator->get_Scene_Graph()->Check_Simple_Distance_To_Object(object_locator->Return_Object_Pointer(), service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[2], goal->goal_instruction_array[3])) <= goal->goal_instruction_array[4])
-			{
-				next_goal_index++;
+	case A_AE_CHECK_SIMPLE_DISTANCE:
+		if (service_locator->get_Scene_Graph()->Check_Simple_Distance_To_Object(object_locator->Return_Object_Pointer(), service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[2], goal->goal_instruction_array[3])) <= goal->goal_instruction_array[4])
+		{
+			next_goal_index++;
 		}
 		break;
 	case A_AE_CHECK_OBJECT_STAT:
-		{AI_Stats_Component * stats_pointer = service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[3], goal->goal_instruction_array[4])->Return_Stats_Component();
-		switch (goal->goal_instruction_array[2])
 		{
-		case LOWER_THAN_OR_EQUAL_TO:
+			AI_Stats_Component * stats_pointer = service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[3], goal->goal_instruction_array[4])->Return_Stats_Component();
+			switch (goal->goal_instruction_array[2])
 			{
-				if (stats_pointer->Return_Stat_Value(goal->goal_instruction_array[5]) <= goal->goal_instruction_array[6]) next_goal_index += goal->goal_instruction_array[7];
-				else next_goal_index++;
+			case LOWER_THAN_OR_EQUAL_TO:
+				{
+					if (stats_pointer->Return_Stat_Value(goal->goal_instruction_array[5]) <= goal->goal_instruction_array[6]) next_goal_index += goal->goal_instruction_array[7];
+					else next_goal_index++;
+				}
+				break;
+			case HIGHER_THAN_OR_EQUAL_TO:
+				{
+					if (stats_pointer->Return_Stat_Value(goal->goal_instruction_array[5]) >= goal->goal_instruction_array[6]) next_goal_index += goal->goal_instruction_array[7];
+					else next_goal_index++;
+				}
+				break;
 			}
-			break;
-		case HIGHER_THAN_OR_EQUAL_TO:
-			{
-				if (stats_pointer->Return_Stat_Value(goal->goal_instruction_array[5]) >= goal->goal_instruction_array[6]) next_goal_index += goal->goal_instruction_array[7];
-				else next_goal_index++;
-			}
-			break;
-		}}
+		}
 		break;
 	case A_AE_CHECK_FOR_ENTITIES_IN_RADIUS:
 		{
@@ -457,7 +459,7 @@ void AI_Job_Component::Action_Assess_External(Job_Goal* goal)
 		AI_Item_Component * object_inventory = service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(goal->goal_instruction_array[2], goal->goal_instruction_array[3])->Return_AI_Item_Component();
 		Item item;
 		item.item_template_id = goal->goal_instruction_array[4];
-		if (object_inventory->Return_Amount_Of_Item_In_Inventory(item) < goal->goal_instruction_array[5])
+		if (object_inventory->Return_Amount_Of_Item_Or_Type_In_Inventory(item) < goal->goal_instruction_array[5])
 		{
 			Abort_Current_Job();
 		}

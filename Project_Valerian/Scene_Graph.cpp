@@ -35,8 +35,6 @@ Job* Scene_Graph::Add_Raw_Job_To_Job_Array(vector<Goal_Set> goal_sets, int job_i
 		new_job.Add_Goal_Set(goal_sets[i]);
 	}
 
-
-
 	for (int i = 0; i < WORLD_MAX_NUM_JOBS + 1; i++)
 	{
 		if (current_job_array[i].Return_Is_Init() == false)
@@ -66,7 +64,7 @@ int Scene_Graph::Check_Simple_Distance_To_Object(Object* object_a, Object* objec
 	int x_dist = abs(object_b_coord.x - object_a_coord.x);
 	int y_dist = abs(object_b_coord.y - object_a_coord.y);
 
-	return max(x_dist, y_dist);
+	return (x_dist+y_dist);
 }
 
 bool Scene_Graph::Check_If_Tile_Has_Leak(Coordinate tile)
@@ -138,6 +136,47 @@ void Scene_Graph::Check_If_Job_Can_Be_Closed(int job_array_num)
 	}
 }
 
+bool Scene_Graph::Create_Goalsets_To_Obtain_Item_Quantity_From_Multiple_Storage_Locations(vector<Goal_Set> &goal_set_vector, Item_Slot item_slot, Object* requestee)
+{
+	Item item = item_slot.slot_item;
+	int quantity_left = item_slot.item_quantity;
+
+	vector<Item_Location*> storage_locations_with_item = Return_Vector_Of_Item_Locations("",item.item_template_id,service_locator->get_Game_Library()->Fetch_Structure_Type_ID_From_Name("STRUCTURE_TYPE_STORAGE"),0);
+
+	while (storage_locations_with_item.size() > 0 && quantity_left > 0)
+	{
+		int ideal_storage_location_index = Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(storage_locations_with_item);
+
+		Object* ideal_storage_location = storage_locations_with_item[ideal_storage_location_index]->associated_object;
+
+		AI_Item_Component* object_item_ai_pointer = ideal_storage_location->Return_AI_Item_Component();
+
+		int amount_of_item = min(quantity_left, object_item_ai_pointer->Return_Amount_Of_Item_Or_Type_In_Inventory(item));
+
+		Goal_Set shuttle_item_goal_set = Goalset_Create_Move_Item_From_Object_To_Object(item, amount_of_item, ideal_storage_location, requestee);
+		goal_set_vector.push_back(shuttle_item_goal_set);
+
+		storage_locations_with_item.erase(storage_locations_with_item.begin() + ideal_storage_location_index);
+
+		quantity_left -= amount_of_item;
+	}
+
+
+	if (quantity_left == 0)
+	{
+		return true;
+	}
+	else if (quantity_left > 0)
+	{
+		return false;
+	}
+	else if (quantity_left < 0)
+	{
+		cout << "found too much of item, quantity left greater than zero, this shouldn't happen" << endl;
+		return false;
+	}
+}
+
 bool Scene_Graph::Check_Container_Placement(Coordinate grid_point)
 {
 	return true;
@@ -185,7 +224,7 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, int structure_temp
 			// we place the object in the first array index with an "OBJECT_UNASSIGNED" type so we can overwrite objects no longer being used
 			if (structure_array[i].Get_Assigned_Flag() == OBJECT_UNASSIGNED)
 			{
-				structure_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, structure_config->tile_specs.w*TILE_SIZE, structure_config->tile_specs.h*TILE_SIZE }, service_locator);
+				structure_array[i] = Object(i, { grid_point.x*TILE_SIZE, grid_point.y*TILE_SIZE, structure_config->tile_specs.w*TILE_SIZE, TILE_SIZE }, service_locator);
 
 				structure_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
 
@@ -484,47 +523,6 @@ void Scene_Graph::free()
 	for (int i = 0; i < current_num_projectiles; i++) projectile_array[i].free();
 }
 
-bool Scene_Graph::Create_Goalsets_To_Obtain_Item_Quantity_From_Multiple_Storage_Locations(vector<Goal_Set> &goal_set_vector, Item_Slot item_slot, Object* requestee)
-{
-	Item item = item_slot.slot_item;
-	int quantity_left = item_slot.item_quantity;
-
-	vector<Object*> storage_locations_with_item = Return_Vector_Of_Storage_Locations_With_Item(item);
-
-	while (storage_locations_with_item.size() > 0 && quantity_left > 0)
-	{
-		int ideal_storage_location_index = Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(storage_locations_with_item, item);
-
-		Object* ideal_storage_location = storage_locations_with_item[ideal_storage_location_index];
-
-		AI_Item_Component* object_item_ai_pointer = ideal_storage_location->Return_AI_Item_Component();
-
-		int amount_of_item = min(quantity_left, object_item_ai_pointer->Return_Amount_Of_Item_In_Inventory(item));
-
-		Goal_Set shuttle_item_goal_set = Goalset_Create_Move_Item_From_Object_To_Object(item, amount_of_item, ideal_storage_location, requestee);
-		goal_set_vector.push_back(shuttle_item_goal_set);
-
-		storage_locations_with_item.erase(storage_locations_with_item.begin() + ideal_storage_location_index);
-
-		quantity_left -= amount_of_item;
-	}
-
-
-	if (quantity_left == 0)
-	{
-		return true;
-	}
-	else if (quantity_left > 0)
-	{
-		return false;
-	}
-	else if (quantity_left < 0)
-	{
-		cout << "found too much of item, quantity left greater than zero, this shouldn't happen" << endl;
-		return false;
-	}
-}
-
 Goal_Set Scene_Graph::Goalset_Create_Move_Item_From_Object_To_Object(Item item, int amount_of_item, Object* start_object, Object* finish_object)
 {
 	Goal_Set new_goalset;
@@ -533,11 +531,11 @@ Goal_Set Scene_Graph::Goalset_Create_Move_Item_From_Object_To_Object(Item item, 
 
 	int check_if_start_object_has_item[6] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_IF_OBJECT_HAS_ITEM, start_object_type, start_object->Get_Array_Index(), item.item_template_id, amount_of_item };
 	int move_to_start_object[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, start_object_type, start_object->Get_Array_Index() };
-	int check_distance[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, start_object_type, start_object->Get_Array_Index(),1 };
+	int check_distance[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, start_object_type, start_object->Get_Array_Index(),2 };
 	int take_items_from_start_object[6] = { ACTION_TRANSFER, A_AT_TAKE_ITEM_FROM_OBJECT, start_object_type, start_object->Get_Array_Index(),item.item_template_id,amount_of_item };
 	int check_for_another_goalset[2] = { ACTION_ASSESS_INTERNAL, A_AI_CHECK_JOB_FOR_MORE_GOALSETS };
 	int move_to_requestee[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, finish_object_type, finish_object->Get_Array_Index() };
-	int check_distance_2[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, finish_object_type, finish_object->Get_Array_Index(),1 };
+	int check_distance_2[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, finish_object_type, finish_object->Get_Array_Index(),2 };
 	int give_items_to_requestee[6] = { ACTION_TRANSFER, A_AT_GIVE_ITEM_TO_OBJECT, finish_object_type, finish_object->Get_Array_Index(), item.item_template_id, amount_of_item };
 	int finish_goal_set[2] = { ACTION_CLOSE_OUT_GOAL_SET, new_goalset.goal_set_uniq_id };
 
@@ -645,17 +643,16 @@ Job* Scene_Graph::Job_Create_Mine_Asteroid(Object* asteroid, int public_private,
 	return Add_Raw_Job_To_Job_Array(goalset_vector, 3, asteroid, public_private);
 }
 
-Job* Scene_Graph::Job_Create_Build_Scaffold(Object* scaffold, int public_private, Object* assigned_object)
+Job* Scene_Graph::Job_Create_Entity_Go_Change_Object_Stat(Object* requestee_object, int public_private, Object* assigned_object, int object_type, int stat, int comparator_function, int increment, int final_value)
 {
 	Goal_Set new_goal_set;
 	new_goal_set.max_num_assigned_objects = 4;
-	int max_built_level = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(scaffold->Return_Stats_Component()->Return_Template_ID())->max_built_level;
 
-	int go_to_scaffold[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, OBJECT_TYPE_SCAFFOLD, scaffold->Get_Array_Index() };
-	int check_distance[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, OBJECT_TYPE_SCAFFOLD, scaffold->Get_Array_Index(),1 };
+	int go_to_scaffold[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, object_type, requestee_object->Get_Array_Index() };
+	int check_distance[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, object_type, requestee_object->Get_Array_Index(),1 };
 	int stop_moving[2] = { ACTION_EDIT_INTERNAL , A_EI_STOP_MOVING };
-	int increment_scaffold_built[6] = { ACTION_EDIT_EXTERNAL, A_EE_ADJUST_OBJECT_STAT, OBJECT_TYPE_SCAFFOLD, scaffold->Get_Array_Index(), STAT_STRUCTURE_BUILT_LEVEL, 1 };
-	int check_scaffold_built_level[8] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_OBJECT_STAT, HIGHER_THAN_OR_EQUAL_TO, OBJECT_TYPE_SCAFFOLD,scaffold->Get_Array_Index(), STAT_STRUCTURE_BUILT_LEVEL,max_built_level, 4 };
+	int increment_scaffold_built[6] = { ACTION_EDIT_EXTERNAL, A_EE_ADJUST_OBJECT_STAT, object_type, requestee_object->Get_Array_Index(), stat, increment };
+	int check_scaffold_built_level[8] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_OBJECT_STAT, comparator_function, object_type,requestee_object->Get_Array_Index(), stat,final_value, 4 };
 	int set_wait_timer[3] = { ACTION_EDIT_INTERNAL, A_EI_SET_WAIT_TIMER, };
 	int wait[2] = { ACTION_EDIT_INTERNAL, A_EI_WAIT };
 	int go_back_four[2] = { ACTION_GOAL_TRAVERSAL, -4 };
@@ -674,11 +671,11 @@ Job* Scene_Graph::Job_Create_Build_Scaffold(Object* scaffold, int public_private
 	vector<Goal_Set> new_goal_sets;
 	new_goal_sets.push_back(new_goal_set);
 
-	return Add_Raw_Job_To_Job_Array(new_goal_sets, 5, scaffold, public_private);
+	return Add_Raw_Job_To_Job_Array(new_goal_sets, 5, requestee_object, public_private);
 
 }
 
-bool Scene_Graph::Job_Create_Find_Blueprint_Items_And_Transport_To_Requestee(Object* requestee, Blueprint* blueprint, bool create_job, int public_private, Object* assigned_object)
+bool Scene_Graph::Job_Create_Find_Blueprint_Items_And_Transport_To_Requestee(Object* requestee, Blueprint* blueprint, bool create_job, int is_public, Object* assigned_object)
 {
 	vector<Goal_Set> Goalsets_Item_Transport;
 
@@ -689,7 +686,7 @@ bool Scene_Graph::Job_Create_Find_Blueprint_Items_And_Transport_To_Requestee(Obj
 
 	if (create_job && Goalsets_Item_Transport.size() > 0)
 	{
-		Add_Raw_Job_To_Job_Array(Goalsets_Item_Transport, 6, requestee, public_private);
+		Add_Raw_Job_To_Job_Array(Goalsets_Item_Transport, 6, requestee, is_public);
 	}
 
 	return true;
@@ -703,7 +700,14 @@ Job* Scene_Graph::Job_Create_Transport_Blueprint_Items_From_Object_To_Requestee(
 		new_goalset.push_back(Goalset_Create_Move_Item_From_Object_To_Object(blueprint.blueprint_items[i].slot_item, blueprint.blueprint_items[i].item_quantity, start_object, finish_object));
 	}
 
-	return Add_Raw_Job_To_Job_Array(new_goalset, 7, start_object, public_private);
+	if (assigned_object == NULL)
+	{
+		return Add_Raw_Job_To_Job_Array(new_goalset, 7, start_object, public_private);
+	}
+	else
+	{
+		return Add_Raw_Job_To_Job_Array(new_goalset, 7, assigned_object, public_private);
+	}
 }
 
 Job* Scene_Graph::Job_Create_Local_Structure_Template_Job(Object* object, int job_id)
@@ -784,7 +788,7 @@ int Scene_Graph::Return_Num_Item_Slots_On_Manifest()
 	return inventory_manifest.size();
 }
 
-int Scene_Graph::Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(vector<Object*> storage_locations_with_item, Item item)
+int Scene_Graph::Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(vector<Item_Location*> storage_locations_with_item)
 {
 	// We will improve this algorithm as it becomes necessary for entities not to do stupid shit
 
@@ -797,6 +801,7 @@ Job* Scene_Graph::Return_Job_With_Highest_Priority_Correlation(Object* requestin
 	{
 		for (int i = 0; i < WORLD_MAX_NUM_JOBS; i++)
 		{
+
 			if (current_job_array[i].Return_Is_Init() == true)
 			{
 				if ((current_job_array[i].Return_Job_Public_Private() == 1 || current_job_array[i].Return_Job_Requestor() == requesting_object) && current_job_array[i].Return_Num_Unassigned_Goalsets() > 0)
@@ -843,22 +848,29 @@ vector<Object*> Scene_Graph::Return_All_Entities_In_Radius(Coordinate base_coord
 	return all_entities_in_radius;
 }
 
-vector<Object*> Scene_Graph::Return_Vector_Of_Storage_Locations_With_Item(Item item)
+vector<Item_Location*> Scene_Graph::Return_Vector_Of_Item_Locations(string iType, int item_id, int structure_type, int structure_id)
 {
-	vector<Object*> storage_locations_with_item;
-	
-	for (int i = 0; i < current_num_structures; i++)
+	vector<Item_Location*> item_locations;
+	string item_type = iType;
+
+	if (item_type.size() == 0) item_type = service_locator->get_Game_Library()->Fetch_Item_Template(item_id)->inventory_item_type_string;
+
+	for (int i = 0; i < curent_num_item_slots_on_manifest; i++)
 	{
-		if (structure_array[i].Return_Stats_Component()->Get_Structure_Type() == service_locator->get_Game_Library()->Fetch_Structure_Type_ID_From_Name("STRUCTURE_TYPE_STORAGE"))
+		if (service_locator->get_Game_Library()->Fetch_Item_Template(inventory_manifest[i].inventory_slot->slot_item.item_template_id)->inventory_item_type_string == item_type)
 		{
-			if (structure_array[i].Return_AI_Item_Component()->Return_Amount_Of_Item_In_Inventory(item) > 0)
-			{
-				storage_locations_with_item.push_back(&structure_array[i]);
-			}
+			bool include = true;
+
+			if (item_id != 0 && inventory_manifest[i].inventory_slot->slot_item.item_template_id != item_id) include = false;
+			if (structure_type != 0 && inventory_manifest[i].associated_object->Return_Stats_Component()->Get_Structure_Type() != structure_type) include = false;
+			if (structure_id != 0 && inventory_manifest[i].associated_object->Return_Stats_Component()->Get_Structure_Name() != structure_id) include = false;
+
+			if (include == true) item_locations.push_back(&inventory_manifest[i]);
 		}
+
 	}
 
-	return storage_locations_with_item;
+	return item_locations;
 }
 
 int Scene_Graph::Return_Current_Num_Jobs_In_Array()
@@ -986,21 +998,24 @@ Object* Scene_Graph::Return_Object_By_Type_And_Array_Num(int object_type, int ar
 	switch (object_type)
 	{
 	case OBJECT_TYPE_STRUCTURE:
-		return &structure_array[array_num];
+		if (&structure_array[array_num] != NULL) return &structure_array[array_num];
 		break;
 	case OBJECT_TYPE_ENTITY:
-		return &entity_array[array_num];
+		if (&entity_array[array_num] != NULL) return &entity_array[array_num];
 		break;
 	case OBJECT_TYPE_PROJECTILE:
-		return &projectile_array[array_num];
+		if (&projectile_array[array_num] != NULL) return &projectile_array[array_num];
 		break;
 	case OBJECT_TYPE_CONTAINER:
-		return &container_array[array_num];
+		if (&container_array[array_num] != NULL) return &container_array[array_num];
 		break;
 	case OBJECT_TYPE_SCAFFOLD:
-		return &scaffold_array[array_num];
+		if (&scaffold_array[array_num] != NULL) return &scaffold_array[array_num];
 		break;
 	}
+
+	cout << "trying to return object of type: " << object_type << " that doesn't exist in Return Object by Type and Array Num Function" << endl;
+	return NULL;
 }
 
 Object* Scene_Graph::Return_Structure_By_Array_Num(int array_num)
@@ -1015,14 +1030,22 @@ Object* Scene_Graph::Return_Entity_By_Array_Num(int array_num)
 
 Coordinate Scene_Graph::Return_Nearest_Accessible_Coordinate(Coordinate origin, Coordinate destination, int requesting_faction)
 {
+	Coordinate delta[] = { { 0,1 },{ 1,1 },{ -1,1 },{ -1,0 },{ 1,0 },{-1,-1 },{ 1,-1 },{ 0,-1 }};
+	
 	if (origin.x == destination.x && origin.y == destination.y)
 	{
-		return origin;
+		for (int i = 0; i < 8; i++)
+		{
+			if (!Check_If_Tile_Is_Inaccessible({ origin.x + delta[i].x, origin.y + delta[i].y }, requesting_faction))
+			{
+				return { origin.x + delta[i].x, origin.y + delta[i].y };
+			}
+		}
+
+		service_locator->get_UI_pointer()->Push_Message_To_Console("Production blocked, nowhere to put item");
 	}
 	else
 	{
-		Coordinate delta[] = { { -1,-1 },{ 0,-1 },{ 1,-1 },{ 1,0 },{ 1,1 },{ 0,1 },{ -1,1 },{ -1,0 } };
-
 		int direction_x = (destination.x - origin.x);
 		int direction_y = (destination.y - origin.y);
 

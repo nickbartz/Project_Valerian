@@ -31,7 +31,6 @@ public:
 
 	void Change_Cursor_Icon(int icon_clip_x, int icon_clip_y);
 
-	void Set_Currently_Clicked_Component(UI_Component_Generic* component);
 	int Get_Recent_Mouse_Action();
 
 	Coordinate Get_Mouse_Grid_Coord();
@@ -56,7 +55,6 @@ private:
 	SDL_Rect camera = { 0,0,0,0 };
 
 	Global_Service_Locator * service_pointer;
-	UI_Component_Generic* currently_clicked_component = NULL;
 	SDL_Rect drag_rect = { 0,0,0,0 };
 	SDL_Rect grid_pos = { 0,0,0,0 };
 };

@@ -4,12 +4,23 @@
 #include<string>
 #include<Global_Constants.h>
 #include<vector>
+#include<deque>
 
 using namespace std;
 
 class Global_Service_Locator;
 class Object_Service_Locator;
 struct Item_Template;
+
+enum Scaffold_States
+{
+	BLUEPRINT_STATE_NULL,
+	BLUEPRINT_STATE_PARTS_NEEDED_NO_JOB_SENT,
+	BLUEPRINT_STATE_PARTS_NEEDED_JOB_SENT,
+	BLUEPRINT_STATE_NO_PARTS_NEEDED_NO_JOB_SENT,
+	BLUEPRINT_STATE_WAITING_TO_START_BUILD,
+	BLUEPRINT_BUILD_JOB_SENT
+};
 
 struct Item_Stats
 {
@@ -50,6 +61,14 @@ struct Blueprint
 	Item_Slot blueprint_items[MAX_ITEMS_PER_BLUEPRINT];
 };
 
+struct Build_Order
+{
+	Blueprint* build_requirements;
+	int object_type;
+	int object_template;
+	int build_stage = BLUEPRINT_STATE_NULL;
+};
+
 class AI_Item_Component
 {
 public:
@@ -57,7 +76,7 @@ public:
 
 	void Update();
 	void Update_Entity();
-	void Update_Scaffold();
+	void Update_Build_Orders();
 	void Check_For_Messages();
 
 	// This is the main function that changes inventory slots - everything must flow through this function
@@ -73,6 +92,7 @@ public:
 	void Populate_Production_Blueprints(int blueprint_id);
 	void Populate_Starter_Inventory(int object_type);
 	void Delete_Item_At_Inventory_Array_Num(int array_num);
+	bool Remove_Blueprint_Items_From_Inventory(Blueprint* current_blueprint);
 	void Clear_All_Inventory();
 
 	// Accessors
@@ -80,15 +100,20 @@ public:
 	int Return_Num_Occupied_Inventory_Slots();
 	Item_Slot* Return_Entire_Inventory_As_Pointer();
 	Item_Slot* Return_Inventory_Slot_As_Pointer(int slot_num);
+	Item_Slot* Return_First_Inventory_Slot_With_Item_Or_Item_Type(int item_id = 0, string item_type_id = "");
+	int Return_Amount_Of_Item_Or_Type_In_Inventory(Item item, string item_type = "");
 	int Return_Num_Production_Blueprints();
 	Blueprint* Return_Blueprint_At_Slot(int blueprint_slot);
 
 	// Job Related Functions
 	void Scan_Inventory_For_Storable_Items(int threshold_quantity);
+	void Request_Production_Of_Item_From_Blueprint(Blueprint* blueprint, int quantity);
+	void Add_Build_Order_To_Queue(Blueprint* blueprint, int object_type, int object_template, int object_stage = BLUEPRINT_STATE_PARTS_NEEDED_NO_JOB_SENT);
+	void Create_Production_Item_Container();
 
 	// Queries
-	int Return_Amount_Of_Item_In_Inventory(Item item);
 	bool Object_Has_Items_For_Blueprint_In_Inventory(Blueprint* blueprint);
+	bool Build_Is_Complete();
 
 
 private:
@@ -96,12 +121,10 @@ private:
 	Object_Service_Locator* object_locator;
 
 	// Scaffold Specific Variables
-	bool Check_For_Scaffold_Completion();
+	bool Check_If_Next_Build_Order_Can_Start_Build();
 	bool Try_To_Create_Job_To_Fetch_Parts();
+	bool Create_Build_Job();
 
-	// 
-
-	int scaffold_stage = SCAFFOLD_STATE_PRE_INITIATION;
 	int item_change_flag = 1;
 
 	int num_inventory_slots = 0;
@@ -110,8 +133,6 @@ private:
 	int num_equipment_slots = 0;
 	Equipment_Slot equipment_array[MAX_NUM_EQUIPMENT_SLOTS];
 
-	vector<Blueprint*> production_blueprints;
-
-	int has_scaffold_blueprint = 0;
-	Blueprint* Scaffold_Blueprint = NULL;
+	vector<Blueprint*> loaded_production_blueprints;
+	deque<Build_Order> active_build_orders;
 };

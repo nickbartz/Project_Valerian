@@ -32,7 +32,7 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	AI_Stats = new AI_Stats_Component(SG_object_array_index, service_locator, &object_service_locator, object_config.structure_id, structure_stats);
 	object_service_locator.Register_Pointer(AI_Stats);
 	AI_Stats->Update_Stat(STAT_OBJECT_FACTION, faction);
-	AI_Stats->Update_Stat(STAT_STRUCTURE_BUILT_LEVEL, object_config.max_built_level);
+	AI_Stats->Update_Stat(STAT_STRUCTURE_BUILT_LEVEL, 0);
 
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config, neighbors);
 	object_service_locator.Register_Pointer(render_component);
@@ -46,7 +46,7 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
 	object_service_locator.Register_Pointer(AI_Relationship);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, MAX_NUM_INVENTORY_SLOTS);
 	object_service_locator.Register_Pointer(AI_Items);
 }
 
@@ -64,7 +64,7 @@ void Object::Init_Scaffold_From_Template(int structure_template_id, int faction)
 	render_component = new Render_Component(service_locator, &object_service_locator, OBJECT_TYPE_SCAFFOLD, structure_template_id);
 	object_service_locator.Register_Pointer(render_component);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, MAX_NUM_INVENTORY_SLOTS);
 	object_service_locator.Register_Pointer(AI_Items);
 
 	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, OBJECT_TYPE_SCAFFOLD, structure_template_id);
@@ -88,7 +88,7 @@ void Object::Init_Entity_From_Template(Entity_Template object_config, int factio
 	//AI_Relationship = new AI_Rel_Component(service_locator, &object_service_locator);
 	//object_service_locator.Register_Pointer(AI_Relationship);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, MAX_NUM_INVENTORY_SLOTS);
 	object_service_locator.Register_Pointer(AI_Items);
 
 	AI_Job = new AI_Job_Component(service_locator, &object_service_locator, OBJECT_TYPE_ENTITY, object_config.entity_id);
@@ -125,7 +125,7 @@ void Object::Init_Container_From_Inventory(Item_Slot inventory_pointer[], int nu
 	AI_Movement = new AI_Movement_Component(service_locator, &object_service_locator, temp_location, OBJECT_TYPE_CONTAINER, 0);
 	object_service_locator.Register_Pointer(AI_Movement);
 
-	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, 20);
+	AI_Items = new AI_Item_Component(service_locator, &object_service_locator, MAX_NUM_INVENTORY_SLOTS);
 	AI_Items->Copy_Inventory_From_Pointer(inventory_pointer, num_inventory_items);
 	object_service_locator.Register_Pointer(AI_Items);
 

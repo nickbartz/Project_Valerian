@@ -24,7 +24,7 @@ UI_Window_Generic::UI_Window_Generic(Global_Service_Locator* sLocator, int windo
 
 void UI_Window_Generic::Change_Window_Name(string new_name)
 {
-	window_title_bar.Change_Component_Title(new_name, { 5,3,0,0 });
+	window_title_bar.Update_Component_Title(new_name, { 255,255,255,255 }, 0);
 }
 
 void UI_Window_Generic::Change_Rect(SDL_Rect new_rect)
@@ -105,6 +105,7 @@ void UI_Window_Object_Diagnostic::Draw(Draw_System* draw_system)
 		break;
 	case PANEL_OBJECT_PRODUCTION:
 		object_production.Draw(draw_system, base_window_rect);
+		break;
 	}
 }
 
@@ -138,7 +139,23 @@ void UI_Window_Object_Diagnostic::Handle_Mouse_Click(Cursor* cursor)
 	UI_Window_Generic::Handle_Mouse_Click(cursor);
 
 	// Check to see if the mouse click was on a panel within the window
-	if (currently_active_panel == object_production.Get_Panel_Name() && object_production.Check_If_Click_In_Panel_Rect(base_window_rect, cursor->Get_Mouse_Position())) object_production.Handle_Mouse_Click();
+	switch (currently_active_panel)
+	{
+	case PANEL_OBJECT_INVENTORY:
+		if (object_inventory.Check_If_Click_In_Panel_Rect(base_window_rect, cursor->Get_Mouse_Position()))
+		{
+			object_inventory.Handle_Mouse_Click();
+		}
+		break;
+	case PANEL_OBJECT_JOBS:
+		if (object_jobs.Check_If_Click_In_Panel_Rect(base_window_rect, cursor->Get_Mouse_Position())) object_jobs.Handle_Mouse_Click();
+		break;
+	case PANEL_OBJECT_STATS:
+		break;
+	case PANEL_OBJECT_PRODUCTION:
+		if (object_production.Check_If_Click_In_Panel_Rect(base_window_rect, cursor->Get_Mouse_Position())) object_production.Handle_Mouse_Click();
+		break;
+	}
 }
 
 void UI_Window_Structure_Create::Handle_Mouse_Click(Cursor* cursor)

@@ -1,4 +1,5 @@
 #include<Draw_System.h>
+#include<algorithm>
 
 Draw_System::Draw_System(Global_Service_Locator* sLocator, FC_Font* font_array_start[], Uint32 wFormat)
 {
@@ -63,6 +64,31 @@ void Draw_System::Set_Spritesheet_Prebaked_Status(int spritesheet_num, bool preb
 void Draw_System::Set_Reset_Prebake_Status_Indicator(bool prebake_status)
 {
 	reset_prebaked_spritesheets = prebake_status;
+}
+
+SDL_Rect Draw_System::Get_Offset_Rect_For_Text(SDL_Rect offset_rect, int FONT_TYPE, string text, int vertical_alignment)
+{
+	int text_width = Return_Text_Width(FONT_TYPE, text);
+	int text_height = Return_Text_Height(FONT_TYPE, text);
+
+	SDL_Rect text_offset;
+
+	text_offset.x = (offset_rect.w - text_width) / 2;
+	text_offset.y = (offset_rect.h - text_height)/ 2;
+
+	switch (vertical_alignment)
+	{
+	case 0:
+		text_offset.x = 5;
+		break;
+	case 1:
+		break;
+	case 2:
+		text_offset.x = offset_rect.w - text_width - 5;
+		break;
+	}
+
+	return text_offset;
 }
 
 // Multisprite Functions
@@ -185,9 +211,9 @@ void Draw_System::Clear_Primitive_Instruction_Array()
 	count_num_primitives = 0;
 }
 
-void Draw_System::Add_Text_Job_To_Render_Cycle(Text_Instruction string)
-{
-	Text_Instruction_Array[count_num_print_text] = string;
+void Draw_System::Add_Text_Job_To_Render_Cycle(int init, SDL_Rect pos_rect, string text_string, int font, SDL_Color text_color)
+{	
+	Text_Instruction_Array[count_num_print_text] = Text_Instruction{ init, pos_rect, font, text_string, text_color };
 	count_num_print_text++;
 	if (count_num_print_text > MAX_NUM_TEXT_PRINT) count_num_print_text = 0;
 }
@@ -352,7 +378,10 @@ void Draw_System::Draw_Text_Strings(SDL_Renderer* render_target, int layer)
 		{			
 			SDL_Rect rect_pos = Text_Instruction_Array[i].pos_rect;
 			int font_num = Text_Instruction_Array[i].font;
-			const char* text_array = Text_Instruction_Array[i].text_string.c_str();
+			
+			string new_string = Text_Instruction_Array[i].text_string;
+
+			const char* text_array = new_string.c_str();
 
 			FC_Draw(font_array[font_num], render_target, rect_pos.x, rect_pos.y, text_array);
 		}

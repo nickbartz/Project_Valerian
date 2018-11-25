@@ -24,9 +24,10 @@ public:
 	void Init();
 
 	// Load and Clear Action Messages
+	UI_Component_Generic*  Return_Currently_Clicked_Component();
+	UI_Component_User_Input_Box* Return_Current_Focus_Component();
 	void Set_Currently_Clicked_Component(UI_Component_Generic* component);
-	void Set_Current_Focus_Component(UI_Component_Generic* component);
-
+	void Set_Current_Focus_Component(UI_Component_User_Input_Box* component);
 	void Set_Currently_Clicked_To_Null();
 	void Set_Current_Focus_To_Null();
 
@@ -36,7 +37,7 @@ public:
 
 private:
 	UI_Component_Generic * currently_clicked_component;
-	UI_Component_Generic * current_focus_component;
+	UI_Component_User_Input_Box * current_focus_component;
 
 	int action_support[MAX_LENGTH_CUSTOM_MESSAGE];
 	bool action_support_loaded = false;

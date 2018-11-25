@@ -42,6 +42,7 @@ public:
 	bool Return_Spritesheet_Prebaked_Status(int spritesheet);
 	void Set_Spritesheet_Prebaked_Status(int spritesheet_num, bool prebake_status);
 	void Set_Reset_Prebake_Status_Indicator(bool prebake_status);
+	SDL_Rect Get_Offset_Rect_For_Text(SDL_Rect offset_rect, int FONT_TYPE, string text, int vertical_align = 1);
 
 	// Multisprite functions
 	int Add_New_Spritesheet_To_Multisprite(int spritesheet_num, SDL_Renderer* game_renderer);
@@ -55,7 +56,7 @@ public:
 	void Add_Primitive_To_Render_Cycle(int init, SDL_Rect pos_rect, bool filled, SDL_Color primitive_color, int primitive_type = PRIMITIVE_TYPE_RECT);
 	void Clear_Primitive_Instruction_Array();
 
-	void Add_Text_Job_To_Render_Cycle(Text_Instruction string);
+	void Add_Text_Job_To_Render_Cycle(int init, SDL_Rect pos_rect, string text_string, int font = FONT_DEFAULT, SDL_Color text_color = { 255,255,255,255 });
 	void Clear_Text_Instruction_Array();
 
 	// Functions to Draw, called by main

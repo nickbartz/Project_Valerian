@@ -85,13 +85,32 @@ struct Item_Template
 	int object_type = OBJECT_TYPE_ITEM;
 
 	int inventory_item_id = 0;
-	string inventory_item_type;
+	int inventory_item_type_id = 0;
+	int associated_blueprint_id = 0;
+	string inventory_item_name;
+	string inventory_item_type_string;
+	string inventory_item_description;
+	int item_build_time = 0;
 
 	SDL_Rect sprite_specs = { 0,0,SPRITE_SIZE,SPRITE_SIZE };
 };
 
 struct Equipment_Template
 {
+
+};
+
+struct Name_Data
+{
+	vector<string> male_first;
+	vector<string> male_middle;
+	vector<string> male_end;
+	vector<string> female_first;
+	vector<string> female_middle;
+	vector<string> female_end;
+	vector<string> neutral_first;
+	vector<string> neutral_middle;
+	vector<string> neutral_end;
 
 };
 
@@ -115,6 +134,7 @@ public:
 	vector<Blueprint*> Fetch_All_Blueprints_Of_Type_For_Object(int type, int object_type, int object_template_id);
 	Job* Fetch_Job_Template(int job_id);
 	Projectile_Template* Fetch_Projectile_Template(int projectile_id);
+	string Fetch_Random_Name_Syllable(int entity_gender, int name_part);
 
 	// Accessors of Template Info
 	int Get_Num_Structure_Template();
@@ -122,6 +142,7 @@ public:
 	void Load_Job_Code_String_To_Enum_Crosswalk();
 	int Get_Job_Code_From_String(string query);
 	int Get_Object_Type_Enum_From_Object_Type_String(string query);
+	int Get_Item_Type_Code_From_Item_Type_String(string item_type_string);
 
 	void Load_Tiles_From_Data_File(string tiles_path);
 	void Load_Entity_Templates(string entity_template_path, string entity_animation_path);
@@ -130,6 +151,7 @@ public:
 	void Load_Blueprint_Packs(string blueprint_packs_path);
 	void Load_Jobs(string jobs_path, string goals_path);
 	void Load_Projectiles(string projectiles_path);
+	void Load_Name_Data(string name_path);
 
 
 	vector<vector<int>> Create_Room_From_Data_File(int x_tile_start, int y_tile_start, string filename);
@@ -149,6 +171,7 @@ private:
 	int num_loaded_entities = 0;
 
 	Item_Template loaded_Items[MAX_NUM_TEMPLATES];
+	unordered_map<string, int> item_type_codes;
 	int num_loaded_Items = 0;
 
 	Blueprint loaded_blueprints[MAX_NUM_TEMPLATES];
@@ -159,15 +182,20 @@ private:
 
 	unordered_map<string, int> job_codes;
 
+
 	Job loaded_jobs[MAX_NUM_TEMPLATES];
 	int num_loaded_jobs = 0;
 
 	Projectile_Template loaded_projectiles[MAX_NUM_TEMPLATES];
 	int num_loaded_projectiles = 0;
 
+	Name_Data name_database;
+
 	vector<string> readCSVRow(const std::string &row);
 	vector<vector<string>> readCSV(string path);
 	int Query_Vector_Table(vector<vector<string>> table, int num_columns_to_crossrefernece, int column_1, int value_1, int column_2, int value_2, int value_column);
+
+
 
 };
 

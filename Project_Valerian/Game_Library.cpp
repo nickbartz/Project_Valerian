@@ -20,6 +20,7 @@ Game_Library::Game_Library(Global_Service_Locator* sLocator)
 	Load_Projectiles("Data/Projectile_Data.csv");
 	Load_Job_Code_String_To_Enum_Crosswalk();
 	Load_Jobs("Data/Job_Data.csv", "Data/Job_Goal_Data.csv");
+	Load_Name_Data("Data/Name_Syllables.csv");
 }
 
 void Game_Library::Load_Job_Code_String_To_Enum_Crosswalk()
@@ -93,6 +94,16 @@ int Game_Library::Get_Job_Code_From_String(string query)
 	{
 		if (job_codes[query] == 0) cout << "found a job code that's not in the system" << endl;
 		return job_codes[query];
+	}
+}
+
+int Game_Library::Get_Item_Type_Code_From_Item_Type_String(string item_type_string)
+{
+	if (item_type_codes.count(item_type_string) > 0) return item_type_codes[item_type_string];
+	else
+	{
+		cout << "Looking for item type string that does not exist" << endl;
+		return 0;
 	}
 }
 
@@ -180,7 +191,22 @@ void Game_Library::Load_Item_Templates(string item_template_path)
 	{
 		Item_Template new_item;
 		new_item.inventory_item_id = stoi(vector_loaded_items[i][0]);
-		new_item.inventory_item_type = vector_loaded_items[i][3];
+		new_item.inventory_item_type_string = vector_loaded_items[i][3];
+		new_item.inventory_item_type_id = stoi(vector_loaded_items[i][2]);
+
+		if (item_type_codes.count(new_item.inventory_item_type_string) > 0)
+		{
+			if (new_item.inventory_item_type_id != item_type_codes[new_item.inventory_item_type_string]) cout << "Duplicate item type string for single item type id" << endl;
+		}
+		else
+		{
+			item_type_codes[new_item.inventory_item_type_string] = new_item.inventory_item_type_id;
+		}
+
+		new_item.inventory_item_name = vector_loaded_items[i][1];
+		new_item.associated_blueprint_id = stoi(vector_loaded_items[i][6]);
+		new_item.inventory_item_description = vector_loaded_items[i][7];
+		new_item.item_build_time = stoi(vector_loaded_items[i][8]);
 
 		new_item.sprite_specs.x = stoi(vector_loaded_items[i][4]) * SPRITE_SIZE;
 		new_item.sprite_specs.y = stoi(vector_loaded_items[i][5]) * SPRITE_SIZE;
@@ -287,6 +313,49 @@ void Game_Library::Load_Projectiles(string projectile_template_path)
 
 		loaded_projectiles[i - 1] = new_projectile_template;
 		num_loaded_projectiles++;
+	}
+}
+
+void Game_Library::Load_Name_Data(string name_path)
+{
+	vector<vector<string>> vector_loaded_name_syllables = readCSV(name_path);
+
+	for (int i = 0; i < vector_loaded_name_syllables.size(); i++)
+	{
+		for (int p = 0; p < vector_loaded_name_syllables[i].size(); p++)
+		{
+			if (vector_loaded_name_syllables[i][p] == "END") break;
+			switch (i)
+			{
+			case 0:
+				name_database.male_first.push_back(vector_loaded_name_syllables[i][p]);
+				break;
+			case 1:
+				name_database.male_middle.push_back(vector_loaded_name_syllables[i][p]);
+				break;
+			case 2: 
+				name_database.male_end.push_back(vector_loaded_name_syllables[i][p]);
+				break;
+			case 3:
+				name_database.female_first.push_back(vector_loaded_name_syllables[i][p]);
+				break;
+			case 4:
+				name_database.female_middle.push_back(vector_loaded_name_syllables[i][p]);
+				break;
+			case 5:
+				name_database.female_end.push_back(vector_loaded_name_syllables[i][p]);
+				break;
+			case 6:
+				name_database.neutral_first.push_back(vector_loaded_name_syllables[i][p]);
+				break;
+			case 7: 
+				name_database.neutral_middle.push_back(vector_loaded_name_syllables[i][p]);
+				break;
+			case 8:
+				name_database.neutral_end.push_back(vector_loaded_name_syllables[i][p]);
+				break;
+			}
+		}
 	}
 }
 
@@ -472,6 +541,55 @@ Job* Game_Library::Fetch_Job_Template(int job_id)
 Projectile_Template* Game_Library::Fetch_Projectile_Template(int projectile_id)
 {
 	return &loaded_projectiles[projectile_id];
+}
+
+string Game_Library::Fetch_Random_Name_Syllable(int entity_gender, int name_part)
+{
+	switch (entity_gender)
+	{
+	case ENTITY_MALE:
+		switch (name_part)
+		{
+		case 0:
+			return name_database.male_first[rand() % name_database.male_first.size()];
+			break;
+		case 1:
+			return name_database.male_middle[rand() % name_database.male_middle.size()];
+			break;
+		case 2:
+			return name_database.male_end[rand() % name_database.male_end.size()];
+			break;
+		}
+		break;
+	case ENTITY_FEMALE:
+		switch (name_part)
+		{
+		case 0:
+			return name_database.female_first[rand() % name_database.female_first.size()];
+			break;
+		case 1:
+			return name_database.female_middle[rand() % name_database.female_middle.size()];
+			break;
+		case 2:
+			return name_database.female_end[rand() % name_database.female_end.size()];
+			break;
+		}
+		break;
+	case ENTITY_NEUTRAL:
+		switch (name_part)
+		{
+		case 0:
+			return name_database.neutral_first[rand() % name_database.neutral_first.size()];
+			break;
+		case 1:
+			return name_database.neutral_middle[rand() % name_database.neutral_middle.size()];
+			break;
+		case 2:
+			return name_database.neutral_end[rand() % name_database.neutral_end.size()];
+			break;
+		}
+		break;
+	}
 }
 
 int Game_Library::Get_Num_Structure_Template()

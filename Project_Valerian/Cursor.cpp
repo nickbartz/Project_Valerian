@@ -4,6 +4,7 @@
 #include<Service_Locator.h>
 #include<Console_Component.h>
 #include<Coordinate.h>
+#include<UI.h>
 
 Cursor::Cursor(Global_Service_Locator* sPointer)
 {
@@ -63,7 +64,7 @@ void Cursor::Change_Cursor_Icon(int icon_clip_x, int icon_clip_y)
 
 void Cursor::Draw()
 {
-	if (left_button == 1 && currently_clicked_component == NULL)
+	if (left_button == 1 && service_pointer->get_UI_pointer()->Return_Currently_Clicked_Component() == NULL)
 	{
 		int x = min(current_mouse_x, held_mouse_x);
 		int y = min(current_mouse_y, held_mouse_y);
@@ -74,7 +75,7 @@ void Cursor::Draw()
 		service_pointer->get_Draw_System_Pointer()->Draw_Primitive_Directly(service_pointer->get_Game_Renderer(), drag_rect, { 100,100,255,100 }, true);
 		service_pointer->get_Draw_System_Pointer()->Draw_Primitive_Directly(service_pointer->get_Game_Renderer(), drag_rect, { 255,255,255,255 }, false);
 	}
-	else if (currently_clicked_component == NULL)
+	else if (service_pointer->get_UI_pointer()->Return_Currently_Clicked_Component() == NULL)
 	{
 		SDL_Point world_pos = Convert_Coord_To_Screen_Pos(Get_Mouse_Grid_Coord(), false);
 		SDL_Rect world_grid_rect = { world_pos.x, world_pos.y, camera.w, camera.w };
@@ -232,11 +233,6 @@ void Cursor::Parse_Input_Message(SDL_Event event)
 	}
 }
 
-void Cursor::Set_Currently_Clicked_Component(UI_Component_Generic* component)
-{
-	currently_clicked_component = component;
-}
-
 void Cursor::Update_Grid_Position()
 {
 	Coordinate grid_point = Get_Mouse_Grid_Coord();
@@ -248,10 +244,9 @@ void Cursor::Update()
 {
 	Age_Mouse();
 
-	if (left_button == false && currently_clicked_component != NULL)
+	if (left_button == false && service_pointer->get_UI_pointer()->Return_Currently_Clicked_Component() != NULL)
 	{
-		currently_clicked_component->Currently_Clicked(false);
-		currently_clicked_component = NULL;
+		service_pointer->get_UI_pointer()->Set_Currently_Clicked_To_Null();
 	}
 }
 

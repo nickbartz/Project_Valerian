@@ -12,6 +12,12 @@ using namespace std;
 #include<Job.h>
 #include<functional>
 
+// Structures for Storing Reference
+struct Item_Location
+{
+	Item_Slot* inventory_slot;
+	Object* associated_object;
+};
 
 class Global_Service_Locator;
 class Item_Slot;
@@ -59,7 +65,7 @@ public:
 	Job* Job_Create_Transport_Blueprint_Items_From_Object_To_Requestee(Object* object, Object* Requestee, Blueprint blueprint, int public_private = 1, Object* assigned_object = NULL);
 	Job* Job_Create_Pickup_Container(Object* container, int public_private = 1, Object* assigned_object = NULL);
 	Job* Job_Create_Mine_Asteroid(Object* asteroid, int public_private = 1, Object* assigned_object = NULL);
-	Job* Job_Create_Build_Scaffold(Object* scaffold, int public_private = 1, Object* assigned_object = NULL);
+	Job* Job_Create_Entity_Go_Change_Object_Stat(Object* scaffold, int public_private = 1, Object* assigned_object = NULL, int object_type = OBJECT_TYPE_SCAFFOLD, int stat = STAT_STRUCTURE_BUILT_LEVEL, int comparator_function = HIGHER_THAN_OR_EQUAL_TO, int increment = 1, int desired_value = 255);
 	Job* Job_Create_Local_Oxygenate(Object* object);
 	Job* Job_Create_Local_Open_Door(Object* object);
 
@@ -75,13 +81,15 @@ public:
 	
 	// Accessors
 	Adjacent_Structure_Array Return_Neighboring_Tiles(Coordinate grid_point);
-	vector<Object*> Return_Vector_Of_Storage_Locations_With_Item(Item item);
+
+	vector<Item_Location*> Return_Vector_Of_Item_Locations(string item_type, int item_id, int structure_type, int structure_id);
+
 	vector<Object*> Return_All_Entities_On_Tile(Coordinate tile);
 	vector<Object*> Return_All_Entities_In_Radius(Coordinate tile, int radius);
 
 	int Return_Current_Num_Jobs_In_Array();
 	int Return_Current_Num_Public_Jobs_In_Array();
-	int Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(vector<Object*> storage_locations_with_item, Item item);
+	int Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(vector<Item_Location*> storage_locations_with_item);
 	int Return_Current_Structure_Count();
 
 	Object* Return_Object_At_Coord(int coord_x, int coord_y);
@@ -127,13 +135,6 @@ private:
 	Object background_star_1;
 	Object background_star_2;
 	Object background_planetoid;
-
-	// Structures for Storing Reference
-	struct Item_Location
-	{
-		Item_Slot* inventory_slot;
-		Object* associated_object;
-	};
 
 	// THE ACTUAL OBJECTS IN THE SCENE
 	map <Coordinate, Tile> tile_map;

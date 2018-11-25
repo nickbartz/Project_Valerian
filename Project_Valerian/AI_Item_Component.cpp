@@ -5,6 +5,7 @@
 #include<AI_Stats_Component.h>
 #include<Scene_Graph.h>
 #include<Message_Array.h>
+#include<AI_Movement_Component.h>
 
 AI_Item_Component::AI_Item_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int num_inv_slots)
 {
@@ -26,9 +27,15 @@ AI_Item_Component::AI_Item_Component(Global_Service_Locator* sLocator, Object_Se
 		}
 		break;
 	case OBJECT_TYPE_SCAFFOLD:
-		Scaffold_Blueprint = service_locator->get_Game_Library()->Fetch_Blueprint(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->scaffold_blueprint_id);
-		if (Scaffold_Blueprint == NULL) has_scaffold_blueprint = 0, scaffold_stage = SCAFFOLD_STATE_NO_PARTS_NEEDED_NO_JOB_SENT;
-		else scaffold_stage = SCAFFOLD_STATE_PARTS_NEEDED_NO_JOB_SENT, has_scaffold_blueprint = 1;
+		Blueprint* scaffold_blueprint = service_locator->get_Game_Library()->Fetch_Blueprint(service_locator->get_Game_Library()->Fetch_Tile_Object_Config(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->scaffold_blueprint_id);
+		if (scaffold_blueprint != NULL)
+		{
+			Add_Build_Order_To_Queue(scaffold_blueprint, OBJECT_TYPE_STRUCTURE, object_locator->Return_AI_Stats_Pointer()->Return_Template_ID(), BLUEPRINT_STATE_PARTS_NEEDED_NO_JOB_SENT);
+		}
+		else
+		{
+			Add_Build_Order_To_Queue(NULL, 0, 0, BLUEPRINT_STATE_WAITING_TO_START_BUILD);
+		}
 		break;
 	}
 
@@ -103,6 +110,16 @@ int AI_Item_Component::Add_Item_To_Inventory(int item_id, int item_quantity, boo
 	return 1;
 }
 
+bool AI_Item_Component::Build_Is_Complete()
+{
+	if (object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) > 0 && object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_MAX_BUILT_LEVEL) > 0)
+	{
+		if ((object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_MAX_BUILT_LEVEL))) return true;
+	}
+
+	else return false;
+}
+
 void AI_Item_Component::Copy_Inventory_From_Pointer(Item_Slot pointer[], int num_inventory_slots)
 {
 	for (int i = 0; i < num_inventory_slots; i++)
@@ -133,14 +150,53 @@ void AI_Item_Component::Clear_All_Inventory()
 	}
 }
 
-bool AI_Item_Component::Check_For_Scaffold_Completion()
+bool AI_Item_Component::Check_If_Next_Build_Order_Can_Start_Build()
 {
-	if ((has_scaffold_blueprint == 0 || Object_Has_Items_For_Blueprint_In_Inventory(Scaffold_Blueprint)))
+	if ((active_build_orders.front().build_requirements == NULL || Object_Has_Items_For_Blueprint_In_Inventory(active_build_orders.front().build_requirements)))
 	{
-		service_locator->get_Scene_Graph()->Job_Create_Build_Scaffold(object_locator->Return_Object_Pointer());
 		return true;
 	}
 	else return false;
+}
+
+bool AI_Item_Component::Create_Build_Job()
+{
+	int max_built_level = 0;
+
+	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
+	{
+	case OBJECT_TYPE_SCAFFOLD:
+		max_built_level = service_locator->get_Game_Library()->Fetch_Tile_Object_Config(active_build_orders.front().object_template)->max_built_level;
+		service_locator->get_Scene_Graph()->Job_Create_Entity_Go_Change_Object_Stat(object_locator->Return_Object_Pointer(), 1, NULL, OBJECT_TYPE_SCAFFOLD, STAT_STRUCTURE_BUILT_LEVEL, HIGHER_THAN_OR_EQUAL_TO, 1, max_built_level);
+		break;
+	case OBJECT_TYPE_STRUCTURE:
+		max_built_level = service_locator->get_Game_Library()->Fetch_Item_Template(active_build_orders.front().object_template)->item_build_time;
+		service_locator->get_Scene_Graph()->Job_Create_Entity_Go_Change_Object_Stat(object_locator->Return_Object_Pointer(), 1, NULL, OBJECT_TYPE_STRUCTURE, STAT_STRUCTURE_BUILT_LEVEL, HIGHER_THAN_OR_EQUAL_TO, 1, max_built_level);
+		break;
+	}
+
+	object_locator->Return_AI_Stats_Pointer()->Update_Stat(STAT_STRUCTURE_BUILT_LEVEL, 0);
+	object_locator->Return_AI_Stats_Pointer()->Update_Stat(STAT_STRUCTURE_MAX_BUILT_LEVEL, max_built_level);
+	active_build_orders.front().build_stage = BLUEPRINT_BUILD_JOB_SENT;
+
+	return true;
+}
+
+void AI_Item_Component::Create_Production_Item_Container()
+{
+	Coordinate object_coordinate = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
+	Coordinate nearest_open_coordinate = service_locator->get_Scene_Graph()->Return_Nearest_Accessible_Coordinate(object_coordinate, object_coordinate, object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_OBJECT_FACTION));
+
+	Item_Slot production_item;
+	production_item.item_quantity = 1;
+	production_item.slot_item.item_template_id = active_build_orders.front().object_template;
+
+	service_locator->get_Scene_Graph()->Create_Container(nearest_open_coordinate, &production_item, 1, 1);
+}
+
+void AI_Item_Component::Add_Build_Order_To_Queue(Blueprint* blueprint, int object_type, int object_template, int object_stage)
+{
+	active_build_orders.push_back(Build_Order{ blueprint, object_type, object_template, object_stage });
 }
 
 void AI_Item_Component::Delete_Item_At_Inventory_Array_Num(int array_num)
@@ -153,7 +209,7 @@ bool AI_Item_Component::Object_Has_Items_For_Blueprint_In_Inventory(Blueprint* b
 	bool check = true;
 	for (int i = 0; i < blueprint->Num_Items_In_Blueprint; i++)
 	{
-		if (Return_Amount_Of_Item_In_Inventory(blueprint->blueprint_items[i].slot_item) < blueprint->blueprint_items[i].item_quantity)
+		if (Return_Amount_Of_Item_Or_Type_In_Inventory(blueprint->blueprint_items[i].slot_item) < blueprint->blueprint_items[i].item_quantity)
 		{
 			check = false;
 		}
@@ -172,7 +228,7 @@ void AI_Item_Component::Populate_Production_Blueprints(int blueprint_id)
 		{
 			for (int i = 0; i < blueprint_pack->blueprint_id_array.size(); i++)
 			{
-				production_blueprints.push_back(service_locator->get_Game_Library()->Fetch_Blueprint(blueprint_pack->blueprint_id_array[i]));
+				loaded_production_blueprints.push_back(service_locator->get_Game_Library()->Fetch_Blueprint(blueprint_pack->blueprint_id_array[i]));
 			}
 		}
 		else
@@ -197,6 +253,31 @@ void AI_Item_Component::Populate_Starter_Inventory(int object_type)
 			Add_Item_To_Inventory(starter_blueprint->blueprint_items[i].slot_item.item_template_id, starter_blueprint->blueprint_items[i].item_quantity, false, {});
 		}
 	}
+}
+
+void AI_Item_Component::Request_Production_Of_Item_From_Blueprint(Blueprint* blueprint, int quantity)
+{
+	int stage = BLUEPRINT_STATE_PARTS_NEEDED_NO_JOB_SENT;
+	if (blueprint->Num_Items_In_Blueprint == 0) stage == BLUEPRINT_STATE_NO_PARTS_NEEDED_NO_JOB_SENT;
+
+	for (int i = 0; i < quantity; i++)
+	{
+		Add_Build_Order_To_Queue(blueprint, OBJECT_TYPE_ITEM, blueprint->associated_template_id, stage);
+	}
+}
+
+bool AI_Item_Component::Remove_Blueprint_Items_From_Inventory(Blueprint* current_blueprint)
+{
+	for (int i = 0; i < current_blueprint->Num_Items_In_Blueprint; i++)
+	{
+		if (Remove_Item_From_Inventory(current_blueprint->blueprint_items[i].slot_item.item_template_id, current_blueprint->blueprint_items[i].item_quantity) != 3)
+		{
+			return false;
+			cout << "something went wrong while removing a blueprint items from inventory" << endl;
+		}
+	}
+
+	return true;
 }
 
 int AI_Item_Component::Return_Num_Inventory_Slots()
@@ -227,14 +308,14 @@ Item_Slot* AI_Item_Component::Return_Inventory_Slot_As_Pointer(int item_id)
 
 int AI_Item_Component::Return_Num_Production_Blueprints()
 {
-	return production_blueprints.size();
+	return loaded_production_blueprints.size();
 }
 
 Blueprint* AI_Item_Component::Return_Blueprint_At_Slot(int blueprint_slot)
 {
-	if (blueprint_slot < production_blueprints.size())
+	if (blueprint_slot < loaded_production_blueprints.size())
 	{
-		return production_blueprints[blueprint_slot];
+		return loaded_production_blueprints[blueprint_slot];
 	}
 	else
 	{
@@ -244,19 +325,64 @@ Blueprint* AI_Item_Component::Return_Blueprint_At_Slot(int blueprint_slot)
 
 }
 
-int AI_Item_Component::Return_Amount_Of_Item_In_Inventory(Item item)
+int AI_Item_Component::Return_Amount_Of_Item_Or_Type_In_Inventory(Item item, string item_type)
 {
+	if (item_type.size() > 0 && service_locator->get_Game_Library()->Get_Item_Type_Code_From_Item_Type_String(item_type) == 0)
+	{
+		return 0;
+	}
+
 	int amount_of_item_in_inventory = 0;
 
 	for (int i = 0; i < num_inventory_slots; i++)
 	{
-		if (inventory_array[i].slot_item.item_template_id == item.item_template_id)
+		if (item_type.size() == 0)
 		{
-			amount_of_item_in_inventory += inventory_array[i].item_quantity;
+			if (inventory_array[i].slot_item.item_template_id == item.item_template_id)
+			{
+				amount_of_item_in_inventory += inventory_array[i].item_quantity;
+			}
 		}
+		else
+		{
+			if (service_locator->get_Game_Library()->Fetch_Item_Template(inventory_array[i].slot_item.item_template_id)->inventory_item_type_string == item_type)
+			{
+				amount_of_item_in_inventory += inventory_array[i].item_quantity;
+			}
+		}
+
 	}
 
 	return amount_of_item_in_inventory;
+}
+
+Item_Slot* AI_Item_Component::Return_First_Inventory_Slot_With_Item_Or_Item_Type(int item_id, string item_type_string)
+{
+	if (item_type_string.size() > 0 && service_locator->get_Game_Library()->Get_Item_Type_Code_From_Item_Type_String(item_type_string) == 0)
+	{
+		return NULL;
+	}
+
+	for (int i = 0; i < num_inventory_slots; i++)
+	{
+		if (item_type_string.size() == 0)
+		{
+			if (inventory_array[i].slot_item.item_template_id == item_id && inventory_array[i].item_quantity > 0)
+			{
+				return &inventory_array[i];
+			}
+		}
+		else
+		{
+			if (service_locator->get_Game_Library()->Fetch_Item_Template(inventory_array[i].slot_item.item_template_id)->inventory_item_type_string == item_type_string && inventory_array[i].item_quantity > 0)
+			{
+				return &inventory_array[i];
+			}
+		}
+
+	}
+
+	return NULL;
 }
 
 int  AI_Item_Component::Remove_Item_From_Inventory(int item_id, int quantity)
@@ -295,7 +421,7 @@ void AI_Item_Component::Scan_Inventory_For_Storable_Items(int threshold_quantity
 	for (int i = 0; i < num_inventory_slots; i++)
 	{
 		// EDIT THIS EVENTUALLY FOR MORE THAN JUST ORE
-		if (service_locator->get_Game_Library()->Fetch_Item_Template(inventory_array[i].slot_item.item_template_id)->inventory_item_type == "INVENTORY_ITEM_TYPE_ORE" && inventory_array[i].item_quantity > 0 && inventory_array[i].part_of_active_job == 0)
+		if (service_locator->get_Game_Library()->Fetch_Item_Template(inventory_array[i].slot_item.item_template_id)->inventory_item_type_string == "INVENTORY_ITEM_TYPE_ORE" && inventory_array[i].item_quantity > 0 && inventory_array[i].part_of_active_job == 0)
 		{
 			if (new_blueprint.Num_Items_In_Blueprint < MAX_ITEMS_PER_BLUEPRINT)
 			{
@@ -315,7 +441,7 @@ void AI_Item_Component::Scan_Inventory_For_Storable_Items(int threshold_quantity
 
 	if (nearest_storage != NULL && new_blueprint.Num_Items_In_Blueprint > 0 && item_quantity >= threshold_quantity)
 	{
-		service_locator->get_Scene_Graph()->Job_Create_Transport_Blueprint_Items_From_Object_To_Requestee(object_locator->Return_Object_Pointer(), nearest_storage, new_blueprint, 0, object_locator->Return_Object_Pointer());
+		service_locator->get_Scene_Graph()->Job_Create_Transport_Blueprint_Items_From_Object_To_Requestee(object_locator->Return_Object_Pointer(), nearest_storage, new_blueprint,0, object_locator->Return_Object_Pointer());
 		for (int i = 0; i < slot_pointers.size(); i++)
 		{
 			slot_pointers[i]->part_of_active_job = 1;
@@ -325,23 +451,32 @@ void AI_Item_Component::Scan_Inventory_For_Storable_Items(int threshold_quantity
 
 bool AI_Item_Component::Try_To_Create_Job_To_Fetch_Parts()
 {
-	if (service_locator->get_Scene_Graph()->Job_Create_Find_Blueprint_Items_And_Transport_To_Requestee(service_locator->get_Scene_Graph()->Return_Object_By_Type_And_Array_Num(OBJECT_TYPE_SCAFFOLD, object_locator->Return_Object_Pointer()->Get_Array_Index()), Scaffold_Blueprint, true) == true) return true;
-	else return false;
+	Scene_Graph* scene_graph = service_locator->get_Scene_Graph();
+	int object_type = object_locator->Return_AI_Stats_Pointer()->Return_Object_Type();
+	if (scene_graph->Job_Create_Find_Blueprint_Items_And_Transport_To_Requestee(scene_graph->Return_Object_By_Type_And_Array_Num(object_type, object_locator->Return_Object_Pointer()->Get_Array_Index()), active_build_orders.front().build_requirements, true) == true)
+	{
+		active_build_orders.front().build_stage = BLUEPRINT_STATE_WAITING_TO_START_BUILD;
+		return true;
+	}
+	else
+	{
+		active_build_orders.front().build_stage = BLUEPRINT_STATE_PARTS_NEEDED_NO_JOB_SENT;
+		return false;
+	}
 }
 
 void AI_Item_Component::Update()
 {
-	if (item_change_flag > 0)
+	if (item_change_flag > 0 || Build_Is_Complete())
 	{
 		switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
 		{
 		case OBJECT_TYPE_ENTITY:
 			Update_Entity();
 			break;
-		case OBJECT_TYPE_SCAFFOLD:
-			Update_Scaffold();
-			break;
 		}
+
+		if (active_build_orders.size() > 0) Update_Build_Orders();
 	}
 }
 
@@ -354,20 +489,27 @@ void AI_Item_Component::Update_Entity()
 	}
 }
 
-void AI_Item_Component::Update_Scaffold()
+void AI_Item_Component::Update_Build_Orders()
 {
-	if (scaffold_stage == SCAFFOLD_STATE_NO_PARTS_NEEDED_NO_JOB_SENT)
+	if (active_build_orders.size() > 0)
 	{
-		if (Check_For_Scaffold_Completion() == true) scaffold_stage = SCAFFOLD_STATE_NO_PARTS_NEEDED_JOB_SENT;
-	}
-	else if (scaffold_stage == SCAFFOLD_STATE_PARTS_NEEDED_NO_JOB_SENT)
-	{
-		if (Try_To_Create_Job_To_Fetch_Parts() == true) scaffold_stage = SCAFFOLD_STATE_PARTS_NEEDED_JOB_SENT;
-		else scaffold_stage = SCAFFOLD_STATE_PARTS_NEEDED_NO_JOB_SENT;
-	}
-	else if (scaffold_stage == SCAFFOLD_STATE_PARTS_NEEDED_JOB_SENT)
-	{
-		if (Check_For_Scaffold_Completion() == true) scaffold_stage = SCAFFOLD_STATE_NO_PARTS_NEEDED_JOB_SENT;
+		switch (active_build_orders.front().build_stage)
+		{
+		case BLUEPRINT_STATE_PARTS_NEEDED_NO_JOB_SENT:
+			Try_To_Create_Job_To_Fetch_Parts();
+			break;
+		case BLUEPRINT_STATE_WAITING_TO_START_BUILD:
+			if (Check_If_Next_Build_Order_Can_Start_Build() == true) Create_Build_Job();
+			break;
+		case BLUEPRINT_BUILD_JOB_SENT:
+			if (Build_Is_Complete() == true)
+			{
+				if (active_build_orders.front().build_requirements != NULL) Remove_Blueprint_Items_From_Inventory(active_build_orders.front().build_requirements);
+				if (active_build_orders.front().object_type == OBJECT_TYPE_ITEM) Create_Production_Item_Container();
+				active_build_orders.pop_front();
+			}
+			break;
+		}
 	}
 
 	item_change_flag = 0;

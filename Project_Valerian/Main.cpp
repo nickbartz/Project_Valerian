@@ -41,7 +41,7 @@ bool init()
 		}
 
 		//Create window
-		Game_Window = SDL_CreateWindow("Project Valerian", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_FULLSCREEN);
+		Game_Window = SDL_CreateWindow("Project Valerian", SCREEN_WIDTH/4, 100, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 		if (Game_Window == NULL)
 		{
 			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
@@ -89,6 +89,9 @@ void load_assets(SDL_Renderer* game_renderer)
 {
 	font_array[FONT_DEFAULT] = FC_CreateFont();
 	FC_LoadFont(font_array[FONT_DEFAULT], game_renderer, "Fonts/OpenSans-Regular.ttf", 12, SDL_Color{ 255, 255, 255, 255 }, TTF_STYLE_NORMAL);
+
+	font_array[FONT_DEFAULT_BOLD] = FC_CreateFont();
+	FC_LoadFont(font_array[FONT_DEFAULT_BOLD], game_renderer, "Fonts/OpenSans-Bold.ttf", 12, SDL_Color{ 255, 255, 255, 255 }, TTF_STYLE_NORMAL);
 
 	font_array[FONT_LARGE] = FC_CreateFont();
 	FC_LoadFont(font_array[FONT_LARGE], game_renderer, "Fonts/OpenSans-Regular.ttf", 14, SDL_Color{ 255, 255, 255, 255 }, TTF_STYLE_NORMAL);
@@ -193,12 +196,15 @@ int main(int argc, char *args[])
 	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(2, 100, false, {});
 	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(3, 100, false, {});
 
+	scene_graph->Create_New_Structure({ 6,-1 }, 39, 2);
+	scene_graph->Return_Structure_At_Coord_By_Layer(6,-1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(7, 100, false, {});
+
 	scene_graph->Create_New_Structure({ -5, -10 }, 21, 1);
 	scene_graph->Create_New_Structure({ -5, -9 }, 22,1);
 	scene_graph->Create_New_Structure({ -5, -8 }, 23, 1);
 	
-	//scene_graph->Create_Entity({ 1,-1 }, *game_library->Fetch_Entity_Template(2), 2);
-	scene_graph->Create_Entity({ 2,-1 }, *game_library->Fetch_Entity_Template(1), 2);
+	scene_graph->Create_Entity({ 5,0 }, *game_library->Fetch_Entity_Template(2), 2);
+	//scene_graph->Create_Entity({ 2,-1 }, *game_library->Fetch_Entity_Template(1), 2);
 
 	//Start counting frames per second
 	int countedFrames = 0;

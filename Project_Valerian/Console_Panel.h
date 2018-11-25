@@ -32,7 +32,7 @@ class UI_Panel_Console : public UI_Panel_Generic
 public:
 	UI_Panel_Console(Global_Service_Locator* service_locator = NULL, int window_name = WINDOW_PLAYER_DIAGNOSTIC, int pName = PANEL_MESSAGE_STREAM, SDL_Rect offset_rect = { 0,0,100,100 }) : UI_Panel_Generic(service_locator,window_name, offset_rect)
 	{
-		panel_name = pName;
+		panel_name = PANEL_MESSAGE_STREAM;
 		message_stream = UI_Component_Message_Stream(service_locator, { offset_rect.x,offset_rect.y,offset_rect.w,offset_rect.h });
 		message_stream.Set_Font_Type(FONT_SMALL);
 		background_component = UI_Component_Generic(service_locator, offset_rect, true);
@@ -72,11 +72,14 @@ private:
 class UI_Panel_Object_Inventory : public UI_Panel_Generic
 {
 public:
-	UI_Panel_Object_Inventory(Global_Service_Locator* service_locator = NULL, int rows = 6, int columns = 8, int window_name = WINDOW_OBJECT_DIAGNOSTIC, SDL_Rect offset_rect = { 0,0,100,100 }) : UI_Panel_Generic(service_locator, window_name, offset_rect)
+	UI_Panel_Object_Inventory(Global_Service_Locator* service_locator = NULL, int window_name = WINDOW_OBJECT_DIAGNOSTIC, SDL_Rect offset_rect = { 0,0,100,100 }) : UI_Panel_Generic(service_locator, window_name, offset_rect)
 	{
-		panel_rows = rows;
-		panel_columns = columns;
 		panel_name = PANEL_OBJECT_INVENTORY;
+
+		int horizontal_divide = 30;
+
+		item_array = UI_Component_Item_Slot_Array(service_locator, { offset_rect.x, offset_rect.y, offset_rect.w* horizontal_divide / 100, offset_rect.h });
+		inventory_details = UI_Component_Object_Details_Display(service_locator, { offset_rect.x + offset_rect.w * horizontal_divide / 100, offset_rect.y, offset_rect.w*(100-horizontal_divide) / 100, offset_rect.h });
 	}
 
 	void Init(Object* object);
@@ -84,10 +87,11 @@ public:
 	void Handle_Mouse_Click();
 
 private:
+	Object * linked_object = NULL;
+
 	int panel_buttons = 0;
-	int panel_rows;
-	int panel_columns;
-	vector <UI_Component_Item_Slot_Button> graphic_button_array;
+	UI_Component_Item_Slot_Array item_array;
+	UI_Component_Object_Details_Display inventory_details;
 	UI_Component_Generic background_component;
 };
 
@@ -107,7 +111,7 @@ private:
 	Object * linked_object;
 
 	int num_stats = 0;
-	vector <UI_Component_Stat_Button> graphic_button_array;
+	vector <UI_Component_Stat_Button> stat_button_array;
 	UI_Component_Generic background_component;
 
 };
@@ -144,14 +148,14 @@ public:
 	{
 		panel_name = PANEL_OBJECT_PRODUCTION;
 
-		int center_vertical_divide = 50;
+		int center_vertical_divide = 60;
 		int middle = center_vertical_divide;
 
 		int center_right_vertical_divide = 50;
 		int middle_right = middle + center_right_vertical_divide;
 
 		int bottom_horizontal_divide = 90;
-		int bottom_vertical_divide = 70;
+		int bottom_vertical_divide = 80;
 
 		SDL_Rect blueprint_list_rect = { offset_rect.x, offset_rect.y, offset_rect.w * center_vertical_divide / 100, offset_rect.h };
 		SDL_Rect blueprint_details_rect = { offset_rect.x + offset_rect.w * center_vertical_divide / 100, offset_rect.y, offset_rect.w * (100 - center_vertical_divide) / 100, offset_rect.h * bottom_horizontal_divide / 100 };
@@ -159,28 +163,26 @@ public:
 		SDL_Rect production_amount_rect = { blueprint_details_rect.x + build_button_rect.w, build_button_rect.y, blueprint_details_rect.w * (100 - bottom_vertical_divide) / 100, build_button_rect.h };
 
 		background_component = UI_Component_Generic(service_locator, offset_rect, true);
-		build_button = UI_Component_Generic(service_locator, build_button_rect, true);
+		build_button = UI_Component_Generic(service_locator, build_button_rect, true, {200,100,100,255});
 		blueprint_list = UI_Component_Button_List(service_locator, blueprint_list_rect);
-		blueprint_details = UI_Component_Details_Display(service_locator, blueprint_details_rect);
+		blueprint_details = UI_Component_Object_Details_Display(service_locator, blueprint_details_rect);
 		production_amount = UI_Component_User_Input_Box(service_locator, production_amount_rect);
-
-		build_button.Change_Component_Title("Build", { build_button_rect.w * 2 / 5, build_button_rect.h / 4, build_button_rect.w * 2 / 3, build_button_rect.h * 2 / 4 });
-		build_button.Set_Font_Type(FONT_LARGE_BOLD);
-
 	}
 
 	void Init(Object* object);
 	void Draw(Draw_System* draw_system, SDL_Rect base_rect);
 	void Handle_Mouse_Click();
+	void Set_Current_Blueprint_ID(int blueprint_id);
 
 private:
-	Object * linked_object;
+	Object * linked_object = NULL;
 	bool reset = true;
+	int current_blueprint_id = 0;
 
 	UI_Component_Generic background_component;
 	UI_Component_Generic build_button;
 	UI_Component_Button_List blueprint_list;
-	UI_Component_Details_Display blueprint_details;
+	UI_Component_Object_Details_Display blueprint_details;
 	UI_Component_User_Input_Box production_amount;
 
 };

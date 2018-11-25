@@ -119,6 +119,9 @@ bool UI::Mouse_Event()
 
 void UI::Update()
 {		
+	// If there is a user-input box that is the current focus, then have the box check for text input
+	if (current_focus_component != NULL) current_focus_component->Check_For_User_Input();
+	
 	// Check Cursor For Clicks
 	if (Mouse_Event() == true)
 	{
@@ -135,12 +138,12 @@ void UI::Update()
 	int num_active_jobs = service_pointer->get_Scene_Graph()->Return_Current_Num_Public_Jobs_In_Array();
 	string job_counter = "Num Public Jobs: ";
 	job_counter += to_string(num_active_jobs);
-	service_pointer->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1, {0,16,128,32},FONT_SMALL, job_counter, {255,255,255,255} });
+	service_pointer->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle(1, {0,16,128,32}, job_counter, FONT_SMALL,  {255,255,255,255} );
 
 	int num_items_on_manifest = service_pointer->get_Scene_Graph()->Return_Num_Item_Slots_On_Manifest();
 	string item_counter = "Num Item_Slots on Manifest: ";
 	item_counter += to_string(num_items_on_manifest);
-	service_pointer->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle({ 1,{ 0,32,256,32 },FONT_SMALL, item_counter,{ 255,255,255,255 } });
+	service_pointer->get_Draw_System_Pointer()->Add_Text_Job_To_Render_Cycle( 1,{ 0,32,256,32 }, item_counter,FONT_SMALL,{ 255,255,255,255 } );
 }
 
 void UI::Parse_Loaded_Actions()
@@ -214,26 +217,66 @@ void UI::Parse_Loaded_Actions()
 
 // UI Mouse_Click Management
 
-void UI::Set_Currently_Clicked_Component(UI_Component_Generic* component)
+UI_Component_Generic* UI::Return_Currently_Clicked_Component()
 {
-	currently_clicked_component = component;
+	return currently_clicked_component;
 }
 
-void UI::Set_Current_Focus_Component(UI_Component_Generic* component)
+UI_Component_User_Input_Box* UI::Return_Current_Focus_Component()
 {
+	return current_focus_component;
+}
+
+void UI::Set_Currently_Clicked_Component(UI_Component_Generic* component)
+{
+	// If something is already currently clicked, tell it that it is no longer clicked
+	if (currently_clicked_component != NULL)
+	{
+		currently_clicked_component->Currently_Clicked(false);
+	}
+	
+	// Set the new component as currently clicked, and tell it it is currently clicked
+	currently_clicked_component = component;
+	currently_clicked_component->Currently_Clicked(true);
+
+	// If something has just been clicked that is not the component that currently has focus, make the current focus component no longer the focus
+	if (current_focus_component != NULL && currently_clicked_component != current_focus_component)
+	{
+		current_focus_component->Currently_Focus(false);
+		current_focus_component = NULL;
+	}
+}
+
+void UI::Set_Current_Focus_Component(UI_Component_User_Input_Box* component)
+{
+	if (current_focus_component != NULL)
+	{
+		current_focus_component->Currently_Focus(false);
+	}
+
 	current_focus_component = component;
+	current_focus_component->Currently_Focus(true);
 }
 
 void UI::Set_Currently_Clicked_To_Null()
 {
+	if (currently_clicked_component != NULL)
+	{
+		currently_clicked_component->Currently_Clicked(false);
+	}	
+	
 	currently_clicked_component = NULL;
 }
 
 void UI::Set_Current_Focus_To_Null()
 {
+	if (current_focus_component != NULL)
+	{
+		current_focus_component->Currently_Focus(false);
+	}
+	
 	current_focus_component = NULL;
 }
-
 
 void UI::Update_UI_With_Mouse_Action(Cursor* cursor_pointer)
 {
@@ -258,6 +301,8 @@ void UI::Update_UI_With_Mouse_Action(Cursor* cursor_pointer)
 void UI::Handle_Click_In_World()
 {
 	SDL_Point mouse_location = service_pointer->get_Cursor_Pointer()->Get_Mouse_Position();
+
+	Set_Current_Focus_To_Null();
 
 	switch (service_pointer->get_Cursor_Pointer()->Get_Recent_Mouse_Action())
 	{
