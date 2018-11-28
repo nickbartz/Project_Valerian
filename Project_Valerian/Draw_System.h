@@ -2,14 +2,13 @@
 
 using namespace std;
 #include<Global_Constants.h>
-#include<iostream>
 #include<string>
 #include<SDL.h>
 #include<SDL_ttf.h>
 #include<SDL_FontCache.h>
-#include <stdio.h>
 #include <Spritesheet.h>
 #include<Service_Locator.h>
+#include<Draw_Layer.h>
 
 class Draw_System
 {
@@ -58,6 +57,10 @@ public:
 
 	void Add_Text_Job_To_Render_Cycle(int init, SDL_Rect pos_rect, string text_string, int font = FONT_DEFAULT, SDL_Color text_color = { 255,255,255,255 });
 	void Clear_Text_Instruction_Array();
+
+	// Draw to layer functions
+	int Get_Layer_Uniq_Id(int render_layer);
+	void Draw_To_Layer(int render_component_id, int draw_layer, int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE, bool has_color = false, SDL_Color override_color = { 255,255,255,255 }, bool is_primitive = false, int primitive_id = PRIMITIVE_TYPE_RECT, bool is_filled = false );
 
 	// Functions to Draw, called by main
 	void Update();
@@ -114,4 +117,14 @@ private:
 	// Text print array
 	int count_num_print_text = -1;
 	Text_Instruction Text_Instruction_Array[MAX_NUM_TEXT_PRINT];
+
+	Draw_Layer draw_layer_background;
+	Draw_Layer draw_layer_base;
+	Draw_Layer draw_layer_base_overlay;
+	Draw_Layer draw_layer_mid;
+	Draw_Layer draw_layer_mid_overlay;
+	//Draw_Layer draw_layer_primitive_1;
+	//Draw_Layer draw_layer_primitive_2;
+	//Draw_Layer draw_layer_primitive_3;
 };
+

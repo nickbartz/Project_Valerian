@@ -1,5 +1,6 @@
 #include<Draw_System.h>
 #include<algorithm>
+#include<iostream>
 
 Draw_System::Draw_System(Global_Service_Locator* sLocator, FC_Font* font_array_start[], Uint32 wFormat)
 {
@@ -11,14 +12,28 @@ Draw_System::Draw_System(Global_Service_Locator* sLocator, FC_Font* font_array_s
 
 	service_locator = sLocator;
 
-	window_format = wFormat;	
+	window_format = wFormat;
+
+	draw_layer_background = Draw_Layer(service_locator);
+	draw_layer_background.Init();
+	draw_layer_base = Draw_Layer(service_locator);
+	draw_layer_base.Init();
+	draw_layer_mid = Draw_Layer(service_locator);
+	draw_layer_mid.Init();
+	draw_layer_mid_overlay = Draw_Layer(service_locator);
+	draw_layer_mid_overlay.Init();
+	//draw_layer_primitive_1 = Draw_Layer(service_locator);
+	//draw_layer_primitive_1.Init();
+	//draw_layer_primitive_2 = Draw_Layer(service_locator);
+	//draw_layer_primitive_2.Init();
+	//draw_layer_primitive_3 = Draw_Layer(service_locator);
+	//draw_layer_primitive_3.Init();
 }
 
 void Draw_System::Init_Sprites(SDL_Renderer* game_renderer)
 {
 	background_spritesheet.Init("Sprites/background_spritesheet.png", game_renderer, window_format );
 	background_spritesheet.Initialize_Prebaked_Texture_Layer(game_renderer, SCREEN_WIDTH, SCREEN_HEIGHT); // This is option A for how to do prebaked textures 
-
 	base_spritesheet.Init("Sprites/base_tile_spritesheet.png", game_renderer, window_format);
 	mid_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer, window_format);
 	mid_2_spritesheet.Init("Sprites/mid_tile_spritesheet.png", game_renderer, window_format);
@@ -237,24 +252,76 @@ void Draw_System::Update()
 	}
 }
 
+// Draw to layer functions
+int Draw_System::Get_Layer_Uniq_Id(int render_layer)
+{
+	switch (render_layer)
+	{
+	case DRAW_LAYER_BACKGROUND:
+		return draw_layer_background.Get_Current_Instruction_Num();
+		break;
+	case DRAW_LAYER_BASE:
+		return draw_layer_base.Get_Current_Instruction_Num();
+		break;
+	case DRAW_LAYER_MID:
+		return draw_layer_mid.Get_Current_Instruction_Num();
+		break;
+	case DRAW_LAYER_MID_OVERLAY:
+		return draw_layer_mid_overlay.Get_Current_Instruction_Num();
+		break;
+	//case DRAW_LAYER_PRIMITIVE_1:
+	//	return draw_layer_primitive_1.Get_Current_Instruction_Num();
+	//	break;
+	//case DRAW_LAYER_PRIMITIVE_2:
+	//	return draw_layer_primitive_2.Get_Current_Instruction_Num();
+	//	break;
+	//case DRAW_LAYER_PRIMITIVE_3:
+	//	return draw_layer_primitive_3.Get_Current_Instruction_Num();
+	//	break;
+	}
+}
+void Draw_System::Draw_To_Layer(int render_uniq_id, int draw_layer, int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, double angle, SDL_Point* center, SDL_RendererFlip flip, bool has_color, SDL_Color override_color, bool is_primitive, int primitive_id, bool is_filled)
+{
+	switch (draw_layer)
+	{
+	case DRAW_LAYER_BACKGROUND:
+		draw_layer_background.Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color);
+		break;
+	case DRAW_LAYER_BASE:
+		draw_layer_base.Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color);
+		break;
+	case DRAW_LAYER_MID:
+		draw_layer_mid.Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color);
+		break;
+	case DRAW_LAYER_MID_OVERLAY:
+		draw_layer_mid_overlay.Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color);
+		break;
+	}
+}
+
 // Full Draw Function
 
 void Draw_System::Draw(SDL_Renderer* render_target)
 {
-	Draw_Sprites(render_target, SPRITESHEET_BACKGROUND);
-	Draw_Sprites(render_target, SPRITESHEET_BASE);
-	Draw_Sprites(render_target, SPRITESHEET_MID_1);
+	draw_layer_background.Draw();
+	//Draw_Sprites(render_target, SPRITESHEET_BACKGROUND);
+	//Draw_Sprites(render_target, SPRITESHEET_BASE);
+	draw_layer_mid.Draw();
+	//Draw_Sprites(render_target, SPRITESHEET_MID_1);
 	Draw_Primitives(render_target, -1); // For lasers 
-	Draw_Sprites(render_target, SPRITESHEET_ENTITY);
-	Draw_Sprites(render_target, SPRITESHEET_PROJECTILE);
-	Draw_Sprites(render_target, SPRITESHEET_MID_2);
+	//draw_layer_primitive_1.Draw();
+	//Draw_Sprites(render_target, SPRITESHEET_ENTITY);
+	//Draw_Sprites(render_target, SPRITESHEET_PROJECTILE);
+	//Draw_Sprites(render_target, SPRITESHEET_MID_2);
+	draw_layer_mid_overlay.Draw();
 
 	Draw_Primitives(render_target, 1);
+	//draw_layer_primitive_2.Draw();
 	Draw_Text_Strings(render_target);
 	Draw_Sprites(render_target, SPRITESHEET_ICON);
 	Draw_Primitives(render_target, 2);
+	//draw_layer_primitive_3.Draw();
 	Draw_Text_Strings(render_target, 2);
-
 }
 
 // Functions for drawing primitives
@@ -264,6 +331,7 @@ void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spr
 	switch (spritesheet_num)
 	{
 	case SPRITESHEET_BACKGROUND:
+		background_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
 		break;
 	case SPRITESHEET_BASE:
 		base_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
@@ -272,10 +340,6 @@ void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spr
 		break;
 	case SPRITESHEET_MID_1:
 		mid_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
-		break;
-	case SPRITESHEET_MID_1_OVERLAY:
-		break;
-	case SPRITESHEET_MID_2:
 		break;
 	case SPRITESHEET_ENTITY:
 		break;
@@ -326,7 +390,7 @@ void Draw_System::Draw_Sprites(SDL_Renderer* render_target, int spritesheet)
 
 void Draw_System::Draw_Primitives(SDL_Renderer* render_target, int layer)
 {
-	SDL_SetRenderDrawBlendMode(render_target, SDL_BLENDMODE_BLEND);
+	//SDL_SetRenderDrawBlendMode(render_target, SDL_BLENDMODE_BLEND);
 
 	for (int i = 0; i < count_num_primitives; i++)
 	{
@@ -356,6 +420,28 @@ void Draw_System::Draw_Primitives(SDL_Renderer* render_target, int layer)
 			}
 		}
 	}
+
+	//for (int i = 0; i < count_num_primitives; i++)
+	//{
+	//	int uniq_id;
+
+	//	switch (Primitive_Instruction_Array[i].init == layer)
+	//	{
+	//	case -1:
+	//		uniq_id = Get_Layer_Uniq_Id(DRAW_LAYER_PRIMITIVE_1);
+	//		draw_layer_primitive_1.Send_Draw_Instruction(uniq_id, true, 0, { 0,0,0,0 }, Primitive_Instruction_Array[i].pos_rect, Primitive_Instruction_Array[i].primitive_type, Primitive_Instruction_Array[i].filled, true, Primitive_Instruction_Array[i].primitive_color);
+	//		break;
+	//	case 1:
+	//		uniq_id = Get_Layer_Uniq_Id(DRAW_LAYER_PRIMITIVE_2);
+	//		draw_layer_primitive_2.Send_Draw_Instruction(uniq_id, true, 0, { 0,0,0,0 }, Primitive_Instruction_Array[i].pos_rect, Primitive_Instruction_Array[i].primitive_type, Primitive_Instruction_Array[i].filled, true, Primitive_Instruction_Array[i].primitive_color);
+	//		break;
+	//	case 2:
+	//		uniq_id = Get_Layer_Uniq_Id(DRAW_LAYER_PRIMITIVE_3);
+	//		draw_layer_primitive_3.Send_Draw_Instruction(uniq_id, true, 0, { 0,0,0,0 }, Primitive_Instruction_Array[i].pos_rect, Primitive_Instruction_Array[i].primitive_type, Primitive_Instruction_Array[i].filled, true, Primitive_Instruction_Array[i].primitive_color);
+	//		break;
+	//	}
+	//}
+
 }
 
 void Draw_System::Draw_Primitive_Directly(SDL_Renderer* render_target, SDL_Rect primitive_rect, SDL_Color primitive_color, bool filled)

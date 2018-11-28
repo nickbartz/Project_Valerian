@@ -155,7 +155,7 @@ void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_
 	else
 	{
 		current_num_instructions = 0;
-		std::cout << "warning, sprite instruction overflow" << std::endl;
+		//std::cout << "warning, sprite instruction overflow" << std::endl;
 	}
 }
 

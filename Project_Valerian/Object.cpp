@@ -265,9 +265,9 @@ void Object::Draw()
 	if(render_component != NULL) render_component->Draw(AI_Movement->Return_World_Pos());
 }
 
-void Object::Draw(SDL_Rect overwrite_pos)
+void Object::Draw(SDL_Rect overwrite_pos, int array_int)
 {		
-	if (render_component != NULL) render_component->Draw(overwrite_pos);
+	if (render_component != NULL) render_component->Draw(overwrite_pos, array_int);
 }
 
 void Object::free()

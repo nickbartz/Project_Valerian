@@ -94,6 +94,7 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	render_component = object_config.render_component_type;
 	multiclip_type = object_config.multiclip_type;
 	spritesheet = object_config.spritesheet;
+	draw_layer = object_config.tile_layer;
 
 	sprite_clip = object_config.tile_clip;
 	sprite_coords = object_config.tile_specs;
@@ -123,14 +124,14 @@ void Render_Component::Update()
 }
 
 // Main draw function
-void Render_Component::Draw(SDL_Rect pos_rect)
+void Render_Component::Draw(SDL_Rect pos_rect, int array_int)
 {	
 	switch (render_component)
 	{
 	case RENDER_COMPONENT_NONE:
 		break;
 	case RENDER_COMPONENT_BACKGROUND:
-		Draw_With_Background_Renderer(pos_rect);
+		Draw_With_Background_Renderer(pos_rect, array_int);
 		break;
 	case RENDER_COMPONENT_SIMPLECLIP:
 		Draw_With_Simple_Clip(pos_rect);
@@ -156,9 +157,12 @@ void Render_Component::Draw(SDL_Rect pos_rect)
 }
 
 // Component draw functions
-void Render_Component::Draw_With_Background_Renderer(SDL_Rect pos_rect)
+void Render_Component::Draw_With_Background_Renderer(SDL_Rect pos_rect, int array_int)
 {
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, pos_rect, sprite_clip, 0.0, NULL, SDL_FLIP_NONE);
+	//service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, pos_rect, sprite_clip, 0.0, NULL, SDL_FLIP_NONE);
+
+	int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_BACKGROUND);
+	service_locator->get_Draw_System_Pointer()->Draw_To_Layer(render_component_id, DRAW_LAYER_BACKGROUND, spritesheet, sprite_clip, pos_rect);
 }
 
 void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
@@ -170,7 +174,10 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 	// Adjust the draw rectangle by the camera position and camera zoom
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
 
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
+	//service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
+	
+	int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(draw_layer);
+	service_locator->get_Draw_System_Pointer()->Draw_To_Layer(render_component_id, draw_layer, spritesheet, new_clip, draw_rect);
 
 	// If the sprite is several stories high, the 2nd story needs to be printed seperately and later so that i will appear to float above any people walking around so they appear to go behind it
 	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
@@ -180,7 +187,10 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 
 		// Now re-do the draw rect and send a new instruction to the draw system to draw that 2nd story 
 		draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((pos_rect.y - TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
-		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
+		//service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
+
+		int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_MID_OVERLAY);
+		service_locator->get_Draw_System_Pointer()->Draw_To_Layer(render_component_id, DRAW_LAYER_MID_OVERLAY, SPRITESHEET_MID_1, new_clip, draw_rect);
 	}
 }
 
@@ -308,8 +318,11 @@ void Render_Component::Initialize_Dedicated_Multisprite()
 void Render_Component::Deinitialize_Dedicated_Multisprite()
 {
 	// This frees up the spritesheet currently being used and puts it back into free rotation for others
-	service_locator->get_Draw_System_Pointer()->Remove_Multisprite(spritesheet,dedicated_multisprite_num);
-	init = false;
+	if (dedicated_multisprite_num != -1)
+	{
+		service_locator->get_Draw_System_Pointer()->Remove_Multisprite(spritesheet, dedicated_multisprite_num);
+		init = false;
+	}
 }
 
 bool Render_Component::Is_Init()

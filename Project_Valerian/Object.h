@@ -42,7 +42,7 @@ public:
 
 	// Draw functions
 	void Draw();
-	void Draw(SDL_Rect overwrite_pos);
+	void Draw(SDL_Rect overwrite_pos, int array_index = 0);
 
 	// Init Functions
 	void Init_Structure_From_Template(Structure_Template object_config, Adjacent_Structure_Array neighbors, int faction);

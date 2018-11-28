@@ -53,7 +53,7 @@ AI_Stats_Component::AI_Stats_Component(int object_array_index, Global_Service_Lo
 void AI_Stats_Component::Assign_Uniq_IDs(int object_array_index)
 {
 	object_array_locator = object_array_index;
-	uniq_id = rand() % 100000;
+	uniq_id = rand() % 4000;
 }
 
 string AI_Stats_Component::Generate_Entity_Name()

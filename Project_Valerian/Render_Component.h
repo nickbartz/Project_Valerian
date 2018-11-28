@@ -27,8 +27,8 @@ public:
 
 	void Update();
 
-	void Draw(SDL_Rect pos_rect);
-	void Draw_With_Background_Renderer(SDL_Rect pos_rect);
+	void Draw(SDL_Rect pos_rect, int array_int= 0);
+	void Draw_With_Background_Renderer(SDL_Rect pos_rect, int array_int = 0);
 	void Draw_With_Simple_Clip(SDL_Rect pos_rect);
 	void Draw_With_Multi_Clip(SDL_Rect pos_rect);
 	void Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect);
@@ -76,6 +76,7 @@ private:
 	Object_Service_Locator* object_locator;
 
 	// GENERIC VARIABLES
+	int draw_layer = DRAW_LAYER_NULL;
 	int render_component;
 	int spritesheet;
 	int max_animation_frames;
@@ -88,7 +89,7 @@ private:
 
 	// STRUCTURE_SPECIFIC VARIABLES
 	int multiclip_type;
-	int dedicated_multisprite_num;
+	int dedicated_multisprite_num = -1;
 	SDL_Rect sprite_clip;
 	SDL_Rect sprite_coords;
 	Adjacent_Structure_Array neighbors;

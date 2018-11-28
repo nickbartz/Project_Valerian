@@ -443,9 +443,9 @@ void Scene_Graph::Draw_Background()
 				TILE_SIZE / background_objects[i].depth
 			};
 
-			if (background_objects[i].type == 0) background_star_1.Draw(pos_rect);
-			else if (background_objects[i].type == 1) background_star_2.Draw(pos_rect);
-			else if (background_objects[i].type == 3) background_planetoid.Draw(pos_rect);
+			if (background_objects[i].type == 0) background_star_1.Draw(pos_rect, i);
+			else if (background_objects[i].type == 1) background_star_2.Draw(pos_rect, i);
+			else if (background_objects[i].type == 3) background_planetoid.Draw(pos_rect, i);
 		}
 	}
 }
