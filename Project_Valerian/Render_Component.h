@@ -76,7 +76,7 @@ private:
 	Object_Service_Locator* object_locator;
 
 	// GENERIC VARIABLES
-	int draw_layer = DRAW_LAYER_NULL;
+	int draw_layer = DRAW_LAYER_BACKGROUND;
 	int render_component;
 	int spritesheet;
 	int max_animation_frames;

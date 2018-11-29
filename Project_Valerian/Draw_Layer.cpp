@@ -51,14 +51,14 @@ void Draw_Layer::Stamp_Draw_Instruction(Draw_Instruction new_instruction)
 	}
 	else
 	{
-		Stamp_From_Spritesheet(new_instruction.spritesheet_id, new_instruction.src_rect, new_instruction.dest_rect);
+		Stamp_From_Spritesheet(new_instruction.spritesheet_id, new_instruction.src_rect, new_instruction.dest_rect, new_instruction.is_multisprite, new_instruction.multisprite_num);
 	}
 }
 
-void Draw_Layer::Stamp_From_Spritesheet(int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect)
+void Draw_Layer::Stamp_From_Spritesheet(int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, bool is_multisprite, int multisprite_num)
 {
 	Set_Layer_As_Render_Target(true);
-	service_locator->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(game_renderer, spritesheet, dest_rect, src_rect);
+	service_locator->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(game_renderer, spritesheet, dest_rect, src_rect, is_multisprite, multisprite_num);
 	Set_Layer_As_Render_Target(false);
 }
 
@@ -78,8 +78,9 @@ void Draw_Layer::Clear_Texture_Space(SDL_Rect clear_size)
 
 void Draw_Layer::Draw()
 {
-	for (int i = 0; i < current_num_instructions; i++)
+	for (int i = 0; i < current_num_instructions + 10; i++)
 	{
+		// Check to see if the current berth is even in use
 		if (pre_baked_instructions[i].init != DRAW_LAYER_STATE_UNUSED)
 		{
 			// If the draw instruction has not been re-pushed this cycle, clear it from the baked texture
@@ -88,7 +89,7 @@ void Draw_Layer::Draw()
 				Clear_Texture_Space(pre_baked_instructions[i].dest_rect);
 				pre_baked_instructions[i].init = DRAW_LAYER_STATE_UNUSED;
 			}
-			else
+			else 
 			{
 				if (pre_baked_instructions[i].init == DRAW_LAYER_STATE_DRAW_AGAIN)
 				{
@@ -103,12 +104,13 @@ void Draw_Layer::Draw()
 	//Actually draw the texture;
 	SDL_RenderCopyEx(game_renderer,layer_texture,&layer_rect, &screen_rect, 0.0, NULL, SDL_FLIP_NONE);
 
+	// Reset the ticker
 	current_num_instructions = 0;
 }
 
-void Draw_Layer::Send_Draw_Instruction(int render_object_id, bool is_primitive, int spritesheet_id, SDL_Rect src_rect, SDL_Rect dest_rect, int primitive_type, bool is_filled, bool has_color, SDL_Color primitive_color)
+void Draw_Layer::Send_Draw_Instruction(int render_object_id, bool is_primitive, int spritesheet_id, SDL_Rect src_rect, SDL_Rect dest_rect, int primitive_type, bool is_filled, bool has_color, SDL_Color primitive_color, bool is_multisprite, int multisprite_num)
 {
-	Draw_Instruction new_instruction = { 1, is_primitive, spritesheet_id, src_rect, dest_rect, primitive_type, is_filled, has_color, primitive_color };
+	Draw_Instruction new_instruction = { 1, is_primitive, spritesheet_id, src_rect, dest_rect, primitive_type, is_filled, has_color, primitive_color, is_multisprite, multisprite_num };
 
 	if (pre_baked_instructions[render_object_id].init != DRAW_LAYER_STATE_UNUSED )
 	{
@@ -120,7 +122,7 @@ void Draw_Layer::Send_Draw_Instruction(int render_object_id, bool is_primitive, 
 		}
 		else
 		{
-			pre_baked_instructions[render_object_id].init = DRAW_LAYER_STATE_DONT_DRAW ;
+			pre_baked_instructions[render_object_id].init = DRAW_LAYER_STATE_DONT_DRAW;
 		}
 	}
 	else

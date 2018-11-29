@@ -162,7 +162,7 @@ void Render_Component::Draw_With_Background_Renderer(SDL_Rect pos_rect, int arra
 	//service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, pos_rect, sprite_clip, 0.0, NULL, SDL_FLIP_NONE);
 
 	int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_BACKGROUND);
-	service_locator->get_Draw_System_Pointer()->Draw_To_Layer(render_component_id, DRAW_LAYER_BACKGROUND, spritesheet, sprite_clip, pos_rect);
+	service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_BACKGROUND, spritesheet, sprite_clip, pos_rect);
 }
 
 void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
@@ -177,7 +177,7 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 	//service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 	
 	int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(draw_layer);
-	service_locator->get_Draw_System_Pointer()->Draw_To_Layer(render_component_id, draw_layer, spritesheet, new_clip, draw_rect);
+	service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, draw_layer, spritesheet, new_clip, draw_rect);
 
 	// If the sprite is several stories high, the 2nd story needs to be printed seperately and later so that i will appear to float above any people walking around so they appear to go behind it
 	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
@@ -190,7 +190,7 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 		//service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 
 		int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_MID_OVERLAY);
-		service_locator->get_Draw_System_Pointer()->Draw_To_Layer(render_component_id, DRAW_LAYER_MID_OVERLAY, SPRITESHEET_MID_1, new_clip, draw_rect);
+		service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_MID_OVERLAY, SPRITESHEET_MID_1, new_clip, draw_rect);
 	}
 }
 
@@ -213,7 +213,9 @@ void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 	// Adjust the draw rectangle by the camera position and camera zoom
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
 
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
+	//service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
+	int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(draw_layer);
+	service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, draw_layer, spritesheet, anim_clip, draw_rect);
 
 	// If the sprite is several stories high, the 2nd story needs to be printed seperately and later so that i will appear to float above any people walking around so they appear to go behind it
 	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
@@ -223,7 +225,10 @@ void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 
 		// Now re-do the draw rect and send a new instruction to the draw system to draw that 2nd story 
 		draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((pos_rect.y - TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
-		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
+	/*	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);*/
+
+		int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(draw_layer);
+		service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_MID_OVERLAY, SPRITESHEET_MID_2, new_clip, draw_rect);
 	}
 }
 

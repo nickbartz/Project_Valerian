@@ -16,7 +16,7 @@ class Draw_Layer
 public:
 	Draw_Layer(Global_Service_Locator* service_locator = NULL);
 
-	void Send_Draw_Instruction(int render_object_id, bool is_primitive, int spritesheet_id, SDL_Rect src_rect, SDL_Rect dest_rect, int primitive_type, bool is_filled, bool has_color, SDL_Color primitive_color);
+	void Send_Draw_Instruction(int render_object_id, bool is_primitive, int spritesheet_id, SDL_Rect src_rect, SDL_Rect dest_rect, int primitive_type, bool is_filled, bool has_color, SDL_Color primitive_color, bool is_multisprite = false, int multisprite_num = 0);
 	int Get_Current_Instruction_Num();
 
 	void Init();
@@ -43,6 +43,8 @@ private:
 		bool is_filled = false;
 		bool has_color = false;
 		SDL_Color primitive_color = { 0,0,0,0 };
+		bool is_multisprite = false;
+		int multisprite_num = 0;
 
 		bool operator!=(const Draw_Instruction& new_instruction) const
 		{
@@ -80,7 +82,7 @@ private:
 	void Set_Layer_As_Render_Target(bool set_to_target);
 
 	void Stamp_Draw_Instruction(Draw_Instruction new_instruction);
-	void Stamp_From_Spritesheet(int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect);
+	void Stamp_From_Spritesheet(int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, bool is_multisprite = false, int multisprite_num = 0);
 	void Stamp_Primitive(int primitive_type, SDL_Rect primitive_rect, SDL_Color primitive_color, bool is_filled);
 	void Clear_Texture_Space(SDL_Rect clear_size);
 

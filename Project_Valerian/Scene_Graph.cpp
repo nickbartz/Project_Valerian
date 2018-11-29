@@ -423,6 +423,7 @@ void Scene_Graph::Draw()
 	Draw_Background();
 
 	Process_Main_Function(OBJECT_FUNCTION_DRAW);
+
 }
 
 void Scene_Graph::Draw_Background()
@@ -565,16 +566,13 @@ void Scene_Graph::Iterate_And_Function(Object object_array[], int current_num_me
 	{
 		if (object_array[array_index].Get_Assigned_Flag() == OBJECT_ASSIGNED)
 		{
-			//if (object_array[array_index].Return_Stats_Component()->Return_Object_Type() == OBJECT_TYPE_PROJECTILE) cout << "starting update of: " << array_index << endl;
 			switch (object_function_type)
 			{
 			case OBJECT_FUNCTION_DRAW:
 				object_array[array_index].Draw();
 				break;
 			case OBJECT_FUNCTION_UPDATE:
-
 				object_array[array_index].Update();
-
 				break;
 			case OBJECT_FUNCTION_CHECK_FOR_MESSAGES:
 				object_array[array_index].Collect_Bus_Messages();

@@ -60,16 +60,16 @@ public:
 
 	// Draw to layer functions
 	int Get_Layer_Uniq_Id(int render_layer);
-	void Draw_To_Layer(int render_component_id, int draw_layer, int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE, bool has_color = false, SDL_Color override_color = { 255,255,255,255 }, bool is_primitive = false, int primitive_id = PRIMITIVE_TYPE_RECT, bool is_filled = false );
+	void Draw_Sprites_To_Draw_Layer(int render_component_id, int draw_layer, int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, bool is_multisprite = false, int multisprite_num = 0, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE, bool has_color = false, SDL_Color override_color = { 255,255,255,255 }, bool is_primitive = false, int primitive_id = PRIMITIVE_TYPE_RECT, bool is_filled = false);
 
 	// Functions to Draw, called by main
 	void Update();
 	void Draw(SDL_Renderer* render_target);
 
-	void Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
+	void Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, bool is_multisprite = false, int multisprite_num = 0, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
 	void Draw_Primitive_Directly(SDL_Renderer* render_target, SDL_Rect primitive_rect, SDL_Color primitive_color, bool filled);
 	void Draw_Sprites(SDL_Renderer* render_target, int spritehsheet);
-	void Draw_Primitives(SDL_Renderer* render_target, int layer = 1);
+	void Draw_Primitives_To_Screen(SDL_Renderer* render_target, int layer = 1);
 	void Draw_Text_Strings(SDL_Renderer* render_target, int layer = 1);
 
 	// Free
@@ -118,13 +118,8 @@ private:
 	int count_num_print_text = -1;
 	Text_Instruction Text_Instruction_Array[MAX_NUM_TEXT_PRINT];
 
-	Draw_Layer draw_layer_background;
-	Draw_Layer draw_layer_base;
-	Draw_Layer draw_layer_base_overlay;
-	Draw_Layer draw_layer_mid;
-	Draw_Layer draw_layer_mid_overlay;
-	//Draw_Layer draw_layer_primitive_1;
-	//Draw_Layer draw_layer_primitive_2;
-	//Draw_Layer draw_layer_primitive_3;
+	int count_num_layers = 4;
+
+	Draw_Layer* draw_layer_array[4];
 };
 
