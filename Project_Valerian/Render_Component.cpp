@@ -109,6 +109,7 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	{
 		Initialize_Dedicated_Multisprite();
 		Adjust_Multisprite_To_Surroundings();
+		multisprite_state = 2;
 	}
 	// If the object is a door, handle door
 	else if (object_config.structure_type == 8)
@@ -194,7 +195,9 @@ void Render_Component::Draw_With_Multi_Clip(SDL_Rect pos_rect)
 
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, sprite_coords.w*camera.w, sprite_coords.h*camera.w };
 
-	service_locator->get_Draw_System_Pointer()->Add_Multisprite_Render_Job_To_Render_Cycle(spritesheet, dedicated_multisprite_num, draw_rect, 0.0, NULL, SDL_FLIP_NONE, override_color);
+	service_locator->get_Draw_System_Pointer()->Add_Multisprite_Render_Job_To_Render_Cycle(spritesheet, dedicated_multisprite_num, draw_rect, 0.0, NULL, SDL_FLIP_NONE, override_color, multisprite_state);
+
+	multisprite_state = 1;
 }
 
 void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
@@ -347,6 +350,8 @@ void Render_Component::Adjust_Multisprite_To_Surroundings()
 		Build_Wall_Multisprite();
 		break;
 	}
+
+	multisprite_state = 2;
 }
 
 void Render_Component::Adjust_Door_Orientation()

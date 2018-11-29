@@ -476,6 +476,9 @@ void AI_Item_Component::Update()
 		case OBJECT_TYPE_ENTITY:
 			Update_Entity();
 			break;
+		case OBJECT_TYPE_SCAFFOLD:
+			Update_Build_Orders();
+			break;
 		case OBJECT_TYPE_STRUCTURE:
 			Update_Build_Orders();
 			break;

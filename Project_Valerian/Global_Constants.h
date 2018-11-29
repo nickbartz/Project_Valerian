@@ -23,8 +23,8 @@ enum PRIMITIVE_TYPES
 	PRIMITIVE_TYPE_POINT
 };
 
-const int SCREEN_WIDTH = 1280;
-const int SCREEN_HEIGHT = 800;
+const int SCREEN_WIDTH = 1920;
+const int SCREEN_HEIGHT = 1080;
 
 const int TILE_SIZE = 32;
 const int SPRITE_SIZE = 32;

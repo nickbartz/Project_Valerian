@@ -41,7 +41,7 @@ bool init()
 		}
 
 		//Create window
-		Game_Window = SDL_CreateWindow("Project Valerian", SCREEN_WIDTH/4, 100, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
+		Game_Window = SDL_CreateWindow("Project Valerian", SCREEN_WIDTH/4, 100, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_FULLSCREEN);
 		if (Game_Window == NULL)
 		{
 			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());

@@ -51,14 +51,14 @@ void Draw_Layer::Stamp_Draw_Instruction(Draw_Instruction new_instruction)
 	}
 	else
 	{
-		Stamp_From_Spritesheet(new_instruction.spritesheet_id, new_instruction.src_rect, new_instruction.dest_rect, new_instruction.is_multisprite, new_instruction.multisprite_num);
+		Stamp_From_Spritesheet(new_instruction.spritesheet_id, new_instruction.src_rect, new_instruction.dest_rect, new_instruction.multisprite_state, new_instruction.multisprite_num);
 	}
 }
 
-void Draw_Layer::Stamp_From_Spritesheet(int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, bool is_multisprite, int multisprite_num)
+void Draw_Layer::Stamp_From_Spritesheet(int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, int  multisprite_state, int multisprite_num)
 {
 	Set_Layer_As_Render_Target(true);
-	service_locator->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(game_renderer, spritesheet, dest_rect, src_rect, is_multisprite, multisprite_num);
+	service_locator->get_Draw_System_Pointer()->Draw_Spritesheet_Directly(game_renderer, spritesheet, dest_rect, src_rect, multisprite_state, multisprite_num);
 	Set_Layer_As_Render_Target(false);
 }
 
@@ -108,13 +108,13 @@ void Draw_Layer::Draw()
 	current_num_instructions = 0;
 }
 
-void Draw_Layer::Send_Draw_Instruction(int render_object_id, bool is_primitive, int spritesheet_id, SDL_Rect src_rect, SDL_Rect dest_rect, int primitive_type, bool is_filled, bool has_color, SDL_Color primitive_color, bool is_multisprite, int multisprite_num)
+void Draw_Layer::Send_Draw_Instruction(int render_object_id, bool is_primitive, int spritesheet_id, SDL_Rect src_rect, SDL_Rect dest_rect, int primitive_type, bool is_filled, bool has_color, SDL_Color primitive_color, int multisprite_state, int multisprite_num)
 {
-	Draw_Instruction new_instruction = { 1, is_primitive, spritesheet_id, src_rect, dest_rect, primitive_type, is_filled, has_color, primitive_color, is_multisprite, multisprite_num };
+	Draw_Instruction new_instruction = { 1, is_primitive, spritesheet_id, src_rect, dest_rect, primitive_type, is_filled, has_color, primitive_color, multisprite_state, multisprite_num };
 
 	if (pre_baked_instructions[render_object_id].init != DRAW_LAYER_STATE_UNUSED )
 	{
-		if (new_instruction != pre_baked_instructions[render_object_id])
+		if (multisprite_state == 2 || new_instruction != pre_baked_instructions[render_object_id])
 		{
 			Clear_Texture_Space(pre_baked_instructions[render_object_id].dest_rect);
 			new_instruction.init = DRAW_LAYER_STATE_DRAW_AGAIN;

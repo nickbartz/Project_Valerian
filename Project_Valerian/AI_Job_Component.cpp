@@ -18,7 +18,7 @@ AI_Job_Component::AI_Job_Component(Global_Service_Locator* sLocator, Object_Serv
 {
 	service_locator = sLocator;
 	object_locator = oLocator;
-	object_type = object_type;
+	object_type = oType;
 
 	Clear_All_Goals_From_Array();
 

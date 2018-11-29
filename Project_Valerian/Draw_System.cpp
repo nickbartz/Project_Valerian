@@ -200,17 +200,17 @@ void Draw_System::Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rec
 	}
 }
 
-void Draw_System::Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip, SDL_Color color_shift)
+void Draw_System::Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip, SDL_Color color_shift, int multisprite_state)
 {
 	if (spritesheet_num == SPRITESHEET_BASE)
 	{
 		int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_BASE);
-		service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_BASE, spritesheet_num, { 0,0,TILE_SIZE,TILE_SIZE }, pos_rect, true, multi_tile_num);
+		service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_BASE, spritesheet_num, { 0,0,TILE_SIZE,TILE_SIZE }, pos_rect, multisprite_state, multi_tile_num);
 	}
 	else if (spritesheet_num == SPRITESHEET_MID_1)
 	{
 		int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_MID_1);
-		service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_MID_1, spritesheet_num, { 0,0,TILE_SIZE,TILE_SIZE }, pos_rect, true, multi_tile_num);
+		service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_MID_1, spritesheet_num, { 0,0,TILE_SIZE,TILE_SIZE }, pos_rect, multisprite_state, multi_tile_num);
 	}
 }
 
@@ -281,24 +281,24 @@ int Draw_System::Get_Layer_Uniq_Id(int render_layer)
 	}
 }
 
-void Draw_System::Draw_Sprites_To_Draw_Layer(int render_uniq_id, int draw_layer, int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, bool is_multisprite, int multisprite_num , double angle, SDL_Point* center, SDL_RendererFlip flip, bool has_color, SDL_Color override_color, bool is_primitive, int primitive_id, bool is_filled)
+void Draw_System::Draw_Sprites_To_Draw_Layer(int render_uniq_id, int draw_layer, int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, int multisprite_state, int multisprite_num , double angle, SDL_Point* center, SDL_RendererFlip flip, bool has_color, SDL_Color override_color, bool is_primitive, int primitive_id, bool is_filled)
 {
 	switch (draw_layer)
 	{
 	case DRAW_LAYER_BACKGROUND:
-		baked_draw_layer_array[DRAW_LAYER_BACKGROUND]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+		baked_draw_layer_array[DRAW_LAYER_BACKGROUND]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, multisprite_state, multisprite_num);
 		break;
 	case DRAW_LAYER_BASE:
-		baked_draw_layer_array[DRAW_LAYER_BASE]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+		baked_draw_layer_array[DRAW_LAYER_BASE]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, multisprite_state, multisprite_num);
 		break;
 	case DRAW_LAYER_MID_1:
-		baked_draw_layer_array[DRAW_LAYER_MID_1]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+		baked_draw_layer_array[DRAW_LAYER_MID_1]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, multisprite_state, multisprite_num);
 		break;
 	case DRAW_LAYER_MID_1_OVERLAY:
-		baked_draw_layer_array[DRAW_LAYER_MID_1_OVERLAY]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+		baked_draw_layer_array[DRAW_LAYER_MID_1_OVERLAY]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, multisprite_state, multisprite_num);
 		break;
 	case DRAW_LAYER_MID_2:
-		baked_draw_layer_array[DRAW_LAYER_MID_2]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+		baked_draw_layer_array[DRAW_LAYER_MID_2]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, multisprite_state, multisprite_num);
 		break;
 	}
 }
@@ -331,7 +331,7 @@ void Draw_System::Draw(SDL_Renderer* render_target)
 
 // Functions for drawing primitives
 
-void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, bool is_multisprite, int multisprite_num, double angle, SDL_Point* center, SDL_RendererFlip render_flip )
+void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, int multisprite_state, int multisprite_num, double angle, SDL_Point* center, SDL_RendererFlip render_flip )
 {
 	switch (spritesheet_num)
 	{
@@ -339,13 +339,13 @@ void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spr
 		background_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
 		break;
 	case SPRITESHEET_BASE:
-		if (!is_multisprite) base_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
+		if (multisprite_state == 0) base_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
 		else base_multisprite[multisprite_num].Draw_Directly(render_target, position_rect, clip_rect);
 		break;
 	case SPRITESHEET_BASE_OVERLAY:
 		break;
 	case SPRITESHEET_MID_1:
-		if (!is_multisprite) mid_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
+		if (multisprite_state == 0) mid_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
 		else mid_multisprite[multisprite_num].Draw_Directly(render_target, position_rect, clip_rect);
 		break;
 	case SPRITESHEET_MID_2:

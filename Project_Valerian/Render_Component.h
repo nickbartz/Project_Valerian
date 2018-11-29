@@ -89,6 +89,7 @@ private:
 	SDL_Color override_color = { 255,255,255,255 };
 
 	// STRUCTURE_SPECIFIC VARIABLES
+	int multisprite_state = 0;
 	int multiclip_type;
 	int dedicated_multisprite_num = -1;
 	SDL_Rect sprite_clip;
