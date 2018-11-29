@@ -104,7 +104,7 @@ void Draw_Layer::Draw()
 	//Actually draw the texture;
 	SDL_RenderCopyEx(game_renderer,layer_texture,&layer_rect, &screen_rect, 0.0, NULL, SDL_FLIP_NONE);
 
-	// Reset the ticker
+	//Reset the ticker
 	current_num_instructions = 0;
 }
 
@@ -132,4 +132,19 @@ void Draw_Layer::Send_Draw_Instruction(int render_object_id, bool is_primitive, 
 	}
 
 	current_num_instructions++;
+}
+
+void Draw_Layer::free()
+{
+	if (layer_texture != NULL)
+	{
+		SDL_DestroyTexture(layer_texture);
+		layer_texture = NULL;
+	}
+
+	if (clear_texture != NULL)
+	{
+		SDL_DestroyTexture(clear_texture);
+		clear_texture = NULL;
+	}
 }

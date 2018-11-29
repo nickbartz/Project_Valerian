@@ -32,6 +32,7 @@ public:
 
 private:
 	Job* active_job;
+	int object_type = 0;
 
 	int wait_timer = 0;
 

@@ -105,16 +105,14 @@ string AI_Stats_Component::Get_Entity_Name()
 
 void AI_Stats_Component::Update()
 {
-	// Increment the update cycle 
-	update_cycle += 1;
-	if (update_cycle > 1000) update_cycle = 0;
-
 	if (!Check_For_Death())
 	{
 		// RUN OBJECT AI
 		switch (object_type)
 		{
 		case OBJECT_TYPE_ENTITY:
+			update_cycle += 1;
+			if (update_cycle > 1000) update_cycle = 0;
 			Update_Entity();
 			break;
 		case OBJECT_TYPE_STRUCTURE:
@@ -403,15 +401,16 @@ int AI_Stats_Component::Return_Object_Type()
 
 void AI_Stats_Component::Check_For_Messages()
 {
-	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
+	Message_Array* mb_pointer = service_locator->get_MB_Pointer();
+	for (int i = 0; i <mb_pointer->count_custom_messages; i++)
 	{
-		switch (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0))
+		switch (mb_pointer->Custom_Message_Array[i].Read_Message(0))
 		{
 		case MESSAGE_TYPE_STAT_UPDATE_REQUEST:
-			Handle_Stat_Message(&service_locator->get_MB_Pointer()->Custom_Message_Array[i]);
+			Handle_Stat_Message(&mb_pointer->Custom_Message_Array[i]);
 			break;
 		case MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION:
-			Update_Stat(STAT_STRUCTURE_OXYGEN_LEVEL, 0);
+			if (object_type == OBJECT_TYPE_STRUCTURE) Update_Stat(STAT_STRUCTURE_OXYGEN_LEVEL, 0);
 			break;
 		}
 	}

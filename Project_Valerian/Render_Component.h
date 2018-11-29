@@ -27,8 +27,8 @@ public:
 
 	void Update();
 
-	void Draw(SDL_Rect pos_rect, int array_int= 0);
-	void Draw_With_Background_Renderer(SDL_Rect pos_rect, int array_int = 0);
+	void Draw(SDL_Rect pos_rect);
+	void Draw_With_Background_Renderer(SDL_Rect pos_rect);
 	void Draw_With_Simple_Clip(SDL_Rect pos_rect);
 	void Draw_With_Multi_Clip(SDL_Rect pos_rect);
 	void Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect);
@@ -50,7 +50,7 @@ public:
 	// Update Functions
 	void Update_Neighbor_Array(Adjacent_Structure_Array new_neighbors);
 	void Adjust_Multisprite_To_Surroundings();
-	void Check_For_Messages(int grid_x, int grid_y);
+	void Check_For_Messages();
 	void Check_Tile_Update_Message(Custom_Message* tile_update);
 
 	// function for different multiclip types
@@ -74,6 +74,7 @@ private:
 	bool init = false;
 	Global_Service_Locator * service_locator;
 	Object_Service_Locator* object_locator;
+	int object_type = 0;
 
 	// GENERIC VARIABLES
 	int draw_layer = DRAW_LAYER_BACKGROUND;

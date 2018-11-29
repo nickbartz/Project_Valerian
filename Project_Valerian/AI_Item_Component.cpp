@@ -13,8 +13,9 @@ AI_Item_Component::AI_Item_Component(Global_Service_Locator* sLocator, Object_Se
 	object_locator = oLocator;
 
 	num_inventory_slots = num_inv_slots;
+	object_type = object_locator->Return_AI_Stats_Pointer()->Return_Object_Type();
 
-	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
+	switch (object_type)
 	{
 	case OBJECT_TYPE_STRUCTURE:
 		if (service_locator->get_Game_Library()->Fetch_Structure_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->has_starter_inventory >= 1) Populate_Starter_Inventory(OBJECT_TYPE_STRUCTURE);
@@ -131,8 +132,9 @@ void AI_Item_Component::Copy_Inventory_From_Pointer(Item_Slot pointer[], int num
 void AI_Item_Component::Check_For_Messages()
 {
 	Custom_Message* new_message;
+	Message_Array* mb_pointer = service_locator->get_MB_Pointer();
 
-	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
+	for (int i = 0; i < mb_pointer->count_custom_messages; i++)
 	{
 		new_message = &service_locator->get_MB_Pointer()->Custom_Message_Array[i];
 		if (new_message->Read_Message(0) == MESSAGE_TYPE_SG_INVENTORY_MANIFEST_UPDATE)
@@ -163,7 +165,7 @@ bool AI_Item_Component::Create_Build_Job()
 {
 	int max_built_level = 0;
 
-	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
+	switch (object_type)
 	{
 	case OBJECT_TYPE_SCAFFOLD:
 		max_built_level = service_locator->get_Game_Library()->Fetch_Structure_Template(active_build_orders.front().object_template)->max_built_level;
@@ -197,6 +199,7 @@ void AI_Item_Component::Create_Production_Item_Container()
 void AI_Item_Component::Add_Build_Order_To_Queue(Blueprint* blueprint, int object_type, int object_template, int object_stage)
 {
 	active_build_orders.push_back(Build_Order{ blueprint, object_type, object_template, object_stage });
+	current_num_build_orders++;
 }
 
 void AI_Item_Component::Delete_Item_At_Inventory_Array_Num(int array_num)
@@ -452,7 +455,6 @@ void AI_Item_Component::Scan_Inventory_For_Storable_Items(int threshold_quantity
 bool AI_Item_Component::Try_To_Create_Job_To_Fetch_Parts()
 {
 	Scene_Graph* scene_graph = service_locator->get_Scene_Graph();
-	int object_type = object_locator->Return_AI_Stats_Pointer()->Return_Object_Type();
 	if (scene_graph->Job_Create_Find_Blueprint_Items_And_Transport_To_Requestee(scene_graph->Return_Object_By_Type_And_Array_Num(object_type, object_locator->Return_Object_Pointer()->Get_Array_Index()), active_build_orders.front().build_requirements, true) == true)
 	{
 		active_build_orders.front().build_stage = BLUEPRINT_STATE_WAITING_TO_START_BUILD;
@@ -467,16 +469,19 @@ bool AI_Item_Component::Try_To_Create_Job_To_Fetch_Parts()
 
 void AI_Item_Component::Update()
 {
-	if (item_change_flag > 0 || Build_Is_Complete())
+	if (item_change_flag > 0 || (current_num_build_orders > 0 && Build_Is_Complete()))
 	{
-		switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
+		switch (object_type)
 		{
 		case OBJECT_TYPE_ENTITY:
 			Update_Entity();
 			break;
+		case OBJECT_TYPE_STRUCTURE:
+			Update_Build_Orders();
+			break;
 		}
 
-		if (active_build_orders.size() > 0) Update_Build_Orders();
+		
 	}
 }
 
@@ -507,6 +512,7 @@ void AI_Item_Component::Update_Build_Orders()
 				if (active_build_orders.front().build_requirements != NULL) Remove_Blueprint_Items_From_Inventory(active_build_orders.front().build_requirements);
 				if (active_build_orders.front().object_type == OBJECT_TYPE_ITEM) Create_Production_Item_Container();
 				active_build_orders.pop_front();
+				current_num_build_orders--;
 			}
 			break;
 		}

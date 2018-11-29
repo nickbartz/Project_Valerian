@@ -246,13 +246,12 @@ void Object::Update()
 
 void Object::Collect_Bus_Messages()
 {
-	Coordinate grid_coord = AI_Movement->Return_Grid_Coord();
-	if (render_component != NULL) render_component->Check_For_Messages(grid_coord.x,grid_coord.y);
-	if (AI_Stats != NULL) AI_Stats->Check_For_Messages();
-	if (AI_Job != NULL) AI_Job->Check_For_Messages();
-	if (AI_Movement != NULL) AI_Movement->Check_For_Messages();
-	if (AI_Relationship != NULL) AI_Relationship->Check_For_Messages();
-	if (AI_Items != NULL) AI_Items->Check_For_Messages();
+		if (render_component != NULL) render_component->Check_For_Messages();
+		if (AI_Stats != NULL) AI_Stats->Check_For_Messages();
+		if (AI_Job != NULL) AI_Job->Check_For_Messages();
+		if (AI_Movement != NULL) AI_Movement->Check_For_Messages();
+		if (AI_Relationship != NULL) AI_Relationship->Check_For_Messages();
+		if (AI_Items != NULL) AI_Items->Check_For_Messages();
 }
 
 void Object::Set_Assigned_Flag(int aFlag)
@@ -265,9 +264,9 @@ void Object::Draw()
 	if(render_component != NULL) render_component->Draw(AI_Movement->Return_World_Pos());
 }
 
-void Object::Draw(SDL_Rect overwrite_pos, int array_int)
+void Object::Draw(SDL_Rect overwrite_pos)
 {		
-	if (render_component != NULL) render_component->Draw(overwrite_pos, array_int);
+	if (render_component != NULL) render_component->Draw(overwrite_pos);
 }
 
 void Object::free()

@@ -14,10 +14,10 @@ Draw_System::Draw_System(Global_Service_Locator* sLocator, FC_Font* font_array_s
 
 	window_format = wFormat;
 
-	for (int i = 0; i < count_num_layers; i++)
+	for (int i = 0; i < count_num_baked_layers; i++)
 	{
-		draw_layer_array[i] = new Draw_Layer(service_locator);
-		draw_layer_array[i]->Init();
+		baked_draw_layer_array[i] = new Draw_Layer(service_locator);
+		baked_draw_layer_array[i]->Init();
 	}
 }
 
@@ -161,25 +161,32 @@ void Draw_System::Remove_Multisprite(int spritesheet_num, int multisprite_num)
 // Functions for adding or removing draw jobs from render cycle
 void Draw_System::Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle, SDL_Point* center, SDL_RendererFlip render_flip, SDL_Color color_shift)
 {
+	int render_component_id = 0;
 	switch (spritesheet)
 	{
 	case SPRITESHEET_BACKGROUND:
-		background_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
+		render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_BACKGROUND);
+		Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_BACKGROUND, spritesheet, clip_rect, position_rect);
 		break;
 	case SPRITESHEET_BASE:
-		base_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
+		render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_BASE);
+		Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_BASE, spritesheet, clip_rect, position_rect);
 		break;
 	case SPRITESHEET_BASE_OVERLAY:
-		base_overlay.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
+		render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_BASE_OVERLAY);
+		Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_BASE_OVERLAY, spritesheet, clip_rect, position_rect);
 		break;
 	case SPRITESHEET_MID_1:
-		mid_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
+		render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_MID_1);
+		Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_MID_1, spritesheet, clip_rect, position_rect);
 		break;
 	case SPRITESHEET_MID_1_OVERLAY:
-		mid_overlay_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
+		render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(SPRITESHEET_MID_1_OVERLAY);
+		Draw_Sprites_To_Draw_Layer(render_component_id, SPRITESHEET_MID_1_OVERLAY, spritesheet, clip_rect, position_rect);
 		break;
 	case SPRITESHEET_MID_2:
-		mid_2_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
+		render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_MID_2);
+		Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_MID_2, spritesheet, clip_rect, position_rect);
 		break;
 	case SPRITESHEET_ENTITY:
 		entity_spritesheet.Add_Sprite_Instructions(position_rect, clip_rect, angle, center, render_flip, color_shift);
@@ -197,17 +204,13 @@ void Draw_System::Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num
 {
 	if (spritesheet_num == SPRITESHEET_BASE)
 	{
-		//base_multisprite[multi_tile_num].Add_Sprite_Instructions(pos_rect, { 0,0,TILE_SIZE,TILE_SIZE }, angle, center, render_flip, color_shift);
-
 		int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_BASE);
 		service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_BASE, spritesheet_num, { 0,0,TILE_SIZE,TILE_SIZE }, pos_rect, true, multi_tile_num);
 	}
 	else if (spritesheet_num == SPRITESHEET_MID_1)
 	{
-		//mid_multisprite[multi_tile_num].Add_Sprite_Instructions(pos_rect, { 0,0,TILE_SIZE,TILE_SIZE }, angle, center, render_flip, color_shift);
-
-		int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_MID);
-		service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_MID, spritesheet_num, { 0,0,TILE_SIZE,TILE_SIZE }, pos_rect, true, multi_tile_num);
+		int render_component_id = service_locator->get_Draw_System_Pointer()->Get_Layer_Uniq_Id(DRAW_LAYER_MID_1);
+		service_locator->get_Draw_System_Pointer()->Draw_Sprites_To_Draw_Layer(render_component_id, DRAW_LAYER_MID_1, spritesheet_num, { 0,0,TILE_SIZE,TILE_SIZE }, pos_rect, true, multi_tile_num);
 	}
 }
 
@@ -248,11 +251,11 @@ void Draw_System::Clear_Text_Instruction_Array()
 
 void Draw_System::Update()
 {
-	if (reset_prebaked_spritesheets == true)
-	{
-		Set_Spritesheet_Prebaked_Status(SPRITESHEET_BACKGROUND, false);
-		Set_Reset_Prebake_Status_Indicator(false);
-	}
+	//if (reset_prebaked_spritesheets == true)
+	//{
+	//	Set_Spritesheet_Prebaked_Status(SPRITESHEET_BACKGROUND, false);
+	//	Set_Reset_Prebake_Status_Indicator(false);
+	//}
 }
 
 // Draw to layer functions
@@ -261,16 +264,19 @@ int Draw_System::Get_Layer_Uniq_Id(int render_layer)
 	switch (render_layer)
 	{
 	case DRAW_LAYER_BACKGROUND:
-		return draw_layer_array[DRAW_LAYER_BACKGROUND]->Get_Current_Instruction_Num();
+		return baked_draw_layer_array[DRAW_LAYER_BACKGROUND]->Get_Current_Instruction_Num();
 		break;
 	case DRAW_LAYER_BASE:
-		return draw_layer_array[DRAW_LAYER_BASE]->Get_Current_Instruction_Num();
+		return baked_draw_layer_array[DRAW_LAYER_BASE]->Get_Current_Instruction_Num();
 		break;
-	case DRAW_LAYER_MID:
-		return draw_layer_array[DRAW_LAYER_MID]->Get_Current_Instruction_Num();
+	case DRAW_LAYER_MID_1:
+		return baked_draw_layer_array[DRAW_LAYER_MID_1]->Get_Current_Instruction_Num();
 		break;
-	case DRAW_LAYER_MID_OVERLAY:
-		return draw_layer_array[DRAW_LAYER_MID_OVERLAY]->Get_Current_Instruction_Num();
+	case DRAW_LAYER_MID_1_OVERLAY:
+		return baked_draw_layer_array[DRAW_LAYER_MID_1_OVERLAY]->Get_Current_Instruction_Num();
+		break;
+	case DRAW_LAYER_MID_2:
+		return baked_draw_layer_array[DRAW_LAYER_MID_2]->Get_Current_Instruction_Num();
 		break;
 	}
 }
@@ -280,16 +286,19 @@ void Draw_System::Draw_Sprites_To_Draw_Layer(int render_uniq_id, int draw_layer,
 	switch (draw_layer)
 	{
 	case DRAW_LAYER_BACKGROUND:
-		draw_layer_array[DRAW_LAYER_BACKGROUND]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+		baked_draw_layer_array[DRAW_LAYER_BACKGROUND]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
 		break;
 	case DRAW_LAYER_BASE:
-		draw_layer_array[DRAW_LAYER_BASE]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+		baked_draw_layer_array[DRAW_LAYER_BASE]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
 		break;
-	case DRAW_LAYER_MID:
-		draw_layer_array[DRAW_LAYER_MID]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+	case DRAW_LAYER_MID_1:
+		baked_draw_layer_array[DRAW_LAYER_MID_1]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
 		break;
-	case DRAW_LAYER_MID_OVERLAY:
-		draw_layer_array[DRAW_LAYER_MID_OVERLAY]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+	case DRAW_LAYER_MID_1_OVERLAY:
+		baked_draw_layer_array[DRAW_LAYER_MID_1_OVERLAY]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
+		break;
+	case DRAW_LAYER_MID_2:
+		baked_draw_layer_array[DRAW_LAYER_MID_2]->Send_Draw_Instruction(render_uniq_id, is_primitive, spritesheet, src_rect, dest_rect, primitive_id, is_filled, has_color, override_color, is_multisprite, multisprite_num);
 		break;
 	}
 }
@@ -298,22 +307,24 @@ void Draw_System::Draw_Sprites_To_Draw_Layer(int render_uniq_id, int draw_layer,
 
 void Draw_System::Draw(SDL_Renderer* render_target)
 {
-	draw_layer_array[DRAW_LAYER_BACKGROUND]->Draw();
-	//Draw_Sprites(render_target, SPRITESHEET_BACKGROUND);
-	draw_layer_array[DRAW_LAYER_BASE]->Draw();
-	Draw_Sprites(render_target, SPRITESHEET_BASE);
-	draw_layer_array[DRAW_LAYER_MID]->Draw();
-	Draw_Sprites(render_target, SPRITESHEET_MID_1);
-	Draw_Primitives_To_Screen(render_target, -1); // For lasers 
-	Draw_Sprites(render_target, SPRITESHEET_ENTITY);
-	Draw_Sprites(render_target, SPRITESHEET_PROJECTILE);
-	Draw_Sprites(render_target, SPRITESHEET_MID_2);
-	draw_layer_array[DRAW_LAYER_MID_OVERLAY]->Draw();
-	Draw_Primitives_To_Screen(render_target, 1);
+	baked_draw_layer_array[DRAW_LAYER_BACKGROUND]->Draw();
+	baked_draw_layer_array[DRAW_LAYER_BASE]->Draw();
+	baked_draw_layer_array[DRAW_LAYER_BASE_OVERLAY]->Draw();
+	baked_draw_layer_array[DRAW_LAYER_MID_1]->Draw();
+	Draw_Primitive_Instructions(render_target, -1); // For lasers 
+
+	Draw_Spritesheet_Instructions(render_target, SPRITESHEET_ENTITY);
+	Draw_Spritesheet_Instructions(render_target, SPRITESHEET_PROJECTILE);
+
+	baked_draw_layer_array[DRAW_LAYER_MID_1_OVERLAY]->Draw();
+
+	Draw_Primitive_Instructions(render_target, 1);
+
+	baked_draw_layer_array[DRAW_LAYER_MID_2]->Draw();
 
 	Draw_Text_Strings(render_target);
-	Draw_Sprites(render_target, SPRITESHEET_ICON);
-	Draw_Primitives_To_Screen(render_target, 2);
+	Draw_Spritesheet_Instructions(render_target, SPRITESHEET_ICON);
+	Draw_Primitive_Instructions(render_target, 2);
 	
 	Draw_Text_Strings(render_target, 2);
 }
@@ -337,6 +348,9 @@ void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spr
 		if (!is_multisprite) mid_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
 		else mid_multisprite[multisprite_num].Draw_Directly(render_target, position_rect, clip_rect);
 		break;
+	case SPRITESHEET_MID_2:
+		mid_spritesheet.Draw_Directly(render_target, position_rect, clip_rect);
+		break;
 	case SPRITESHEET_ENTITY:
 		break;
 	case SPRITESHEET_ROOF:
@@ -348,7 +362,7 @@ void Draw_System::Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spr
 	}
 }
 
-void Draw_System::Draw_Sprites(SDL_Renderer* render_target, int spritesheet)
+void Draw_System::Draw_Spritesheet_Instructions(SDL_Renderer* render_target, int spritesheet)
 {
 	switch (spritesheet)
 	{
@@ -384,7 +398,7 @@ void Draw_System::Draw_Sprites(SDL_Renderer* render_target, int spritesheet)
 	}
 }
 
-void Draw_System::Draw_Primitives_To_Screen(SDL_Renderer* render_target, int layer)
+void Draw_System::Draw_Primitive_Instructions(SDL_Renderer* render_target, int layer)
 {
 	//SDL_SetRenderDrawBlendMode(render_target, SDL_BLENDMODE_BLEND);
 
@@ -468,5 +482,12 @@ void Draw_System::free()
 	icon_spritesheet.free();
 	projectile_spritesheet.free();
 
+
+	for (int i = 0; i < count_num_baked_layers; i++)
+	{
+		baked_draw_layer_array[i]->free();
+		delete baked_draw_layer_array[i];
+		baked_draw_layer_array[i] = NULL;
+	}
 	
 }

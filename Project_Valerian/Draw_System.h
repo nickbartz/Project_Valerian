@@ -68,8 +68,8 @@ public:
 
 	void Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, bool is_multisprite = false, int multisprite_num = 0, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
 	void Draw_Primitive_Directly(SDL_Renderer* render_target, SDL_Rect primitive_rect, SDL_Color primitive_color, bool filled);
-	void Draw_Sprites(SDL_Renderer* render_target, int spritehsheet);
-	void Draw_Primitives_To_Screen(SDL_Renderer* render_target, int layer = 1);
+	void Draw_Spritesheet_Instructions(SDL_Renderer* render_target, int spritehsheet);
+	void Draw_Primitive_Instructions(SDL_Renderer* render_target, int layer = 1);
 	void Draw_Text_Strings(SDL_Renderer* render_target, int layer = 1);
 
 	// Free
@@ -118,8 +118,7 @@ private:
 	int count_num_print_text = -1;
 	Text_Instruction Text_Instruction_Array[MAX_NUM_TEXT_PRINT];
 
-	int count_num_layers = 4;
-
-	Draw_Layer* draw_layer_array[4];
+	int count_num_baked_layers = 6;
+	Draw_Layer* baked_draw_layer_array[6];
 };
 

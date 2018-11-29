@@ -11,13 +11,15 @@ AI_Rel_Component::AI_Rel_Component(Global_Service_Locator* sLocator, Object_Serv
 {
 	service_locator = sLocator;
 	object_locator = oLocator;
+	object_type = object_locator->Return_AI_Stats_Pointer()->Return_Object_Type();
 }
 
 void AI_Rel_Component::Check_For_Messages()
 {
-	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
+	Message_Array* mb_pointer = service_locator->get_MB_Pointer();
+	for (int i = 0; i < mb_pointer->count_custom_messages; i++)
 	{
-		Custom_Message* message = &service_locator->get_MB_Pointer()->Custom_Message_Array[i];
+		Custom_Message* message = &mb_pointer->Custom_Message_Array[i];
 		switch (message->Read_Message(0))
 		{
 		case MESSAGE_TYPE_SG_PROJECTILE_MOVEMENT:

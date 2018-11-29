@@ -21,6 +21,7 @@ public:
 
 	void Init();
 	void Draw();
+	void free();
 
 
 private:

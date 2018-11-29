@@ -420,7 +420,7 @@ void Scene_Graph::Create_Container(Coordinate grid_point, Item_Slot inventory_ar
 void Scene_Graph::Draw()
 {
 	// Background will only re-draw from individual textures if there is movement on the screen, otherwise is a prebaked texture
-	Draw_Background();
+	//Draw_Background();
 
 	Process_Main_Function(OBJECT_FUNCTION_DRAW);
 
@@ -428,26 +428,23 @@ void Scene_Graph::Draw()
 
 void Scene_Graph::Draw_Background()
 {
-	if (service_locator->get_Draw_System_Pointer()->Return_Spritesheet_Prebaked_Status(SPRITESHEET_BACKGROUND) == false)
+	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
+	SDL_Rect pos_rect = { 0,0,0,0 };
+
+	int camera_move_dampner = 10;
+
+	for (int i = 0; i < WORLD_MAX_NUM_BACKGROUND_OBJECTS; i++)
 	{
-		SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
-		SDL_Rect pos_rect = { 0,0,0,0 };
+		pos_rect = {
+			SCREEN_WIDTH / 2 + background_objects[i].x + (camera.x / camera_move_dampner) / background_objects[i].depth,
+			SCREEN_HEIGHT / 2 + background_objects[i].y + (camera.y / camera_move_dampner) / background_objects[i].depth,
+			TILE_SIZE / background_objects[i].depth,
+			TILE_SIZE / background_objects[i].depth
+		};
 
-		int camera_move_dampner = 10;
-
-		for (int i = 0; i < WORLD_MAX_NUM_BACKGROUND_OBJECTS; i++)
-		{
-			pos_rect = {
-				SCREEN_WIDTH / 2 + background_objects[i].x + (camera.x / camera_move_dampner) / background_objects[i].depth,
-				SCREEN_HEIGHT / 2 + background_objects[i].y + (camera.y / camera_move_dampner) / background_objects[i].depth,
-				TILE_SIZE / background_objects[i].depth,
-				TILE_SIZE / background_objects[i].depth
-			};
-
-			if (background_objects[i].type == 0) background_star_1.Draw(pos_rect, i);
-			else if (background_objects[i].type == 1) background_star_2.Draw(pos_rect, i);
-			else if (background_objects[i].type == 3) background_planetoid.Draw(pos_rect, i);
-		}
+		if (background_objects[i].type == 0) background_star_1.Draw(pos_rect);
+		else if (background_objects[i].type == 1) background_star_2.Draw(pos_rect);
+		else if (background_objects[i].type == 3) background_planetoid.Draw(pos_rect);
 	}
 }
 
