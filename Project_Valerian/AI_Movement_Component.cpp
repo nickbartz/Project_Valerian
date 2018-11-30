@@ -9,11 +9,10 @@
 #include<Scene_Graph.h>
 
 
-AI_Movement_Component::AI_Movement_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, SDL_Rect location, int oType, int object_template)
+AI_Movement_Component::AI_Movement_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, SDL_Rect location, int object_type, int object_template)
 {
 	service_locator = sLocator;
 	object_locator = oLocator;
-	object_type = oType;
 
 	world_pos = location;
 	Update_World_Coord(world_pos);
@@ -36,14 +35,12 @@ AI_Movement_Component::AI_Movement_Component(Global_Service_Locator* sLocator, O
 
 void AI_Movement_Component::Check_For_Messages()
 {
-	Message_Array* mb_pointer = service_locator->get_MB_Pointer();
-
-	for (int i = 0; i < mb_pointer->count_custom_messages; i++)
+	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
 	{
-		switch (mb_pointer->Custom_Message_Array[i].Read_Message(0))
+		switch (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0))
 		{
 		case MESSAGE_TYPE_SET_ENTITY_RALLY_POINT:
-			if (object_type == OBJECT_TYPE_ENTITY)
+			if (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type() == OBJECT_TYPE_ENTITY)
 			{
 				object_locator->Return_AI_Job_Pointer()->Clear_Job();
 				Set_Target_Coord({ service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(4), service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(5) });
@@ -55,7 +52,7 @@ void AI_Movement_Component::Check_For_Messages()
 
 void AI_Movement_Component::Update()
 {
-	switch (object_type)
+	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
 	{
 	case OBJECT_TYPE_ENTITY:
 		Update_Entity();

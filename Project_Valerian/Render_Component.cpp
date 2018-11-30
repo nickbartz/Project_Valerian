@@ -13,12 +13,11 @@
 using namespace std;
 
 // Generic Init
-Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int oType, int object_template_id)
+Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int object_type, int object_template_id)
 {
 	service_locator = sLocator;
 	object_locator = oLocator;
 	override_color = { 255,255,255,255 };
-	object_type = oType;
 
 	switch (object_type)
 	{
@@ -91,12 +90,10 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	service_locator = sLocator;
 	object_locator = oLocator;
 	override_color = { 255,255,255,255 };
-	object_type = OBJECT_TYPE_STRUCTURE;
 
 	render_component = object_config.render_component_type;
 	multiclip_type = object_config.multiclip_type;
 	spritesheet = object_config.spritesheet;
-	draw_layer = object_config.tile_layer;
 
 	sprite_clip = object_config.tile_clip;
 	sprite_coords = object_config.tile_specs;
@@ -109,7 +106,6 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	{
 		Initialize_Dedicated_Multisprite();
 		Adjust_Multisprite_To_Surroundings();
-		multisprite_state = 2;
 	}
 	// If the object is a door, handle door
 	else if (object_config.structure_type == 8)
@@ -162,7 +158,7 @@ void Render_Component::Draw(SDL_Rect pos_rect)
 // Component draw functions
 void Render_Component::Draw_With_Background_Renderer(SDL_Rect pos_rect)
 {
-	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, pos_rect, sprite_clip);
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, pos_rect, sprite_clip, 0.0, NULL, SDL_FLIP_NONE);
 }
 
 void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
@@ -175,7 +171,7 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
 
 	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
-	
+
 	// If the sprite is several stories high, the 2nd story needs to be printed seperately and later so that i will appear to float above any people walking around so they appear to go behind it
 	if (sprite_coords.h == 2 && spritesheet == SPRITESHEET_MID_1)
 	{
@@ -184,7 +180,6 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 
 		// Now re-do the draw rect and send a new instruction to the draw system to draw that 2nd story 
 		draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, ((pos_rect.y - TILE_SIZE)*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
-
 		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 	}
 }
@@ -195,9 +190,7 @@ void Render_Component::Draw_With_Multi_Clip(SDL_Rect pos_rect)
 
 	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, sprite_coords.w*camera.w, sprite_coords.h*camera.w };
 
-	service_locator->get_Draw_System_Pointer()->Add_Multisprite_Render_Job_To_Render_Cycle(spritesheet, dedicated_multisprite_num, draw_rect, 0.0, NULL, SDL_FLIP_NONE, override_color, multisprite_state);
-
-	multisprite_state = 1;
+	service_locator->get_Draw_System_Pointer()->Add_Multisprite_Render_Job_To_Render_Cycle(spritesheet, dedicated_multisprite_num, draw_rect, 0.0, NULL, SDL_FLIP_NONE, override_color);
 }
 
 void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
@@ -257,36 +250,29 @@ void Render_Component::Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Re
 void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 {
 	AI_Stats_Component* stats_pointer = object_locator->Return_AI_Stats_Pointer();
+	int current_health = stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH);
+	int max_health = stats_pointer->Return_Max_Stat_Value(STAT_OBJECT_HEALTH);
 
-	if (object_type == OBJECT_TYPE_ENTITY || object_type == OBJECT_TYPE_STRUCTURE)
+	int built_level = stats_pointer->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL);
+	int max_built_level = stats_pointer->Return_Max_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL);
+
+	// Draw Oxygenation Level
+	if (stats_pointer->Return_Object_Type() == OBJECT_TYPE_STRUCTURE)
 	{
-		int current_health = stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH);
-		int max_health = stats_pointer->Return_Max_Stat_Value(STAT_OBJECT_HEALTH);
-
-		// Draw Oxygenation Level
-		if (object_type == OBJECT_TYPE_STRUCTURE)
-		{
-			int oxygen_level = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_OXYGEN_LEVEL);
-			if (oxygen_level > 0) Handle_Oxygenation_Overlay(pos_rect, oxygen_level);
-		}
-
-		// Draw Current Health
-		if (current_health < max_health && current_health > 0)
-		{
-			Handle_Progress_Overlays(pos_rect, { 255,0,100,255 }, 5, current_health, max_health);
-		}
+		int oxygen_level = object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_OXYGEN_LEVEL);
+		if (oxygen_level > 0) Handle_Oxygenation_Overlay(pos_rect, oxygen_level);
 	}
 
-	if (object_type == OBJECT_TYPE_SCAFFOLD)
+	// Draw Current Health
+	if ( current_health < max_health && current_health > 0)
 	{
-		int built_level = stats_pointer->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL);
-		int max_built_level = stats_pointer->Return_Max_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL);
+		Handle_Progress_Overlays(pos_rect, { 255,0,100,255 }, 5, current_health, max_health);
+	}
 
-		// Draw Built Level
-		if (built_level < max_built_level)
-		{
-			Handle_Progress_Overlays(pos_rect, { 100,100,255,255 }, 11, built_level, max_built_level);
-		}
+	// Draw Built Level
+	if (built_level < max_built_level)
+	{
+		Handle_Progress_Overlays(pos_rect, { 100,100,255,255 }, 11, built_level, max_built_level);
 	}
 }
 
@@ -322,11 +308,8 @@ void Render_Component::Initialize_Dedicated_Multisprite()
 void Render_Component::Deinitialize_Dedicated_Multisprite()
 {
 	// This frees up the spritesheet currently being used and puts it back into free rotation for others
-	if (dedicated_multisprite_num != -1)
-	{
-		service_locator->get_Draw_System_Pointer()->Remove_Multisprite(spritesheet, dedicated_multisprite_num);
-		init = false;
-	}
+	service_locator->get_Draw_System_Pointer()->Remove_Multisprite(spritesheet,dedicated_multisprite_num);
+	init = false;
 }
 
 bool Render_Component::Is_Init()
@@ -350,8 +333,6 @@ void Render_Component::Adjust_Multisprite_To_Surroundings()
 		Build_Wall_Multisprite();
 		break;
 	}
-
-	multisprite_state = 2;
 }
 
 void Render_Component::Adjust_Door_Orientation()
@@ -368,14 +349,13 @@ void Render_Component::Adjust_Door_Orientation()
 	}
 }
 
-void Render_Component::Check_For_Messages()
+void Render_Component::Check_For_Messages(int grid_x, int grid_y)
 {
-	Message_Array* mb_pointer = service_locator->get_MB_Pointer();
-	for (int i = 0; i < mb_pointer->count_custom_messages; i++)
+	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
 	{
-		if (mb_pointer->Custom_Message_Array[i].Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION )
+		if (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION )
 		{
-			Check_Tile_Update_Message(&mb_pointer->Custom_Message_Array[i]);
+			Check_Tile_Update_Message(&service_locator->get_MB_Pointer()->Custom_Message_Array[i]);
 		}
 	}
 }

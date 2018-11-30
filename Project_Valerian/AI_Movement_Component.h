@@ -30,7 +30,6 @@ public:
 private:
 	SDL_Rect world_pos;
 	Coordinate world_coord = { 0,0 };
-	int object_type = 0;
 
 	bool Update_World_Coord(SDL_Rect new_world_rect);
 

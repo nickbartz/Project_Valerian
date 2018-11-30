@@ -35,13 +35,13 @@ bool init()
 	else
 	{
 		//Set texture filtering to linear
-		if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0"))
+		if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
 		{
 			printf("Warning: Linear texture filtering not enabled!");
 		}
 
 		//Create window
-		Game_Window = SDL_CreateWindow("Project Valerian", SCREEN_WIDTH/4, 100, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_FULLSCREEN);
+		Game_Window = SDL_CreateWindow("Project Valerian", SCREEN_WIDTH/4, 100, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 		if (Game_Window == NULL)
 		{
 			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
@@ -145,36 +145,40 @@ int main(int argc, char *args[])
 
 	// Create Service Locator
 	unique_ptr<Global_Service_Locator> service_locator(new Global_Service_Locator());
-	service_locator->Register_Game_Renderer(Game_Renderer);
-	service_locator->Register_Game_Window(Game_Window);
 
 	// Load Game Library
 	unique_ptr<Game_Library> game_library(new Game_Library(service_locator.get()));
-	service_locator->Register_Game_Library(game_library.get());
 
 	// Create Draw System & Load Sprites
 	unique_ptr<Draw_System> draw_system(new Draw_System{service_locator.get(), font_array, SDL_GetWindowPixelFormat(Game_Window) });
-	service_locator->Register_Draw_System_Pointer(draw_system.get());
 	draw_system.get()->Init_Sprites(Game_Renderer);
 
 	// Create UI System
 	unique_ptr<UI> user_interface(new UI(service_locator.get()));
-	service_locator->Register_UI_Pointer(user_interface.get());
 
 	// Create Cursor
 	unique_ptr<Cursor> cursor(new Cursor(service_locator.get()));
-	service_locator->Register_Cursor_Pointer(cursor.get());
 
 	// Create Message Bus
 	unique_ptr<Message_Array> main_bus(new Message_Array(service_locator.get()));
-	service_locator->Register_MB_Pointer(main_bus.get());
+
 
 	// Create World Map
 	unique_ptr<Scene_Graph> scene_graph(new Scene_Graph(service_locator.get()));
-	service_locator->Register_Scene_Graph(scene_graph.get());
 
 	// Create the Pathfinder 
 	unique_ptr<Path_Field> pathfinder(new Path_Field(service_locator.get()));
+
+	// Register pointers with the service locator
+
+	service_locator->Register_Game_Library(game_library.get());
+	service_locator->Register_Game_Window(Game_Window);
+	service_locator->Register_Game_Renderer(Game_Renderer);
+	service_locator->Register_Draw_System_Pointer(draw_system.get());
+	service_locator->Register_MB_Pointer(main_bus.get());
+	service_locator->Register_UI_Pointer(user_interface.get());
+	service_locator->Register_Cursor_Pointer(cursor.get());
+	service_locator->Register_Scene_Graph(scene_graph.get());
 	service_locator->Register_Pathfinder(pathfinder.get());
 
 	user_interface.get()->Init();

@@ -2,13 +2,14 @@
 
 using namespace std;
 #include<Global_Constants.h>
+#include<iostream>
 #include<string>
 #include<SDL.h>
 #include<SDL_ttf.h>
 #include<SDL_FontCache.h>
+#include <stdio.h>
 #include <Spritesheet.h>
 #include<Service_Locator.h>
-#include<Draw_Layer.h>
 
 class Draw_System
 {
@@ -50,7 +51,7 @@ public:
 
 	// Functions to Add or Remove From the Draw Array
 	void Add_Sprite_Render_Job_To_Render_Cycle(int spritesheet, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE, SDL_Color color_tint = {255,255,255,255});
-	void Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE,  SDL_Color color_shift = { 255,255,255,255 }, int multisprite_state = 1);
+	void Add_Multisprite_Render_Job_To_Render_Cycle(int spritesheet_num, int multi_tile_num, SDL_Rect pos_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE,  SDL_Color color_shift = { 255,255,255,255 });
 
 	void Add_Primitive_To_Render_Cycle(int init, SDL_Rect pos_rect, bool filled, SDL_Color primitive_color, int primitive_type = PRIMITIVE_TYPE_RECT);
 	void Clear_Primitive_Instruction_Array();
@@ -58,18 +59,14 @@ public:
 	void Add_Text_Job_To_Render_Cycle(int init, SDL_Rect pos_rect, string text_string, int font = FONT_DEFAULT, SDL_Color text_color = { 255,255,255,255 });
 	void Clear_Text_Instruction_Array();
 
-	// Draw to layer functions
-	int Get_Layer_Uniq_Id(int render_layer);
-	void Draw_Sprites_To_Draw_Layer(int render_component_id, int draw_layer, int spritesheet, SDL_Rect src_rect, SDL_Rect dest_rect, int multisprite_state = 0, int multisprite_num = 0, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE, bool has_color = false, SDL_Color override_color = { 255,255,255,255 }, bool is_primitive = false, int primitive_id = PRIMITIVE_TYPE_RECT, bool is_filled = false);
-
 	// Functions to Draw, called by main
 	void Update();
 	void Draw(SDL_Renderer* render_target);
 
-	void Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, int multisprite_state = 0, int multisprite_num = 0, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
+	void Draw_Spritesheet_Directly(SDL_Renderer* render_target, int spritesheet_num, SDL_Rect position_rect, SDL_Rect clip_rect, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip render_flip = SDL_FLIP_NONE);
 	void Draw_Primitive_Directly(SDL_Renderer* render_target, SDL_Rect primitive_rect, SDL_Color primitive_color, bool filled);
-	void Draw_Spritesheet_Instructions(SDL_Renderer* render_target, int spritehsheet);
-	void Draw_Primitive_Instructions(SDL_Renderer* render_target, int layer = 1);
+	void Draw_Sprites(SDL_Renderer* render_target, int spritehsheet);
+	void Draw_Primitives(SDL_Renderer* render_target, int layer = 1);
 	void Draw_Text_Strings(SDL_Renderer* render_target, int layer = 1);
 
 	// Free
@@ -117,8 +114,4 @@ private:
 	// Text print array
 	int count_num_print_text = -1;
 	Text_Instruction Text_Instruction_Array[MAX_NUM_TEXT_PRINT];
-
-	int count_num_baked_layers = 6;
-	Draw_Layer* baked_draw_layer_array[6];
 };
-

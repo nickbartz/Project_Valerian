@@ -14,11 +14,10 @@
 
 // Instantiation
 
-AI_Job_Component::AI_Job_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int oType, int template_id)
+AI_Job_Component::AI_Job_Component(Global_Service_Locator* sLocator, Object_Service_Locator* oLocator, int object_type, int template_id)
 {
 	service_locator = sLocator;
 	object_locator = oLocator;
-	object_type = oType;
 
 	Clear_All_Goals_From_Array();
 
@@ -75,7 +74,7 @@ int AI_Job_Component::Return_Current_Goal_Index()
 
 void AI_Job_Component::Update()
 {
-	switch (object_type)
+	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
 	{
 	case OBJECT_TYPE_STRUCTURE:
 		Update_Structure();
@@ -135,7 +134,7 @@ void AI_Job_Component::Clear_Job()
 
 void AI_Job_Component::Check_For_Messages()
 {
-	switch (object_type)
+	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
 	{
 	case OBJECT_TYPE_STRUCTURE:
 		Check_For_Messages_Structure();
@@ -150,7 +149,6 @@ void AI_Job_Component::Check_For_Messages_Structure()
 {
 	Custom_Message* new_message;
 	Coordinate current_coord;
-	Message_Array* mb_pointer = service_locator->get_MB_Pointer();
 	int job_type = 0;
 
 	if (active_job != NULL) job_type = active_job->Return_Job_Type();
@@ -158,16 +156,16 @@ void AI_Job_Component::Check_For_Messages_Structure()
 	switch (job_type)
 	{
 	case 1: // Oxygenate Job From job csv data
-		for (int i = 0; i < mb_pointer->count_custom_messages; i++)
+		for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
 		{
-			new_message = &mb_pointer->Custom_Message_Array[i];
+			new_message = &service_locator->get_MB_Pointer()->Custom_Message_Array[i];
 			if (new_message->Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION)	next_goal_index = 0;
 		}
 		break;
 	case 2: // Door Job From job csv data
-		for (int i = 0; i < mb_pointer->count_custom_messages; i++)
+		for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
 		{
-			new_message = &mb_pointer->Custom_Message_Array[i];
+			new_message = &service_locator->get_MB_Pointer()->Custom_Message_Array[i];
 			switch (new_message->Read_Message(0))
 			{
 			case MESSAGE_TYPE_SG_ENTITY_MOVEMENT:
@@ -193,11 +191,11 @@ void AI_Job_Component::Check_For_Messages_Entity()
 	// Send out Job Acceptance Message
 
 	// Check to See if Someone Else Accepted the Job
-	Message_Array* mb_pointer = service_locator->get_MB_Pointer();
 
-	for (int i = 0; i < mb_pointer->count_custom_messages; i++)
+
+	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
 	{
-		switch (mb_pointer->Custom_Message_Array[i].Read_Message(0))
+		switch (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0))
 		{
 		case MESSAGE_TYPE_ENTITY_JOB_REQUEST:
 			break;
@@ -263,6 +261,7 @@ void AI_Job_Component::Process_Next_Goal()
 
 	if (next_goal_index < current_num_job_goals && current_goals[next_goal_index].goal_instruction_array[0] != ACTION_NONE)
 	{
+		//if (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type() == OBJECT_TYPE_ENTITY) cout << current_goals[next_goal_index].goal_string_name << endl;
 		Action_Triage(&current_goals[next_goal_index]);
 	}
 }

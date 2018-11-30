@@ -18,7 +18,6 @@ bool Tile::Update_Tile_Structure(Object* new_structure, int tile_layer)
 		if (base_structure != NULL && base_structure->Get_Assigned_Flag() == OBJECT_ASSIGNED)
 		{
 			base_structure->Set_Assigned_Flag(OBJECT_UNASSIGNED);
-			base_structure->Return_Render_Component()->Deinitialize_Dedicated_Multisprite();
 			replacement = true;
 		}
 		base_structure = new_structure;
@@ -27,7 +26,6 @@ bool Tile::Update_Tile_Structure(Object* new_structure, int tile_layer)
 		if (mid_structure != NULL && mid_structure->Get_Assigned_Flag() == OBJECT_ASSIGNED)
 		{
 			mid_structure->Set_Assigned_Flag(OBJECT_UNASSIGNED);
-			mid_structure->Return_Render_Component()->Deinitialize_Dedicated_Multisprite();
 			replacement = true;
 		}
 		mid_structure = new_structure;
@@ -37,7 +35,6 @@ bool Tile::Update_Tile_Structure(Object* new_structure, int tile_layer)
 		{
 			replacement = true;
 			roof_structure->Set_Assigned_Flag(OBJECT_UNASSIGNED);
-			roof_structure->Return_Render_Component()->Deinitialize_Dedicated_Multisprite();
 		}
 		roof_structure = new_structure;
 		break;
@@ -46,7 +43,6 @@ bool Tile::Update_Tile_Structure(Object* new_structure, int tile_layer)
 		{
 			replacement = true;
 			scaffold->Set_Assigned_Flag(OBJECT_UNASSIGNED);
-			scaffold->Return_Render_Component()->Deinitialize_Dedicated_Multisprite();
 		}
 		scaffold = new_structure;
 		break;

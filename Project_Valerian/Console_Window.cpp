@@ -253,10 +253,7 @@ bool UI_Window_Generic::is_open()
 
 bool UI_Window_Generic::is_currently_clicked()
 {
-	if (window_title_bar.Currently_Clicked() == true)
-	{
-		return true;
-	}
+	if (window_title_bar.Currently_Clicked() == true) return true;
 	else return false;
 }
 

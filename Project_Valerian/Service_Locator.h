@@ -25,6 +25,7 @@ public:
 	Scene_Graph* get_Scene_Graph();
 	Path_Field* get_Pathfinder();
 
+
 	void Register_UI_Pointer(UI* ui_pointer);
 	void Register_MB_Pointer(Message_Array* msg_pointer);
 	void Register_Draw_System_Pointer(Draw_System* draw_pointer);

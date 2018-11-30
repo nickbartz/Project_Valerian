@@ -246,12 +246,13 @@ void Object::Update()
 
 void Object::Collect_Bus_Messages()
 {
-		if (render_component != NULL) render_component->Check_For_Messages();
-		if (AI_Stats != NULL) AI_Stats->Check_For_Messages();
-		if (AI_Job != NULL) AI_Job->Check_For_Messages();
-		if (AI_Movement != NULL) AI_Movement->Check_For_Messages();
-		if (AI_Relationship != NULL) AI_Relationship->Check_For_Messages();
-		if (AI_Items != NULL) AI_Items->Check_For_Messages();
+	Coordinate grid_coord = AI_Movement->Return_Grid_Coord();
+	if (render_component != NULL) render_component->Check_For_Messages(grid_coord.x,grid_coord.y);
+	if (AI_Stats != NULL) AI_Stats->Check_For_Messages();
+	if (AI_Job != NULL) AI_Job->Check_For_Messages();
+	if (AI_Movement != NULL) AI_Movement->Check_For_Messages();
+	if (AI_Relationship != NULL) AI_Relationship->Check_For_Messages();
+	if (AI_Items != NULL) AI_Items->Check_For_Messages();
 }
 
 void Object::Set_Assigned_Flag(int aFlag)

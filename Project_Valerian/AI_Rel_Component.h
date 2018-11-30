@@ -28,8 +28,6 @@ private:
 		Object* object_pointer;
 	};
 
-	int object_type = 0;
-
 	Object_Relationship Obj_Relationship_Array[AI_REL_MAX_OBJECT_RELATIONSHIPS];
 	
 	// Functions to manage basic objects added or subtracted to the object pointer array

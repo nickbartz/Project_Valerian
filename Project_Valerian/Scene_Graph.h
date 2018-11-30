@@ -131,8 +131,7 @@ private:
 		int depth;
 		int type;
 	};
-
-	Background_Object background_objects[WORLD_MAX_NUM_BACKGROUND_OBJECTS];
+	Background_Object background_objects[1000];
 	Object background_star_1;
 	Object background_star_2;
 	Object background_planetoid;

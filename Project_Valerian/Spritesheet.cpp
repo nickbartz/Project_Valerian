@@ -149,7 +149,6 @@ void Spritesheet::Add_Sprite_Instructions(SDL_Rect position_rect, SDL_Rect clip_
 	Sprite_Instructions new_instruction = { position_rect, clip_rect,angle,center,render_flip, color_shift};
 	if (current_num_instructions < MAX_SPRITE_INSTRUCTIONS)
 	{
-		//cout << current_num_instructions << endl;
 		instruction_array[current_num_instructions] = new_instruction;
 		current_num_instructions++;
 	}

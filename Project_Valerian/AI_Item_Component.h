@@ -126,7 +126,6 @@ private:
 	bool Create_Build_Job();
 
 	int item_change_flag = 1;
-	int object_type = 0;
 
 	int num_inventory_slots = 0;
 	Item_Slot inventory_array[MAX_NUM_INVENTORY_SLOTS];
@@ -135,7 +134,5 @@ private:
 	Equipment_Slot equipment_array[MAX_NUM_EQUIPMENT_SLOTS];
 
 	vector<Blueprint*> loaded_production_blueprints;
-
-	int current_num_build_orders = 0;
 	deque<Build_Order> active_build_orders;
 };

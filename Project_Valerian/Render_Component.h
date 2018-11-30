@@ -50,7 +50,7 @@ public:
 	// Update Functions
 	void Update_Neighbor_Array(Adjacent_Structure_Array new_neighbors);
 	void Adjust_Multisprite_To_Surroundings();
-	void Check_For_Messages();
+	void Check_For_Messages(int grid_x, int grid_y);
 	void Check_Tile_Update_Message(Custom_Message* tile_update);
 
 	// function for different multiclip types
@@ -74,10 +74,8 @@ private:
 	bool init = false;
 	Global_Service_Locator * service_locator;
 	Object_Service_Locator* object_locator;
-	int object_type = 0;
 
 	// GENERIC VARIABLES
-	int draw_layer = DRAW_LAYER_BACKGROUND;
 	int render_component;
 	int spritesheet;
 	int max_animation_frames;
@@ -89,9 +87,8 @@ private:
 	SDL_Color override_color = { 255,255,255,255 };
 
 	// STRUCTURE_SPECIFIC VARIABLES
-	int multisprite_state = 0;
 	int multiclip_type;
-	int dedicated_multisprite_num = -1;
+	int dedicated_multisprite_num;
 	SDL_Rect sprite_clip;
 	SDL_Rect sprite_coords;
 	Adjacent_Structure_Array neighbors;
