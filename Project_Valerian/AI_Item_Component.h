@@ -76,6 +76,7 @@ public:
 
 	void Update();
 	void Update_Entity();
+	void Update_Structure();
 	void Update_Build_Orders();
 	void Check_For_Messages();
 
@@ -119,6 +120,7 @@ public:
 private:
 	Global_Service_Locator* service_locator;
 	Object_Service_Locator* object_locator;
+	int object_type = 0;
 
 	// Scaffold Specific Variables
 	bool Check_If_Next_Build_Order_Can_Start_Build();

@@ -210,6 +210,9 @@ void UI::Parse_Loaded_Actions()
 			service_pointer->get_Cursor_Pointer()->Change_Cursor_Icon(icon_clip_x, icon_clip_y);
 			break;
 		case UI_ACTION_SUPPORTING_TYPE_SET_ASTEROID_MINE:
+			icon_clip_x = 2 * SPRITE_SIZE;
+			icon_clip_y = 3 * SPRITE_SIZE;
+			service_pointer->get_Cursor_Pointer()->Change_Cursor_Icon(icon_clip_x, icon_clip_y);
 			break;
 		}
 	}

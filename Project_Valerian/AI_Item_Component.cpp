@@ -11,14 +11,28 @@ AI_Item_Component::AI_Item_Component(Global_Service_Locator* sLocator, Object_Se
 {
 	service_locator = sLocator;
 	object_locator = oLocator;
+	object_type = object_locator->Return_AI_Stats_Pointer()->Return_Object_Type();
 
 	num_inventory_slots = num_inv_slots;
 
-	switch (object_locator->Return_AI_Stats_Pointer()->Return_Object_Type())
+	switch (object_type)
 	{
 	case OBJECT_TYPE_STRUCTURE:
 		if (service_locator->get_Game_Library()->Fetch_Structure_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->has_starter_inventory >= 1) Populate_Starter_Inventory(OBJECT_TYPE_STRUCTURE);
 		Populate_Production_Blueprints(service_locator->get_Game_Library()->Fetch_Structure_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->blueprint_pack_id);
+
+		if (object_locator->Return_AI_Stats_Pointer()->Get_Structure_Type() == service_locator->get_Game_Library()->Get_Structure_Type_Code_From_Structure_Type_String("STRUCTURE_TYPE_LIVING_FRENZEL"))
+		{
+			if (loaded_production_blueprints.size() > 0)
+			{
+				Blueprint* frenzel_blueprint = loaded_production_blueprints.front();
+				if (frenzel_blueprint != NULL)
+				{
+					Add_Build_Order_To_Queue(frenzel_blueprint, OBJECT_TYPE_ITEM, frenzel_blueprint->associated_template_id, BLUEPRINT_STATE_PARTS_NEEDED_NO_JOB_SENT);
+				}
+			}
+		}
+
 		break;
 	case OBJECT_TYPE_ENTITY:
 		if (service_locator->get_Game_Library()->Fetch_Entity_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->entity_has_starter_inventory >= 1)
@@ -114,7 +128,10 @@ bool AI_Item_Component::Build_Is_Complete()
 {
 	if (object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) > 0 && object_locator->Return_AI_Stats_Pointer()->Return_Max_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) > 0)
 	{
-		if ((object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= object_locator->Return_AI_Stats_Pointer()->Return_Max_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL))) return true;
+		if ((object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= object_locator->Return_AI_Stats_Pointer()->Return_Max_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL)))
+		{
+			return true;
+		}
 	}
 
 	else return false;
@@ -420,14 +437,13 @@ void AI_Item_Component::Scan_Inventory_For_Storable_Items(int threshold_quantity
 
 	for (int i = 0; i < num_inventory_slots; i++)
 	{
-		// EDIT THIS EVENTUALLY FOR MORE THAN JUST ORE
-		if (service_locator->get_Game_Library()->Fetch_Item_Template(inventory_array[i].slot_item.item_template_id)->inventory_item_type_string == "INVENTORY_ITEM_TYPE_ORE" && inventory_array[i].item_quantity > 0 && inventory_array[i].part_of_active_job == 0)
+		if (inventory_array[i].item_quantity > 0 && inventory_array[i].part_of_active_job == 0)
 		{
 			if (new_blueprint.Num_Items_In_Blueprint < MAX_ITEMS_PER_BLUEPRINT)
 			{
-				Item found_ore;
-				found_ore.item_template_id = inventory_array[i].slot_item.item_template_id;
-				new_blueprint.blueprint_items[new_blueprint.Num_Items_In_Blueprint].slot_item = found_ore;
+				Item storable_item;
+				storable_item.item_template_id = inventory_array[i].slot_item.item_template_id;
+				new_blueprint.blueprint_items[new_blueprint.Num_Items_In_Blueprint].slot_item = storable_item;
 				new_blueprint.blueprint_items[new_blueprint.Num_Items_In_Blueprint].item_quantity = inventory_array[i].item_quantity;
 				item_quantity += inventory_array[i].item_quantity;
 				new_blueprint.Num_Items_In_Blueprint++;
@@ -474,6 +490,9 @@ void AI_Item_Component::Update()
 		case OBJECT_TYPE_ENTITY:
 			Update_Entity();
 			break;
+		case OBJECT_TYPE_STRUCTURE:
+			Update_Structure();
+			break;
 		}
 
 		if (active_build_orders.size() > 0) Update_Build_Orders();
@@ -484,8 +503,17 @@ void AI_Item_Component::Update_Entity()
 {
 	if (object_locator->Return_AI_Job_Pointer()->Return_Current_Num_Goals() == 0)
 	{
-		Scan_Inventory_For_Storable_Items(0);
+		// Removing this for now until we can find a sustainable way to scan inventory for only storeable items
+		//Scan_Inventory_For_Storable_Items(0);
 		item_change_flag = 0;
+	}
+}
+
+void AI_Item_Component::Update_Structure()
+{
+	if (object_locator->Return_AI_Stats_Pointer()->Get_Structure_Type() == service_locator->get_Game_Library()->Get_Structure_Type_Code_From_Structure_Type_String("STRUCTURE_TYPE_LIVING_FRENZEL"))
+	{
+
 	}
 }
 
@@ -505,7 +533,10 @@ void AI_Item_Component::Update_Build_Orders()
 			if (Build_Is_Complete() == true)
 			{
 				if (active_build_orders.front().build_requirements != NULL) Remove_Blueprint_Items_From_Inventory(active_build_orders.front().build_requirements);
-				if (active_build_orders.front().object_type == OBJECT_TYPE_ITEM) Create_Production_Item_Container();
+				if (active_build_orders.front().object_type == OBJECT_TYPE_ITEM)
+				{
+					Create_Production_Item_Container();
+				}
 				active_build_orders.pop_front();
 			}
 			break;

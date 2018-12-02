@@ -346,6 +346,10 @@ void AI_Job_Component::Action_Edit_Internal(Job_Goal* goal)
 		object_locator->Return_AI_Movement_Pointer()->Stop_Moving();
 		next_goal_index++;
 		break;
+	case A_EI_SET_CARRIED_ITEM:
+		object_locator->Return_Render_Pointer()->Set_Currently_Carried_Item(goal->goal_instruction_array[2]);
+		next_goal_index++;
+		break;
 	}
 }
 

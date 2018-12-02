@@ -114,15 +114,146 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 	}
 }
 
-void Render_Component::Update()
+void Render_Component::Adjust_Multisprite_To_Surroundings()
 {
-	if (render_component == RENDER_COMPONENT_ANIMATED_CLIP)
+	switch (multiclip_type)
 	{
-		Increment_Simple_Animation();
+	case MULTI_CLIP_FLOOR:
+		Stamp({ 0,0,32,32 }, { 0,0,32,32 });
+		break;
+	case MULTI_CLIP_WALL:
+		Build_Wall_Multisprite();
+		break;
+	case MULTI_CLIP_FRENZEL:
+		Build_Frenzel_Multisprite(sprite_clip.x, sprite_clip.y);
+		break;
+	}
+}
+void Render_Component::Adjust_Door_Orientation()
+{
+	Game_Library* gl = service_locator->get_Game_Library();
+
+	if (gl->is_wall(neighbors.asa[1][0][1]) && gl->is_wall(neighbors.asa[1][2][1]))
+	{
+		orientation_y_clip_offset = 0;
+	}
+	else if (gl->is_wall(neighbors.asa[1][1][0]) && gl->is_wall(neighbors.asa[1][1][2]))
+	{
+		orientation_y_clip_offset = 1;
 	}
 }
 
-// Main draw function
+void Render_Component::Build_Floor_Multisprite()
+{
+
+}
+void Render_Component::Build_Wall_Multisprite()
+{
+	Clear_Sprite();
+
+	Handle_Upper_Left_Wall_Quad(sprite_clip.x, sprite_clip.y);
+
+	Handle_Upper_Right_Wall_Quad(sprite_clip.x, sprite_clip.y);
+
+	Handle_Bottom_Left_Wall_Quad(sprite_clip.x, sprite_clip.y);
+
+	Handle_Bottom_Right_Wall_Quad(sprite_clip.x, sprite_clip.y);
+
+}
+void Render_Component::Build_Frenzel_Multisprite(int sprite_offset_x, int sprite_offset_y)
+{
+	Clear_Sprite();
+
+	Game_Library* gl = service_locator->get_Game_Library();
+	int TW = TILE_SIZE;
+	int TQ = TILE_SIZE / 2;
+	int cto_x = sprite_offset_x;
+	int cto_y = sprite_offset_y;
+
+	bool bottom_frenzel = false;
+	bool right_frenzel = false;
+	bool left_frenzel = false;
+	bool top_frenzel = false;
+
+	if (neighbors.asa[1][0][1] == gl->Get_Structure_Type_Code_From_Structure_Type_String("STRUCTURE_TYPE_LIVING_FRENZEL")) left_frenzel = true;
+	if (neighbors.asa[1][1][0] == gl->Get_Structure_Type_Code_From_Structure_Type_String("STRUCTURE_TYPE_LIVING_FRENZEL")) top_frenzel = true;
+	if (neighbors.asa[1][2][1] == gl->Get_Structure_Type_Code_From_Structure_Type_String("STRUCTURE_TYPE_LIVING_FRENZEL")) right_frenzel = true;
+	if (neighbors.asa[1][1][2] == gl->Get_Structure_Type_Code_From_Structure_Type_String("STRUCTURE_TYPE_LIVING_FRENZEL")) bottom_frenzel = true;
+
+	// Base
+	Stamp({ 0 * TW,0 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+
+	// Connective Tissue
+	if (left_frenzel == true) Stamp({ 6 * TQ,0 * TQ,TW / 2,TW }, { 0,0,TW / 2,TW }, cto_x, cto_y); // Left Arm
+	if (right_frenzel == true) Stamp({ 7 * TQ,0 * TQ,TW / 2,TW }, { TW / 2,0,TW / 2,TW }, cto_x, cto_y); // Right Arm
+	if (top_frenzel == true) Stamp({ 8 * TQ,0 * TQ,TW,TW / 2 }, { 0,0,TW,TW / 2 }, cto_x, cto_y); // Left Arm
+	if (bottom_frenzel == true) Stamp({ 8 * TQ,1 * TQ,TW,TW / 2 }, { 0,TW / 2,TW,TW / 2 }, cto_x, cto_y); // Right Arm
+
+																										  // Arms
+	if (left_frenzel == true) Stamp({ 2 * TQ,1 * TQ,TQ,TQ }, { 0,TQ / 2,TQ,TQ }, cto_x, cto_y); // Left Arm
+	if (top_frenzel == true) Stamp({ 2 * TQ,0 * TQ,TQ,TQ }, { TQ / 2,0,TQ,TQ }, cto_x, cto_y); // Top Arm
+	if (right_frenzel == true) Stamp({ 3 * TQ,0 * TQ,TQ,TQ }, { TQ,TQ / 2,TQ,TQ }, cto_x, cto_y); // Right Arm
+	if (bottom_frenzel == true) Stamp({ 3 * TQ,1 * TQ,TQ,TQ }, { TQ / 2,TQ,TQ,TQ }, cto_x, cto_y); // Bottom Arm
+
+
+																								   // Head
+	Stamp({ 1 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+}
+
+void Render_Component::Change_Simple_Animation(int new_animation)
+{
+	simple_animation_type = new_animation;
+}
+void Render_Component::Change_Entity_Current_Animation(int new_animation)
+{
+	current_entity_anim = new_animation;
+}
+void Render_Component::Check_For_Messages(int grid_x, int grid_y)
+{
+	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
+	{
+		if (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION)
+		{
+			Check_Tile_Update_Message(&service_locator->get_MB_Pointer()->Custom_Message_Array[i]);
+		}
+	}
+}
+void Render_Component::Check_Tile_Update_Message(Custom_Message* tile_update)
+{
+	Coordinate grid_point = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
+	int grid_x = grid_point.x;
+	int grid_y = grid_point.y;
+
+	bool sprite_update = false;
+
+	int message_tile_x = tile_update->Read_Message(3);
+	int message_tile_y = tile_update->Read_Message(4);
+
+	int delta_x = message_tile_x - grid_x;
+	int delta_y = message_tile_y - grid_y;
+
+	if (abs(delta_x) <= 1 && abs(delta_y) <= 1 && !(delta_x == 0 && delta_y == 0))
+	{
+		int message_tile_layer = tile_update->Read_Message(5);
+		int message_tile_type = tile_update->Read_Message(6);
+
+		neighbors.asa[message_tile_layer - 1][delta_x + 1][delta_y + 1] = message_tile_type;
+		sprite_update = true;
+	}
+
+	if (sprite_update == true) Adjust_Multisprite_To_Surroundings();
+}
+void Render_Component::Clear_Sprite()
+{
+	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet, dedicated_multisprite_num, { 0,0,0,0 }, { 0,0,0,0 }, true);
+}
+
+void Render_Component::Deinitialize_Dedicated_Multisprite()
+{
+	// This frees up the spritesheet currently being used and puts it back into free rotation for others
+	service_locator->get_Draw_System_Pointer()->Remove_Multisprite(spritesheet, dedicated_multisprite_num);
+	init = false;
+}
 void Render_Component::Draw(SDL_Rect pos_rect)
 {	
 	switch (render_component)
@@ -154,13 +285,10 @@ void Render_Component::Draw(SDL_Rect pos_rect)
 	Draw_Overlays(pos_rect);
 
 }
-
-// Component draw functions
 void Render_Component::Draw_With_Background_Renderer(SDL_Rect pos_rect)
 {
 	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, pos_rect, sprite_clip, 0.0, NULL, SDL_FLIP_NONE);
 }
-
 void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 {
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
@@ -183,7 +311,6 @@ void Render_Component::Draw_With_Simple_Clip(SDL_Rect pos_rect)
 		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 	}
 }
-
 void Render_Component::Draw_With_Multi_Clip(SDL_Rect pos_rect)
 {
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
@@ -192,7 +319,6 @@ void Render_Component::Draw_With_Multi_Clip(SDL_Rect pos_rect)
 
 	service_locator->get_Draw_System_Pointer()->Add_Multisprite_Render_Job_To_Render_Cycle(spritesheet, dedicated_multisprite_num, draw_rect, 0.0, NULL, SDL_FLIP_NONE, override_color);
 }
-
 void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 {	
 	
@@ -216,7 +342,6 @@ void Render_Component::Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect)
 		service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_MID_2, draw_rect, new_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 	}
 }
-
 void Render_Component::Draw_With_Complex_Entity_Animation(SDL_Rect pos_rect)
 {
 	for (int i = 0; i < num_entity_components; i++)
@@ -224,7 +349,6 @@ void Render_Component::Draw_With_Complex_Entity_Animation(SDL_Rect pos_rect)
 		Draw_Entity_Animation_Component(pos_rect, entity_animations[current_entity_anim][i].component_clip, entity_animations[current_entity_anim][i].component_current_frame, SPRITESHEET_ENTITY);
 	}
 }
-
 void Render_Component::Draw_Point(SDL_Rect pos_rect)
 {
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
@@ -232,9 +356,6 @@ void Render_Component::Draw_Point(SDL_Rect pos_rect)
 
 	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(-1, draw_rect, true, override_color, PRIMITIVE_TYPE_POINT);
 }
-
-// Draw function sub-functions
-
 void Render_Component::Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Rect sprite_clip, int animation_frame, int spritesheet)
 {
 	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
@@ -246,9 +367,13 @@ void Render_Component::Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Re
 
 	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(spritesheet, draw_rect, anim_clip, 0.0, NULL, SDL_FLIP_NONE, override_color);
 }
-
 void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 {
+	if (carrying_item == true)
+	{
+		Draw_Carried_Item(pos_rect);
+	}
+
 	AI_Stats_Component* stats_pointer = object_locator->Return_AI_Stats_Pointer();
 	int current_health = stats_pointer->Return_Stat_Value(STAT_OBJECT_HEALTH);
 	int max_health = stats_pointer->Return_Max_Stat_Value(STAT_OBJECT_HEALTH);
@@ -275,6 +400,12 @@ void Render_Component::Draw_Overlays(SDL_Rect pos_rect)
 		Handle_Progress_Overlays(pos_rect, { 100,100,255,255 }, 11, built_level, max_built_level);
 	}
 }
+void Render_Component::Draw_Carried_Item(SDL_Rect pos_rect)
+{
+	SDL_Rect camera = service_locator->get_Cursor_Pointer()->Get_Camera();
+	SDL_Rect draw_rect = { (pos_rect.x*camera.w / TILE_SIZE) + SCREEN_WIDTH / 2 + camera.x, (pos_rect.y*camera.w / TILE_SIZE) + SCREEN_HEIGHT / 2 + camera.y, camera.w, camera.w };
+	service_locator->get_Draw_System_Pointer()->Add_Sprite_Render_Job_To_Render_Cycle(SPRITESHEET_ICON, draw_rect, { item_clip_x, item_clip_y, SPRITE_SIZE, SPRITE_SIZE });
+}
 
 void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level)
 {
@@ -286,7 +417,6 @@ void Render_Component::Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygena
 
 	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, true, overlay_color);
 }
-
 void Render_Component::Handle_Progress_Overlays(SDL_Rect pos_rect, SDL_Color bar_color, int height_offset, int current_health, int max_health)
 {
 	SDL_Rect progress_bar_Rect = { pos_rect.x, pos_rect.y - height_offset, current_health*TILE_SIZE/max_health, height_offset };
@@ -295,122 +425,6 @@ void Render_Component::Handle_Progress_Overlays(SDL_Rect pos_rect, SDL_Color bar
 	service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, true, bar_color, PRIMITIVE_TYPE_RECT);
 	if (draw_rect.w > 0) service_locator->get_Draw_System_Pointer()->Add_Primitive_To_Render_Cycle(1, draw_rect, false, { 255,255,255,255 }, PRIMITIVE_TYPE_RECT);
 }
-
-// Functions that support multisprites
-
-void Render_Component::Initialize_Dedicated_Multisprite()
-{
-	// This creates a dedicated spritesheet for this multitileconfig with a blank SDL_Texture the size of one tile
-	dedicated_multisprite_num = service_locator->get_Draw_System_Pointer()->Add_New_Spritesheet_To_Multisprite(spritesheet, service_locator->get_Game_Renderer());
-	if (dedicated_multisprite_num >= 0 && dedicated_multisprite_num <= MAX_SPRITES_PER_MULTISPRITE) init = true;
-}
-
-void Render_Component::Deinitialize_Dedicated_Multisprite()
-{
-	// This frees up the spritesheet currently being used and puts it back into free rotation for others
-	service_locator->get_Draw_System_Pointer()->Remove_Multisprite(spritesheet,dedicated_multisprite_num);
-	init = false;
-}
-
-bool Render_Component::Is_Init()
-{
-	return init;
-}
-
-void Render_Component::Update_Neighbor_Array(Adjacent_Structure_Array new_neighbors)
-{
-	neighbors = new_neighbors;
-}
-
-void Render_Component::Adjust_Multisprite_To_Surroundings()
-{
-	switch (multiclip_type)
-	{
-	case MULTI_CLIP_FLOOR:
-		Stamp({ 0,0,32,32 }, { 0,0,32,32 });
-		break;
-	case MULTI_CLIP_WALL:
-		Build_Wall_Multisprite();
-		break;
-	}
-}
-
-void Render_Component::Adjust_Door_Orientation()
-{
-	Game_Library* gl = service_locator->get_Game_Library();
-
-	if (gl->is_wall(neighbors.asa[1][0][1]) && gl->is_wall(neighbors.asa[1][2][1]))
-	{
-		orientation_y_clip_offset = 0;
-	}
-	else if (gl->is_wall(neighbors.asa[1][1][0]) && gl->is_wall(neighbors.asa[1][1][2]))
-	{
-		orientation_y_clip_offset = 1;
-	}
-}
-
-void Render_Component::Check_For_Messages(int grid_x, int grid_y)
-{
-	for (int i = 0; i < service_locator->get_MB_Pointer()->count_custom_messages; i++)
-	{
-		if (service_locator->get_MB_Pointer()->Custom_Message_Array[i].Read_Message(0) == MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION )
-		{
-			Check_Tile_Update_Message(&service_locator->get_MB_Pointer()->Custom_Message_Array[i]);
-		}
-	}
-}
-
-void Render_Component::Check_Tile_Update_Message(Custom_Message* tile_update)
-{
-	Coordinate grid_point = object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord();
-	int grid_x = grid_point.x;
-	int grid_y = grid_point.y;
-	
-	bool sprite_update = false;
-
-	int message_tile_x = tile_update->Read_Message(3);
-	int message_tile_y = tile_update->Read_Message(4);
-
-	int delta_x = message_tile_x - grid_x;
-	int delta_y = message_tile_y - grid_y;
-
-	if (abs(delta_x) <= 1 && abs(delta_y) <= 1 && !(delta_x == 0 && delta_y == 0))
-	{
-		int message_tile_layer = tile_update->Read_Message(5);
-		int message_tile_type = tile_update->Read_Message(6);
-
-		neighbors.asa[message_tile_layer - 1][delta_x + 1][delta_y + 1] = message_tile_type;
-		sprite_update = true;
-	}
-
-	if (sprite_update == true) Adjust_Multisprite_To_Surroundings();
-}
-
-void Render_Component::Stamp(SDL_Rect spritesheet_clip, SDL_Rect pos_rect, int tile_offset_x, int tile_offset_y)
-{
-	SDL_Rect offset_clip = { spritesheet_clip.x + tile_offset_x, spritesheet_clip.y + tile_offset_y, spritesheet_clip.w, spritesheet_clip.h };
-	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet, dedicated_multisprite_num, offset_clip, pos_rect);
-}
-
-void Render_Component::Clear_Sprite()
-{
-	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet, dedicated_multisprite_num, { 0,0,0,0 }, { 0,0,0,0 }, true);
-}
-
-void Render_Component::Build_Wall_Multisprite()
-{
-	Clear_Sprite();
-	
-	Handle_Upper_Left_Wall_Quad(sprite_clip.x, sprite_clip.y);
-
-	Handle_Upper_Right_Wall_Quad(sprite_clip.x, sprite_clip.y);
-
-	Handle_Bottom_Left_Wall_Quad(sprite_clip.x, sprite_clip.y);
-
-	Handle_Bottom_Right_Wall_Quad(sprite_clip.x, sprite_clip.y);
-
-}
-
 void Render_Component::Handle_Upper_Left_Wall_Quad(int sprite_offset_x, int sprite_offset_y)
 {
 	Game_Library* gl = service_locator->get_Game_Library();
@@ -428,7 +442,7 @@ void Render_Component::Handle_Upper_Left_Wall_Quad(int sprite_offset_x, int spri
 	bool top_left_space = false;
 	bool top_left_wall = false;
 	bool top_left_floor = false;
-	
+
 	if (gl->is_null(neighbors.asa[0][0][1]) && gl->is_null(neighbors.asa[1][0][1])) left_space = true;
 	if (gl->is_wall(neighbors.asa[1][0][1])) left_wall = true;
 	if (gl->is_floor(neighbors.asa[0][0][1]) && !gl->is_wall(neighbors.asa[1][0][1])) left_floor = true;
@@ -597,7 +611,7 @@ void Render_Component::Handle_Bottom_Right_Wall_Quad(int sprite_offset_x, int sp
 	else if (right_wall && bottom_wall && bottom_right_wall) Stamp({ 12 * TQ,0 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 	else if (right_wall && bottom_space) Stamp({ 2 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 	else if (right_wall && bottom_floor) Stamp({ 5 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
-	else if (right_floor && bottom_floor) Stamp({ 10* TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
+	else if (right_floor && bottom_floor) Stamp({ 10 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 	else if (right_floor && bottom_space) Stamp({ 1 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 	else if (right_space && bottom_floor) Stamp({ 1 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 
@@ -609,12 +623,6 @@ void Render_Component::Handle_Bottom_Right_Wall_Quad(int sprite_offset_x, int sp
 	else if (gl->is_door(neighbors.asa[1][1][2]) && gl->is_null(neighbors.asa[0][0][2]) && gl->is_null(neighbors.asa[1][0][2])) Stamp({ 15 * TQ,1 * TQ,TQ,TQ }, { TQ,TQ,TQ,TQ }, cto_x, cto_y);
 }
 
-void Render_Component::Build_Floor_Multisprite()
-{
-
-}
-
-// Animation Commands
 void Render_Component::Increment_Simple_Animation()
 {
 	if (animation_delay == 0)
@@ -684,11 +692,47 @@ void Render_Component::Increment_Entity_Animation()
 		}
 	}
 }
-void Render_Component::Change_Simple_Animation(int new_animation)
+void Render_Component::Initialize_Dedicated_Multisprite()
 {
-	simple_animation_type = new_animation;
+	// This creates a dedicated spritesheet for this multitileconfig with a blank SDL_Texture the size of one tile
+	dedicated_multisprite_num = service_locator->get_Draw_System_Pointer()->Add_New_Spritesheet_To_Multisprite(spritesheet, service_locator->get_Game_Renderer());
+	if (dedicated_multisprite_num >= 0 && dedicated_multisprite_num <= MAX_SPRITES_PER_MULTISPRITE) init = true;
 }
-void Render_Component::Change_Entity_Current_Animation(int new_animation)
+bool Render_Component::Is_Init()
 {
-	current_entity_anim = new_animation;
+	return init;
 }
+
+void Render_Component::Stamp(SDL_Rect spritesheet_clip, SDL_Rect pos_rect, int tile_offset_x, int tile_offset_y)
+{
+	SDL_Rect offset_clip = { spritesheet_clip.x + tile_offset_x, spritesheet_clip.y + tile_offset_y, spritesheet_clip.w, spritesheet_clip.h };
+	service_locator->get_Draw_System_Pointer()->Stamp_Sprite_Onto_Multisprite(spritesheet, dedicated_multisprite_num, offset_clip, pos_rect);
+}
+void Render_Component::Set_Currently_Carried_Item(int item_template_id)
+{
+	if (item_template_id > 0)
+	{
+		carrying_item = true;
+		Item_Template* item = service_locator->get_Game_Library()->Fetch_Item_Template(item_template_id);
+		item_clip_x = item->sprite_specs.x;
+		item_clip_y = item->sprite_specs.y;
+	}
+	else
+	{
+		carrying_item = false;
+	}
+}
+
+void Render_Component::Update()
+{
+	if (render_component == RENDER_COMPONENT_ANIMATED_CLIP)
+	{
+		Increment_Simple_Animation();
+	}
+}
+void Render_Component::Update_Neighbor_Array(Adjacent_Structure_Array new_neighbors)
+{
+	neighbors = new_neighbors;
+}
+
+

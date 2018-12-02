@@ -533,10 +533,14 @@ Goal_Set Scene_Graph::Goalset_Create_Move_Item_From_Object_To_Object(Item item, 
 	int move_to_start_object[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, start_object_type, start_object->Get_Array_Index() };
 	int check_distance[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, start_object_type, start_object->Get_Array_Index(),2 };
 	int take_items_from_start_object[6] = { ACTION_TRANSFER, A_AT_TAKE_ITEM_FROM_OBJECT, start_object_type, start_object->Get_Array_Index(),item.item_template_id,amount_of_item };
+	int set_carried_item[3] = { ACTION_EDIT_INTERNAL, A_EI_SET_CARRIED_ITEM, item.item_template_id };
+
 	int check_for_another_goalset[2] = { ACTION_ASSESS_INTERNAL, A_AI_CHECK_JOB_FOR_MORE_GOALSETS };
 	int move_to_requestee[4] = { ACTION_EDIT_INTERNAL, A_EI_SET_TARGET_COORD_TO_OBJECT, finish_object_type, finish_object->Get_Array_Index() };
 	int check_distance_2[5] = { ACTION_ASSESS_EXTERNAL, A_AE_CHECK_SIMPLE_DISTANCE, finish_object_type, finish_object->Get_Array_Index(),2 };
 	int give_items_to_requestee[6] = { ACTION_TRANSFER, A_AT_GIVE_ITEM_TO_OBJECT, finish_object_type, finish_object->Get_Array_Index(), item.item_template_id, amount_of_item };
+	int remove_carried_item[3] = { ACTION_EDIT_INTERNAL, A_EI_SET_CARRIED_ITEM, 0 };
+
 	int finish_goal_set[2] = { ACTION_CLOSE_OUT_GOAL_SET, new_goalset.goal_set_uniq_id };
 
 	// Add the item check to make sure the entity doesn't waste time on the job 
@@ -547,10 +551,13 @@ Goal_Set Scene_Graph::Goalset_Create_Move_Item_From_Object_To_Object(Item item, 
 	// Add th item check again to make sure they don't waste time again
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Check for Item", check_if_start_object_has_item, 6);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Take Items", take_items_from_start_object, 6);
+	new_goalset.Add_Raw_Job_Goal_to_Goalset("Set Carried Item", set_carried_item, 3);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Check job", check_for_another_goalset, 2);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Move to requestee", move_to_requestee, 4);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Check Distance", check_distance_2, 5);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Give items to requestee", give_items_to_requestee, 6);
+
+	new_goalset.Add_Raw_Job_Goal_to_Goalset("Set No Carried Item", remove_carried_item, 3);
 	new_goalset.Add_Raw_Job_Goal_to_Goalset("Finish goal set", finish_goal_set, 2);
 
 	return new_goalset;

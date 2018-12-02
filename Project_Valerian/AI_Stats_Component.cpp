@@ -211,9 +211,13 @@ void AI_Stats_Component::Handle_Stat_Above_Threshold(int stat_name)
 		Dynamic_Stat * hunger_stat = object_stats.entity_stats.Return_Stat_Pointer(STAT_ENTITY_HUNGER);
 		if (hunger_stat->current_associated_job == NULL || hunger_stat->current_associated_job->Return_Is_Init() == false)
 		{
-			if (object_locator->Return_AI_Item_Pointer()->Return_Amount_Of_Item_Or_Type_In_Inventory({}, "Food") > 0)
+			if (object_locator->Return_AI_Item_Pointer()->Return_Amount_Of_Item_Or_Type_In_Inventory({}, "Solid Food") > 0)
 			{
-				hunger_stat->current_associated_job = Create_Eat_Food_Job(object_locator->Return_AI_Item_Pointer()->Return_First_Inventory_Slot_With_Item_Or_Item_Type(0, "Food"));
+				Item_Slot* food_item = object_locator->Return_AI_Item_Pointer()->Return_First_Inventory_Slot_With_Item_Or_Item_Type(0, "Solid Food");
+				if (food_item != NULL)
+				{
+					hunger_stat->current_associated_job = Create_Eat_Food_Job(food_item);
+				}
 			}
 			else
 			{
@@ -230,7 +234,10 @@ void AI_Stats_Component::Increment_Dynamic_Stats()
 	{
 		if (update_cycle % object_stats.entity_stats.dynamic_stat_array[i].update_cycle == 0)
 		{
-			object_stats.entity_stats.dynamic_stat_array[i].stat_number += object_stats.entity_stats.dynamic_stat_array[i].auto_increment;
+			if (object_stats.entity_stats.dynamic_stat_array[i].stat_number < object_stats.entity_stats.dynamic_stat_array[i].stat_limit)
+			{
+				object_stats.entity_stats.dynamic_stat_array[i].stat_number += object_stats.entity_stats.dynamic_stat_array[i].auto_increment;
+			}
 
 			if (object_stats.entity_stats.dynamic_stat_array[i].stat_number > object_stats.entity_stats.dynamic_stat_array[i].threshold_level_yellow)
 			{
@@ -419,13 +426,17 @@ void AI_Stats_Component::Check_For_Messages()
 
 Job* AI_Stats_Component::Create_Find_Food_Job()
 {
-	vector<Item_Location*> food_locations = service_locator->get_Scene_Graph()->Return_Vector_Of_Item_Locations("Food", 0, 0, 0);
-	Item_Location* ideal_location = food_locations[service_locator->get_Scene_Graph()->Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(food_locations)];
-	Blueprint food_item;
-	food_item.blueprint_items[0] = *ideal_location->inventory_slot;
-	food_item.blueprint_items[0].item_quantity = 1;
-	food_item.Num_Items_In_Blueprint = 1;
-	return service_locator->get_Scene_Graph()->Job_Create_Transport_Blueprint_Items_From_Object_To_Requestee(ideal_location->associated_object, object_locator->Return_Object_Pointer(), food_item, 0, object_locator->Return_Object_Pointer());
+	vector<Item_Location*> food_locations = service_locator->get_Scene_Graph()->Return_Vector_Of_Item_Locations("Solid Food", 0, 0, 0);
+	if (food_locations.size() > 0)
+	{
+		Item_Location* ideal_location = food_locations[service_locator->get_Scene_Graph()->Return_Best_Item_Pickup_Location_From_Vector_Of_Locations(food_locations)];
+		Blueprint food_item;
+		food_item.blueprint_items[0] = *ideal_location->inventory_slot;
+		food_item.blueprint_items[0].item_quantity = 1;
+		food_item.Num_Items_In_Blueprint = 1;
+		return service_locator->get_Scene_Graph()->Job_Create_Transport_Blueprint_Items_From_Object_To_Requestee(ideal_location->associated_object, object_locator->Return_Object_Pointer(), food_item, 0, object_locator->Return_Object_Pointer());
+	}
+	return NULL;
 }
 
 Job* AI_Stats_Component::Create_Eat_Food_Job(Item_Slot* food_item)

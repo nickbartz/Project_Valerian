@@ -195,6 +195,7 @@ int main(int argc, char *args[])
 	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(1, 100, false, {});
 	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(2, 100, false, {});
 	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(3, 100, false, {});
+	scene_graph->Return_Structure_At_Coord_By_Layer(9, -1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(9, 100, false, {});
 
 	scene_graph->Create_New_Structure({ 6,-1 }, 39, 2);
 	scene_graph->Return_Structure_At_Coord_By_Layer(6,-1, TILE_LAYER_MID)->Return_AI_Item_Component()->Add_Item_To_Inventory(7, 100, false, {});

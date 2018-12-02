@@ -28,20 +28,12 @@ public:
 	void Update();
 
 	void Draw(SDL_Rect pos_rect);
-	void Draw_With_Background_Renderer(SDL_Rect pos_rect);
-	void Draw_With_Simple_Clip(SDL_Rect pos_rect);
-	void Draw_With_Multi_Clip(SDL_Rect pos_rect);
-	void Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect);
-	void Draw_Point(SDL_Rect pos_rect);
 
-	void Draw_With_Complex_Entity_Animation(SDL_Rect pos_rect);
-	void Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Rect sprite_clip, int animation_frame, int spritesheet);
-
-	void Draw_Overlays(SDL_Rect pos_rect);
 
 	// Overlay Specific Functions
 	void Handle_Oxygenation_Overlay(SDL_Rect pos_rect, int oxygenation_level);
 	void Handle_Progress_Overlays(SDL_Rect pos_rect, SDL_Color bar_color, int height_offset, int current_health, int max_health);
+	void Set_Currently_Carried_Item(int item_template_id);
 
 	void Initialize_Dedicated_Multisprite();
 	void Deinitialize_Dedicated_Multisprite();
@@ -57,6 +49,7 @@ public:
 	void Clear_Sprite();
 	void Stamp(SDL_Rect spritesheet_clip, SDL_Rect pos_rect, int tile_offset_x = 0, int tile_offset_y = 0);
 	void Build_Wall_Multisprite(); 
+	void Build_Frenzel_Multisprite(int sprite_offset_x, int sprite_offset_y);
 	void Handle_Upper_Left_Wall_Quad(int sprite_offset_x, int sprite_offset_y);
 	void Handle_Upper_Right_Wall_Quad(int sprite_offset_x, int sprite_offset_y);
 	void Handle_Bottom_Left_Wall_Quad(int sprite_offset_x, int sprite_offset_y);
@@ -86,6 +79,11 @@ private:
 	int simple_animation_type = SIMPLE_ANIMATION_NULL;
 	SDL_Color override_color = { 255,255,255,255 };
 
+	// CARRIED ITEM VARIABLES
+	bool carrying_item = false;
+	int item_clip_x = 0;
+	int item_clip_y = 0;
+
 	// STRUCTURE_SPECIFIC VARIABLES
 	int multiclip_type;
 	int dedicated_multisprite_num;
@@ -100,4 +98,16 @@ private:
 	int num_entity_animations = 0;
 	int num_entity_components = 0;
 	int current_entity_anim = ANIM_WALK_DOWN;
+
+	void Draw_With_Background_Renderer(SDL_Rect pos_rect);
+	void Draw_With_Simple_Clip(SDL_Rect pos_rect);
+	void Draw_With_Multi_Clip(SDL_Rect pos_rect);
+	void Draw_With_Animated_Simple_Clip(SDL_Rect pos_rect);
+	void Draw_Point(SDL_Rect pos_rect);
+
+	void Draw_With_Complex_Entity_Animation(SDL_Rect pos_rect);
+	void Draw_Entity_Animation_Component(SDL_Rect pos_rect, SDL_Rect sprite_clip, int animation_frame, int spritesheet);
+
+	void Draw_Overlays(SDL_Rect pos_rect);
+	void Draw_Carried_Item(SDL_Rect pos_rect);
 };
