@@ -107,7 +107,7 @@ bool Scene_Graph::Check_If_Tile_Is_Inaccessible(Coordinate tile, int requesting_
 
 bool Scene_Graph::Check_Tile_Placement(Coordinate grid_point, Structure_Template structure)
 {
-	if (tile_map[grid_point].Return_Tile_Type_By_Layer(structure.tile_layer) == STRUCTURE_ID_NULL)
+	if (tile_map[grid_point].Return_Tile_Type_By_Layer(structure.tile_layer) == STRUCTURE_ID_NULL || tile_map[grid_point].Return_Tile_Type_By_Layer(structure.tile_layer) == structure.structure_type)
 	{
 		return true;
 	}
@@ -210,12 +210,14 @@ void Scene_Graph::Create_Background()
 	}
 }
 
-void Scene_Graph::Create_New_Structure(Coordinate grid_point, int structure_template_id, int faction, bool update_message)
+Object* Scene_Graph::Create_New_Structure(Coordinate grid_point, int structure_template_id, int faction, bool update_message)
 {
 	Structure_Template* structure_config = service_locator->get_Game_Library()->Fetch_Structure_Template(structure_template_id);
 
 	if (Check_Tile_Placement(grid_point, *structure_config))
 	{
+		Object* new_object = NULL;
+
 		// First we put an object in the structure array to represent our new structure and increment the number of structures in the world
 		int array_index = 0;
 
@@ -229,6 +231,7 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, int structure_temp
 				structure_array[i].Set_Assigned_Flag(OBJECT_ASSIGNED);
 
 				array_index = i;
+				new_object = &structure_array[i];
 				break;
 			}
 		}
@@ -246,7 +249,14 @@ void Scene_Graph::Create_New_Structure(Coordinate grid_point, int structure_temp
 			int update_message[8] = { MESSAGE_TYPE_SG_TILE_UPDATE_NOTIFICATION , OBJECT_TYPE_ANY, FOCUS_ALL,grid_point.x,grid_point.y,structure_config->tile_layer,structure_config->structure_type,structure_config->structure_id };
 			service_locator->get_MB_Pointer()->Add_Custom_Message(8, update_message);
 		}
+
+		return new_object;
 	}
+	else
+	{
+		return NULL;
+	}
+
 }
 
 void Scene_Graph::Create_Entity(Coordinate grid_point, Entity_Template entity, int faction)

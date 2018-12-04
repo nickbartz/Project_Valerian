@@ -11,7 +11,7 @@ using namespace std;
 #include<unordered_map>
 #include<AI_Item_Component.h>
 
-class Blueprint;
+struct Blueprint;
 
 struct Blueprint_Pack
 {
@@ -36,6 +36,7 @@ struct Structure_Template
 	SDL_Rect tile_specs = { 0,0,0,0 };
 	SDL_Rect tile_clip = { 0,0,0,0 };
 	int multiclip_type = MULTICLIP_NONE;
+	int multiclip_variant = 0;
 	int num_animation_frame = 0;
 	int ui_type = 0;
 	int icon_clip_x = 0;
@@ -60,7 +61,7 @@ struct Entity_Template
 	int render_component = RENDER_COMPONENT_ENTITY_COMPLEX;
 	int num_entity_animations = 0;
 	int num_entity_components = 0;
-	int entity_has_starter_inventory = 0;
+	int entity_starter_inventory_blueprint = 0;
 	Animation_State entity_animations[MAX_NUM_ANIMATIONS][MAX_NUM_COMPONENTS];
 };
 
@@ -131,7 +132,7 @@ public:
 	Item_Template* Fetch_Item_Template(int item_id);
 	Blueprint* Fetch_Blueprint(int inventory_id);
 	Blueprint_Pack* Fetch_Blueprint_Pack(int blueprint_pack);
-	vector<Blueprint*> Fetch_All_Blueprints_Of_Type_For_Object(int type, int object_type, int object_template_id);
+
 	Job* Fetch_Job_Template(int job_id);
 	Projectile_Template* Fetch_Projectile_Template(int projectile_id);
 	string Fetch_Random_Name_Syllable(int entity_gender, int name_part);

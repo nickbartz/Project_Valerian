@@ -45,7 +45,6 @@ struct Entity_Stats
 
 struct Structure_Stats
 {
-	int built_level = 0;
 	int max_build_level = 0;
 	int oxygen_level = 0;
 	int powered = 0;

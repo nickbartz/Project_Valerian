@@ -86,6 +86,7 @@ private:
 
 	// STRUCTURE_SPECIFIC VARIABLES
 	int multiclip_type;
+	int multiclip_variant = 0;
 	int dedicated_multisprite_num;
 	SDL_Rect sprite_clip;
 	SDL_Rect sprite_coords;

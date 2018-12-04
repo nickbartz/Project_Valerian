@@ -96,15 +96,12 @@ int Game_Library::Get_Item_Type_Code_From_Item_Type_String(string item_type_stri
 
 int Game_Library::Get_Structure_Type_Code_From_Structure_Type_String(string structure_type)
 {
-	for (int i = 0; i < num_loaded_tiles; i++)
+	if (structure_type_codes.count(structure_type) > 0) return structure_type_codes[structure_type];
+	else
 	{
-		if (structure_type == loaded_tiles[i].structure_type_string)
-		{
-			return loaded_tiles[i].structure_type;
-		}
+		cout << "Looking for structure type string that does not exist" << endl;
+		return 0;
 	}
-
-	return 0;
 }
 
 void Game_Library::Load_Structures_From_Data_File(string tiles_path)
@@ -144,6 +141,7 @@ void Game_Library::Load_Structures_From_Data_File(string tiles_path)
 		new_config.has_starter_inventory = stoi(vector_loaded_tiles[i + 1][28]);
 		new_config.scaffold_blueprint_id = stoi(vector_loaded_tiles[i + 1][29]);
 		new_config.blueprint_pack_id = stoi(vector_loaded_tiles[i + 1][30]);
+		new_config.multiclip_variant = stoi(vector_loaded_tiles[i + 1][31]);
 
 		if (structure_type_codes.count(new_config.structure_type_string) > 0)
 		{
@@ -175,7 +173,7 @@ void Game_Library::Load_Entity_Templates(string entity_template_path, string ent
 		new_entity.num_entity_components = stoi(loaded_templates[i][7]);
 		new_entity.num_entity_animations = stoi(loaded_templates[i][6]);
 		new_entity.entity_id = stoi(loaded_templates[i][1]);
-		new_entity.entity_has_starter_inventory = stoi(loaded_templates[i][12]);
+		new_entity.entity_starter_inventory_blueprint = stoi(loaded_templates[i][12]);
 
 		for (int q = 0; q < new_entity.num_entity_components; q++)
 		{
@@ -529,21 +527,6 @@ Blueprint* Game_Library::Fetch_Blueprint(int blueprint_id)
 Blueprint_Pack* Game_Library::Fetch_Blueprint_Pack(int blueprint_pack)
 {
 	return &loaded_blueprint_packs[blueprint_pack];
-}
-
-vector<Blueprint*> Game_Library::Fetch_All_Blueprints_Of_Type_For_Object(int type, int object_type, int object_template_id)
-{
-	vector<Blueprint*> requested_blueprints;
-	
-	for (int i = 0; i < num_loaded_blueprints; i++)
-	{
-		if (loaded_blueprints[i].associated_blueprint_type == type && loaded_blueprints[i].associated_object_type == object_type && loaded_blueprints[i].associated_template_id == object_template_id)
-		{
-			requested_blueprints.push_back(&loaded_blueprints[i]);	
-		}
-	}
-	
-	return requested_blueprints;
 }
 
 Job* Game_Library::Fetch_Job_Template(int job_id)

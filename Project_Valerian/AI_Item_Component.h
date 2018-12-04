@@ -110,11 +110,19 @@ public:
 	void Scan_Inventory_For_Storable_Items(int threshold_quantity);
 	void Request_Production_Of_Item_From_Blueprint(Blueprint* blueprint, int quantity);
 	void Add_Build_Order_To_Queue(Blueprint* blueprint, int object_type, int object_template, int object_stage = BLUEPRINT_STATE_PARTS_NEEDED_NO_JOB_SENT);
-	void Create_Production_Item_Container();
+	void Add_Build_Order_To_Queue(Build_Order new_build_order);
+	void Create_Production_Object();
 
 	// Queries
 	bool Object_Has_Items_For_Blueprint_In_Inventory(Blueprint* blueprint);
 	bool Build_Is_Complete();
+	void Update_Current_Build_Level(int new_level);
+	void Increment_Current_Build_Level(int increment);
+	int Return_Current_Build_Level();
+	int Return_Build_Level_Target();
+
+	// Specific Functions
+	void Prep_Growth_Build_Orders();
 
 
 private:
@@ -137,4 +145,8 @@ private:
 
 	vector<Blueprint*> loaded_production_blueprints;
 	deque<Build_Order> active_build_orders;
+
+	int current_build_progress = 0;
+	int previous_build_progress = 0;
+	int build_target_level = 0;
 };

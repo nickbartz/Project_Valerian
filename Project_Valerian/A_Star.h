@@ -6,7 +6,7 @@
 #include<SDL.h>
 
 class Global_Service_Locator;
-class Coordinate;
+struct Coordinate;
 
 using namespace std;
 

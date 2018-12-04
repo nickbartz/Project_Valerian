@@ -4,7 +4,7 @@
 #include<Service_Locator.h>
 #include<AI_Job_Component.h>
 
-class SDL_Renderer;
+struct SDL_Renderer;
 struct Structure_Template;
 struct Adjacent_Structure_Array;
 class AI_Stats_Component;
@@ -12,7 +12,7 @@ class AI_Movement_Component;
 class AI_Rel_Component;
 class AI_Item_Component;
 class Coordinate;
-class Item_Slot;
+struct Item_Slot;
 
 class Object
 {

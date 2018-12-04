@@ -30,7 +30,6 @@ void Object::Init_Structure_From_Template(Structure_Template object_config, Adja
 	object_service_locator.Register_Pointer(AI_Stats);
 	
 	AI_Stats->Update_Stat(STAT_OBJECT_FACTION, faction);
-	AI_Stats->Update_Stat(STAT_STRUCTURE_BUILT_LEVEL, 0);
 	AI_Stats->Update_Stat(STAT_STRUCTURE_IMPASSABLE, object_config.is_inaccessible);
 
 	render_component = new Render_Component(service_locator, &object_service_locator, object_config, neighbors);

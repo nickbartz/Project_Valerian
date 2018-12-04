@@ -7,5 +7,5 @@ Inventory_Item_ID,Inventory_Item_String_Name,Inventory_Item_Type_ID,Inventory_It
 5,Processed Cobalt,2,INVENTORY_ITEM_TYPE_PROCESSED_ORE,5,2,7,"Hello world how are you doing today, I am doing great, thank you for asking. There are a couple things I've come here to talk about today, first and foremost the machine imperium that bears down upon us at this very moment, threatening to wipe out our families and loved ones",50
 6,Processed Nickell,2,INVENTORY_ITEM_TYPE_PROCESSED_ORE,6,2,8,"Hello world how are you doing today, I am doing great, thank you for asking. There are a couple things I've come here to talk about today, first and foremost the machine imperium that bears down upon us at this very moment, threatening to wipe out our families and loved ones",50
 7,Green Soylent,3,Solid Food,0,3,0,"Green Soylent, made from Green Frenzel",50
-8,Green Frenzel,4,Raw Food,3,3,9,Green Frenzel,50
+8,Green Frenzel Meat,4,Raw Food,3,3,9,Green Frenzel,50
 9,Water Canister,5,Liquid Food,4,3,0,A Water Canister,50

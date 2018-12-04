@@ -139,7 +139,7 @@ void AI_Stats_Component::Update_Stat(int stat_name, int new_value)
 		object_stats.object_faction = new_value;
 		break;
 	case STAT_STRUCTURE_BUILT_LEVEL:
-		object_stats.structure_stats.built_level = new_value;
+		object_locator->Return_AI_Item_Pointer()->Update_Current_Build_Level(new_value);
 		break;
 	case STAT_OBJECT_HEALTH:
 		object_stats.object_health = new_value;
@@ -252,7 +252,7 @@ void AI_Stats_Component::Adjust_Stat(int stat_name, int new_value)
 	switch (stat_name)
 	{
 	case STAT_STRUCTURE_BUILT_LEVEL:
-		object_stats.structure_stats.built_level += new_value;
+		object_locator->Return_AI_Item_Pointer()->Increment_Current_Build_Level(new_value);
 		break;
 	case STAT_OBJECT_HEALTH:
 		object_stats.object_health += new_value;
@@ -298,7 +298,7 @@ int AI_Stats_Component::Return_Stat_Value(int stat_name)
 		return object_stats.object_faction;
 		break;
 	case STAT_STRUCTURE_BUILT_LEVEL:
-		return object_stats.structure_stats.built_level;
+		return object_locator->Return_AI_Item_Pointer()->Return_Current_Build_Level();
 		break;
 	case STAT_OBJECT_HEALTH:
 		return object_stats.object_health;
@@ -347,7 +347,7 @@ int AI_Stats_Component::Return_Max_Stat_Value(int stat_name)
 	switch (stat_name)
 	{
 	case STAT_STRUCTURE_BUILT_LEVEL:
-		return object_stats.structure_stats.max_build_level;
+		return object_locator->Return_AI_Item_Pointer()->Return_Build_Level_Target();
 		break;
 	case STAT_OBJECT_HEALTH:
 		return object_stats.object_max_health;
@@ -482,15 +482,6 @@ bool AI_Stats_Component::Check_For_Death()
 			// Do not have to clear inventory here, since theoretically the Container is only destroyed if it's inventory is already clear
 			service_locator->get_Scene_Graph()->Delete_Object(OBJECT_TYPE_CONTAINER, object_locator->Return_Object_Pointer()->Get_Array_Index());
 			return true;
-		}
-		break;
-	case OBJECT_TYPE_SCAFFOLD:
-		if (object_locator->Return_AI_Stats_Pointer()->Return_Stat_Value(STAT_STRUCTURE_BUILT_LEVEL) >= service_locator->get_Game_Library()->Fetch_Structure_Template(object_locator->Return_AI_Stats_Pointer()->Return_Template_ID())->max_built_level)
-		{	
-			// Have to clear all inventory here so it is officially removed from the manifest
-			object_locator->Return_AI_Item_Pointer()->Clear_All_Inventory();
-			service_locator->get_Scene_Graph()->Create_New_Structure(object_locator->Return_AI_Movement_Pointer()->Return_Grid_Coord(), object_template_id, object_stats.object_faction, true);
-			service_locator->get_Scene_Graph()->Delete_Object(OBJECT_TYPE_SCAFFOLD, object_array_locator);
 		}
 		break;
 	}

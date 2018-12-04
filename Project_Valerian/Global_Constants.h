@@ -257,8 +257,6 @@ enum Entity_Genders
 const int MAX_STRUCTURE_STATS = 20;
 const int MAX_ENTITY_STATS = 10;
 
-int chesum = 0;
-
 enum Object_Stat_Enum
 {
 	STAT_UNIQ_ID,

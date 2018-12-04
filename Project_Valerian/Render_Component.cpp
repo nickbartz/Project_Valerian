@@ -25,6 +25,7 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 		{Structure_Template * object_config = service_locator->get_Game_Library()->Fetch_Structure_Template(object_template_id);
 		render_component = object_config->render_component_type;
 		multiclip_type = object_config->multiclip_type;
+		multiclip_variant = object_config->multiclip_variant;
 		spritesheet = object_config->spritesheet;
 		is_scaffold = true;
 		override_color = { 100,255,255,100 };
@@ -93,6 +94,7 @@ Render_Component::Render_Component(Global_Service_Locator* sLocator, Object_Serv
 
 	render_component = object_config.render_component_type;
 	multiclip_type = object_config.multiclip_type;
+	multiclip_variant = object_config.multiclip_variant;
 	spritesheet = object_config.spritesheet;
 
 	sprite_clip = object_config.tile_clip;
@@ -196,8 +198,25 @@ void Render_Component::Build_Frenzel_Multisprite(int sprite_offset_x, int sprite
 	if (bottom_frenzel == true) Stamp({ 3 * TQ,1 * TQ,TQ,TQ }, { TQ / 2,TQ,TQ,TQ }, cto_x, cto_y); // Bottom Arm
 
 
-																								   // Head
-	Stamp({ 1 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+	// Head
+	switch (multiclip_variant)
+	{
+	case 0:
+		Stamp({ 0 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+		break;
+	case 1:
+		Stamp({ 1 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+		break;
+	case 2:
+		Stamp({ 2 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+		break;
+	case 3:
+		Stamp({ 3 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+		break;
+	case 4:
+		Stamp({ 4 * TW,1 * TW,TW,TW }, { 0,0,TW,TW }, cto_x, cto_y);
+		break;
+	}
 }
 
 void Render_Component::Change_Simple_Animation(int new_animation)

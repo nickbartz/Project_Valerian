@@ -20,9 +20,9 @@ struct Item_Location
 };
 
 class Global_Service_Locator;
-class Item_Slot;
-class Blueprint;
-class Item;
+struct Item_Slot;
+struct Blueprint;
+struct Item;
 
 class Scene_Graph
 {
@@ -37,13 +37,11 @@ public:
 	void Collect_Bus_Messages();
 	void Draw();
 
-	// Create Structures
+	// Create Things
 	bool Check_Tile_Placement(Coordinate grid_point, Structure_Template structure);
 	void Create_Background();
-	void Create_New_Structure(Coordinate grid_point, int structure_template_id, int faction, bool update_message = true);
+	Object* Create_New_Structure(Coordinate grid_point, int structure_template_id, int faction, bool update_message = true);
 	void Stamp_Room_From_Array(vector<vector<int>> room_array, int x_tile_offset, int y_tile_offset, int faction);
-
-	// Create
 	void Create_New_Scaffold(Coordinate grid_point, int structure_template_id, int faction);
 	void Create_Entity(Coordinate grid_point, Entity_Template entity, int faction);
 	void Create_Projectile(Object* firing_object, Object* target_object, int projectile_id, int faction);
